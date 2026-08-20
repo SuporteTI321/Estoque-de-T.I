@@ -14,6 +14,7 @@ import Etiquetas from "./pages/Etiquetas";
 import Configuracoes from "./pages/Configuracoes";
 import Usuarios from "./pages/Usuarios";
 import Perfil from "./pages/Perfil";
+import Sincronizacao from "./pages/Sincronizacao";
 
 function Bootstrap() {
   const [ready, setReady] = useState(false);
@@ -108,6 +109,7 @@ function AppRoutes() {
       <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
       <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
       <Route path="/usuarios" element={<ProtectedRoute><Usuarios /></ProtectedRoute>} />
+      <Route path="/sincronizacao" element={<ProtectedRoute><Sincronizacao /></ProtectedRoute>} />
       <Route path="/" element={<Navigate to="/dashboard" replace />} />
       <Route path="*" element={<Navigate to="/dashboard" replace />} />
     </Routes>

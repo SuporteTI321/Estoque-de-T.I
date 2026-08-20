@@ -1477,6 +1477,8 @@ pub fn run() {
             print_romaneio,
             save_romaneio_html,
             open_in_browser,
+            export_all_data,
+            import_all_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -1497,8 +1499,216 @@ fn open_in_browser(file_path: String) -> Result<(), String> {
     Ok(())
 }
 
-/// Envia texto formatado diretamente para a impressora padrão via USB.
-/// Salva HTML do romaneio em arquivo temporário e retorna o caminho
+// ============================================================================
+//  SYNC — EXPORT / IMPORT (Web <-> Desktop)
+// ============================================================================
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ExportData {
+    pub versao: String,
+    pub data_exportacao: String,
+    pub lojas: Vec<Loja>,
+    pub categorias: Vec<Categoria>,
+    pub fornecedores: Vec<Fornecedor>,
+    pub produtos: Vec<Produto>,
+    pub usuarios_senha: Vec<UsuarioSync>,
+    pub movimentacoes: Vec<Movimentacao>,
+    pub solicitacoes: Vec<Solicitacao>,
+    pub solicitacao_itens: Vec<SolicitacaoItem>,
+    pub pedidos: Vec<Pedido>,
+    pub pedido_itens: Vec<PedidoItem>,
+    pub alertas: Vec<Alerta>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct UsuarioSync {
+    pub id: i64,
+    pub nome: String,
+    pub email: String,
+    pub senha: String,
+    pub perfil: String,
+    pub loja_id: Option<i64>,
+    pub loja_nome: Option<String>,
+    pub ativo: bool,
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn export_all_data() -> Result<ExportData, String> {
+    let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+
+    let mut stmt_lojas = conn.prepare("SELECT id, nome, codigo, endereco, ativa FROM lojas").map_err(|e| e.to_string())?;
+    let lojas: Vec<Loja> = stmt_lojas.query_map([], |r| Ok(Loja { id: r.get(0)?, nome: r.get(1)?, codigo: r.get(2)?, endereco: r.get(3)?, ativa: r.get::<_, i64>(4)? != 0 }))
+        .map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_cats = conn.prepare("SELECT id, nome, descricao, ativa FROM categorias").map_err(|e| e.to_string())?;
+    let categorias: Vec<Categoria> = stmt_cats.query_map([], |r| Ok(Categoria { id: r.get(0)?, nome: r.get(1)?, descricao: r.get(2)?, ativa: r.get::<_, i64>(3)? != 0 }))
+        .map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_forn = conn.prepare("SELECT id, nome, cnpj, contato, email, telefone, ativo FROM fornecedores").map_err(|e| e.to_string())?;
+    let fornecedores: Vec<Fornecedor> = stmt_forn.query_map([], |r| Ok(Fornecedor { id: r.get(0)?, nome: r.get(1)?, cnpj: r.get(2)?, contato: r.get(3)?, email: r.get(4)?, telefone: r.get(5)?, ativo: r.get::<_, i64>(6)? != 0 }))
+        .map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_prod = conn.prepare("SELECT p.id, p.codigo, p.nome, p.marca, p.modelo, p.descricao, p.categoria_id, c.nome, p.fornecedor_id, f.nome, p.unidade, p.preco_compra, p.preco_venda, p.estoque, p.estoque_minimo, p.custo_total, p.ativo FROM produtos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN fornecedores f ON p.fornecedor_id = f.id").map_err(|e| e.to_string())?;
+    let produtos: Vec<Produto> = stmt_prod.query_map([], |r| Ok(Produto {
+        id: r.get(0)?, codigo: r.get(1)?, nome: r.get(2)?, marca: r.get(3)?, modelo: r.get(4)?,
+        descricao: r.get(5)?, categoria_id: r.get(6)?, categoria_nome: r.get(7)?,
+        fornecedor_id: r.get(8)?, fornecedor_nome: r.get(9)?, unidade: r.get(10)?,
+        preco_compra: r.get(11)?, preco_venda: r.get(12)?, estoque: r.get(13)?,
+        estoque_minimo: r.get(14)?, custo_total: r.get(15)?, ativo: r.get::<_, i64>(16)? != 0,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_usu = conn.prepare("SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.loja_id, l.nome, u.ativo FROM usuarios u LEFT JOIN lojas l ON u.loja_id = l.id").map_err(|e| e.to_string())?;
+    let usuarios_senha: Vec<UsuarioSync> = stmt_usu.query_map([], |r| Ok(UsuarioSync {
+        id: r.get(0)?, nome: r.get(1)?, email: r.get(2)?, senha: r.get(3)?, perfil: r.get(4)?,
+        loja_id: r.get(5)?, loja_nome: r.get(6)?, ativo: r.get::<_, i64>(7)? != 0,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_mov = conn.prepare("SELECT id, tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, data_movimento, preco_compra, unidade FROM movimentacoes").map_err(|e| e.to_string())?;
+    let movimentacoes: Vec<Movimentacao> = stmt_mov.query_map([], |r| Ok(Movimentacao {
+        id: r.get(0)?, tipo: r.get(1)?, produto_id: r.get(2)?, produto_nome: r.get(3)?,
+        quantidade: r.get(4)?, loja_origem_id: r.get(5)?, loja_origem_nome: r.get(6)?,
+        loja_destino_id: r.get(7)?, loja_destino_nome: r.get(8)?, usuario_id: r.get(9)?,
+        observacao: r.get(10)?, data_movimento: r.get(11)?, preco_compra: r.get(12)?, unidade: r.get(13)?,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_sol = conn.prepare("SELECT s.id, s.loja_id, l.nome, s.usuario_id, u.nome, s.observacao, s.status, s.data_solicitacao, (SELECT COUNT(*) FROM solicitacao_itens si WHERE si.solicitacao_id = s.id) FROM solicitacoes s LEFT JOIN lojas l ON s.loja_id = l.id LEFT JOIN usuarios u ON s.usuario_id = u.id").map_err(|e| e.to_string())?;
+    let solicitacoes: Vec<Solicitacao> = stmt_sol.query_map([], |r| Ok(Solicitacao {
+        id: r.get(0)?, loja_id: r.get(1)?, loja_nome: r.get(2)?, usuario_id: r.get(3)?,
+        usuario_nome: r.get(4)?, observacao: r.get(5)?, status: r.get(6)?,
+        data_solicitacao: r.get(7)?, total_itens: r.get(8)?,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_si = conn.prepare("SELECT si.id, si.solicitacao_id, si.produto_id, p.nome, p.codigo, p.unidade, si.quantidade FROM solicitacao_itens si LEFT JOIN produtos p ON si.produto_id = p.id").map_err(|e| e.to_string())?;
+    let solicitacao_itens: Vec<SolicitacaoItem> = stmt_si.query_map([], |r| Ok(SolicitacaoItem {
+        id: r.get(0)?, solicitacao_id: r.get(1)?, produto_id: r.get(2)?,
+        produto_nome: r.get(3)?, produto_codigo: r.get(4)?, unidade: r.get(5)?, quantidade: r.get(6)?,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_ped = conn.prepare("SELECT p.id, p.numero, p.loja_id, l.nome, l.codigo, p.solicitante, p.origem, p.status, p.arquivo_pdf, p.data_pedido, p.setor FROM pedidos p LEFT JOIN lojas l ON p.loja_id = l.id").map_err(|e| e.to_string())?;
+    let pedidos: Vec<Pedido> = stmt_ped.query_map([], |r| Ok(Pedido {
+        id: r.get(0)?, numero: r.get(1)?, loja_id: r.get(2)?, loja_nome: r.get(3)?,
+        loja_codigo: r.get(4)?, solicitante: r.get(5)?, origem: r.get(6)?, status: r.get(7)?,
+        arquivo_pdf: r.get(8)?, data_pedido: r.get(9)?, setor: r.get(10)?,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_pi = conn.prepare("SELECT id, pedido_id, produto_id, produto_nome, unidade, quantidade FROM pedido_itens").map_err(|e| e.to_string())?;
+    let pedido_itens: Vec<PedidoItem> = stmt_pi.query_map([], |r| Ok(PedidoItem {
+        id: r.get(0)?, pedido_id: r.get(1)?, produto_id: r.get(2)?,
+        produto_nome: r.get(3)?, unidade: r.get(4)?, quantidade: r.get(5)?,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_ale = conn.prepare("SELECT id, tipo, titulo, mensagem, data_alerta, lido FROM alertas").map_err(|e| e.to_string())?;
+    let alertas: Vec<Alerta> = stmt_ale.query_map([], |r| Ok(Alerta {
+        id: r.get(0)?, tipo: r.get(1)?, titulo: r.get(2)?, mensagem: r.get(3)?,
+        data_alerta: r.get(4)?, lido: r.get::<_, i64>(5)? != 0,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    Ok(ExportData {
+        versao: "1.0".to_string(),
+        data_exportacao: now,
+        lojas, categorias, fornecedores, produtos, usuarios_senha,
+        movimentacoes, solicitacoes, solicitacao_itens,
+        pedidos, pedido_itens, alertas,
+    })
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn import_all_data(dados: ExportData) -> Result<String, String> {
+    let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let mut stats = std::collections::HashMap::new();
+
+    // Lojas
+    for item in &dados.lojas {
+        conn.execute("INSERT OR REPLACE INTO lojas (id, nome, codigo, endereco, ativa) VALUES (?1, ?2, ?3, ?4, ?5)",
+            params![item.id, item.nome, item.codigo, item.endereco, item.ativa as i64]).map_err(|e| e.to_string())?;
+        *stats.entry("lojas".to_string()).or_insert(0) += 1;
+    }
+
+    // Categorias
+    for item in &dados.categorias {
+        conn.execute("INSERT OR REPLACE INTO categorias (id, nome, descricao, ativa) VALUES (?1, ?2, ?3, ?4)",
+            params![item.id, item.nome, item.descricao, item.ativa as i64]).map_err(|e| e.to_string())?;
+        *stats.entry("categorias".to_string()).or_insert(0) += 1;
+    }
+
+    // Fornecedores
+    for item in &dados.fornecedores {
+        conn.execute("INSERT OR REPLACE INTO fornecedores (id, nome, cnpj, contato, email, telefone, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![item.id, item.nome, item.cnpj, item.contato, item.email, item.telefone, item.ativo as i64]).map_err(|e| e.to_string())?;
+        *stats.entry("fornecedores".to_string()).or_insert(0) += 1;
+    }
+
+    // Produtos
+    for item in &dados.produtos {
+        conn.execute("INSERT OR REPLACE INTO produtos (id, codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+            params![item.id, item.codigo, item.nome, item.marca, item.modelo, item.descricao,
+                item.categoria_id, item.fornecedor_id, item.unidade, item.preco_compra,
+                item.preco_venda, item.estoque, item.estoque_minimo, item.custo_total, item.ativo as i64]).map_err(|e| e.to_string())?;
+        *stats.entry("produtos".to_string()).or_insert(0) += 1;
+    }
+
+    // Usuarios (senhas já vêm com hash ou texto plano — importar direto)
+    for item in &dados.usuarios_senha {
+        conn.execute("INSERT OR REPLACE INTO usuarios (id, nome, email, senha, perfil, loja_id, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![item.id, item.nome, item.email, item.senha, item.perfil, item.loja_id, item.ativo as i64]).map_err(|e| e.to_string())?;
+        *stats.entry("usuarios".to_string()).or_insert(0) += 1;
+    }
+
+    // Movimentacoes
+    for item in &dados.movimentacoes {
+        conn.execute("INSERT OR REPLACE INTO movimentacoes (id, tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, data_movimento, preco_compra, unidade) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+            params![item.id, item.tipo, item.produto_id, item.produto_nome, item.quantidade,
+                item.loja_origem_id, item.loja_origem_nome, item.loja_destino_id, item.loja_destino_nome,
+                item.usuario_id, item.observacao, item.data_movimento, item.preco_compra, item.unidade]).map_err(|e| e.to_string())?;
+        *stats.entry("movimentacoes".to_string()).or_insert(0) += 1;
+    }
+
+    // Solicitacoes
+    for item in &dados.solicitacoes {
+        conn.execute("INSERT OR REPLACE INTO solicitacoes (id, loja_id, usuario_id, observacao, status, data_solicitacao) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![item.id, item.loja_id, item.usuario_id, item.observacao, item.status, item.data_solicitacao]).map_err(|e| e.to_string())?;
+        *stats.entry("solicitacoes".to_string()).or_insert(0) += 1;
+    }
+
+    // Solicitacao Itens
+    for item in &dados.solicitacao_itens {
+        conn.execute("INSERT OR REPLACE INTO solicitacao_itens (id, solicitacao_id, produto_id, quantidade) VALUES (?1, ?2, ?3, ?4)",
+            params![item.id, item.solicitacao_id, item.produto_id, item.quantidade]).map_err(|e| e.to_string())?;
+        *stats.entry("solicitacao_itens".to_string()).or_insert(0) += 1;
+    }
+
+    // Pedidos
+    for item in &dados.pedidos {
+        conn.execute("INSERT OR REPLACE INTO pedidos (id, numero, loja_id, solicitante, origem, status, arquivo_pdf, data_pedido, setor) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+            params![item.id, item.numero, item.loja_id, item.solicitante, item.origem, item.status, item.arquivo_pdf, item.data_pedido, item.setor]).map_err(|e| e.to_string())?;
+        *stats.entry("pedidos".to_string()).or_insert(0) += 1;
+    }
+
+    // Pedido Itens
+    for item in &dados.pedido_itens {
+        conn.execute("INSERT OR REPLACE INTO pedido_itens (id, pedido_id, produto_id, produto_nome, unidade, quantidade) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![item.id, item.pedido_id, item.produto_id, item.produto_nome, item.unidade, item.quantidade]).map_err(|e| e.to_string())?;
+        *stats.entry("pedido_itens".to_string()).or_insert(0) += 1;
+    }
+
+    // Alertas
+    for item in &dados.alertas {
+        conn.execute("INSERT OR REPLACE INTO alertas (id, tipo, titulo, mensagem, data_alerta, lido) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![item.id, item.tipo, item.titulo, item.mensagem, item.data_alerta, item.lido as i64]).map_err(|e| e.to_string())?;
+        *stats.entry("alertas".to_string()).or_insert(0) += 1;
+    }
+
+    // Resetar sequences para evitar conflitos de ID futuro
+    for tabela in &["lojas", "categorias", "fornecedores", "produtos", "usuarios", "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos", "pedido_itens", "alertas"] {
+        let max_id: i64 = conn.query_row(&format!("SELECT COALESCE(MAX(id), 0) FROM {}", tabela), [], |r| r.get(0)).unwrap_or(0);
+        let _ = conn.execute(&format!("INSERT OR REPLACE INTO sqlite_sequence (name, seq) VALUES ('{}', {})", tabela, max_id), []);
+    }
+
+    let total: i64 = stats.values().sum();
+    let relatorio: String = stats.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<_>>().join(", ");
+    Ok(format!("Importacao concluida! {} registros em: {}", total, relatorio))
+}
 #[tauri::command(rename_all = "snake_case")]
 fn save_romaneio_html(html: String, numero: String) -> Result<String, String> {
     let name = format!("romaneio_{}.html", numero.replace(|c: char| !c.is_alphanumeric(), "_"));

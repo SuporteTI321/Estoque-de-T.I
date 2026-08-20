@@ -564,6 +564,85 @@ export const api = {
       store.markAlertaLido(id);
     }),
   },
+
+  // ---- Sync (Export / Import) ----
+  sync: {
+    /** Exporta todos os dados como JSON (Desktop: Tauri, Browser: localStorage) */
+    exportData: async (): Promise<string> => {
+      const invoke = await getInvoke();
+      if (invoke) {
+        // Desktop: exporta do SQLite
+        const dados = await invoke("export_all_data");
+        return JSON.stringify(dados, null, 2);
+      }
+      // Browser: exporta do localStorage
+      const chaves = [
+        "almox_lojas", "almox_categorias", "almox_fornecedores",
+        "almox_produtos", "almox_usuarios", "almox_movimentacoes",
+        "almox_solicitacoes", "almox_solicitacao_itens", "almox_pedidos",
+        "almox_pedido_itens", "almox_alertas",
+      ];
+      const dados: Record<string, any> = { versao: "1.0", data_exportacao: new Date().toISOString() };
+      for (const chave of chaves) {
+        const raw = localStorage.getItem(chave);
+        if (raw) dados[chave] = JSON.parse(raw);
+      }
+      return JSON.stringify(dados, null, 2);
+    },
+
+    /** Importa dados de um JSON (Desktop: Tauri, Browser: localStorage) */
+    importData: async (json: string): Promise<string> => {
+      const dados = JSON.parse(json);
+      const invoke = await getInvoke();
+      if (invoke) {
+        // Desktop: importa para SQLite
+        return await invoke("import_all_data", { dados });
+      }
+      // Browser: importa para localStorage
+      let total = 0;
+      const mapa: Record<string, string> = {
+        "almox_lojas": "almox_lojas",
+        "almox_categorias": "almox_categorias",
+        "almox_fornecedores": "almox_fornecedores",
+        "almox_produtos": "almox_produtos",
+        "almox_usuarios": "almox_usuarios",
+        "almox_movimentacoes": "almox_movimentacoes",
+        "almox_solicitacoes": "almox_solicitacoes",
+        "almox_solicitacao_itens": "almox_solicitacao_itens",
+        "almox_pedidos": "almox_pedidos",
+        "almox_pedido_itens": "almox_pedido_itens",
+        "almox_alertas": "almox_alertas",
+      };
+      for (const [key, lsKey] of Object.entries(mapa)) {
+        if (dados[key]) {
+          localStorage.setItem(lsKey, JSON.stringify(dados[key]));
+          total += Array.isArray(dados[key]) ? dados[key].length : 1;
+        }
+      }
+      return `Importacao concluida! ${total} registros importados.`;
+    },
+
+    /** Baixa o arquivo JSON no navegador */
+    downloadJson: (json: string, nome: string = "estoque_ti_sync.json") => {
+      const blob = new Blob([json], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nome;
+      a.click();
+      URL.revokeObjectURL(url);
+    },
+
+    /** Le um arquivo JSON selecionado pelo usuario */
+    readJsonFile: (file: File): Promise<string> => {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = () => reject(new Error("Erro ao ler arquivo"));
+        reader.readAsText(file);
+      });
+    },
+  },
 };
 
 // ============================================================================

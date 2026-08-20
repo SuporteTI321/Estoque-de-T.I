@@ -2,7 +2,7 @@ import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
   BarChart3, FileBarChart,
-  Settings, Tag,
+  Settings, Tag, RefreshCw,
 } from "lucide-react";
 import type { Usuario } from "../lib/types";
 
@@ -26,7 +26,8 @@ const NAV: NavItem[] = [
   { to: "/inventario", label: "Inventário", icon: BarChart3 },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
 
-  { to: "/configuracoes", label: "Configurações", icon: Settings, adminOnly: true },
+  { to: "/configuracoes", label: "Configuracoes", icon: Settings, adminOnly: true },
+  { to: "/sincronizacao", label: "Sincronizar", icon: RefreshCw, adminOnly: true },
 ];
 
 export default function Sidebar({ user }: SidebarProps) {
