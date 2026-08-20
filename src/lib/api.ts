@@ -193,7 +193,8 @@ async function apiCall<T>(command: string, args: any, fallback: () => T): Promis
   try {
     return await invoke(command, args);
   } catch (e) {
-    console.warn(`[apiCall] Tauri ${command} failed, using fallback:`, e);
+    // Log sem expor dados sensiveis
+    console.warn(`[apiCall] Tauri ${command} failed`);
     return fallback();
   }
 }
@@ -308,7 +309,7 @@ export const api = {
           id: 1,
           nome: "Administrador",
           email: "admin@empresa.com",
-          senha: "admin123",
+          senha: "",  // Nao armazenar senha no browser
           perfil: "admin",
           loja_id: null,
           loja_nome: null,
@@ -328,7 +329,7 @@ export const api = {
           id: 1,
           nome: "Administrador",
           email: "admin@empresa.com",
-          senha: "admin123",
+          senha: "",  // Nao armazenar senha no browser (fallback web)
           perfil: "admin",
           loja_id: null,
           loja_nome: null,
@@ -337,7 +338,8 @@ export const api = {
         dados = [admin];
         persist("almox_usuarios", dados);
       }
-      const u = dados.find(x => x.email === email && x.senha === senha);
+      // No browser mode, matching only by email (no password stored)
+      const u = dados.find(x => x.email === email);
       if (!u) throw new Error("Credenciais inválidas");
       return u;
     }),

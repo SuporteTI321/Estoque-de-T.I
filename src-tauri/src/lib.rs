@@ -22,12 +22,10 @@ fn hash_password(password: &str) -> String {
 fn verify_password(password: &str, hash: &str) -> bool {
     // Tenta verificar como Argon2
     if let Ok(parsed) = PasswordHash::new(hash) {
-        if Argon2::default().verify_password(password.as_bytes(), &parsed).is_ok() {
-            return true;
-        }
+        return Argon2::default().verify_password(password.as_bytes(), &parsed).is_ok();
     }
-    // Fallback: comparacao direta (senhas antigas em texto plano — migracao)
-    password == hash
+    // Hash invalido — recusar login (senhas em texto plano nao sao mais aceitas)
+    false
 }
 
 /// Se a senha armazenada estiver em texto plano e bater, retorna Some(hash_novo).
@@ -875,7 +873,7 @@ fn login(email: String, senha: String) -> Result<Usuario, String> {
             id: row.get(0).map_err(|e| e.to_string())?,
             nome: row.get(1).map_err(|e| e.to_string())?,
             email: row.get(2).map_err(|e| e.to_string())?,
-            senha: stored_hash,
+            senha: String::new(), // Nunca retornar hash ao frontend
             perfil: row.get(4).map_err(|e| e.to_string())?,
             loja_id: row.get(5).map_err(|e| e.to_string())?,
             loja_nome: row.get(6).map_err(|e| e.to_string())?,
@@ -1511,7 +1509,7 @@ pub struct ExportData {
     pub categorias: Vec<Categoria>,
     pub fornecedores: Vec<Fornecedor>,
     pub produtos: Vec<Produto>,
-    pub usuarios_senha: Vec<UsuarioSync>,
+    pub usuarios: Vec<Usuario>, // serde skip_serializing na senha
     pub movimentacoes: Vec<Movimentacao>,
     pub solicitacoes: Vec<Solicitacao>,
     pub solicitacao_itens: Vec<SolicitacaoItem>,
@@ -1559,7 +1557,7 @@ fn export_all_data() -> Result<ExportData, String> {
     })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
     let mut stmt_usu = conn.prepare("SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.loja_id, l.nome, u.ativo FROM usuarios u LEFT JOIN lojas l ON u.loja_id = l.id").map_err(|e| e.to_string())?;
-    let usuarios_senha: Vec<UsuarioSync> = stmt_usu.query_map([], |r| Ok(UsuarioSync {
+    let usuarios: Vec<Usuario> = stmt_usu.query_map([], |r| Ok(Usuario {
         id: r.get(0)?, nome: r.get(1)?, email: r.get(2)?, senha: r.get(3)?, perfil: r.get(4)?,
         loja_id: r.get(5)?, loja_nome: r.get(6)?, ativo: r.get::<_, i64>(7)? != 0,
     })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
@@ -1607,7 +1605,7 @@ fn export_all_data() -> Result<ExportData, String> {
     Ok(ExportData {
         versao: "1.0".to_string(),
         data_exportacao: now,
-        lojas, categorias, fornecedores, produtos, usuarios_senha,
+        lojas, categorias, fornecedores, produtos, usuarios,
         movimentacoes, solicitacoes, solicitacao_itens,
         pedidos, pedido_itens, alertas,
     })
@@ -1648,8 +1646,8 @@ fn import_all_data(dados: ExportData) -> Result<String, String> {
         *stats.entry("produtos".to_string()).or_insert(0) += 1;
     }
 
-    // Usuarios (senhas já vêm com hash ou texto plano — importar direto)
-    for item in &dados.usuarios_senha {
+    // Usuarios (senhas sao exportadas apenas no import manual, nunca no sync GitHub)
+    for item in &dados.usuarios {
         conn.execute("INSERT OR REPLACE INTO usuarios (id, nome, email, senha, perfil, loja_id, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![item.id, item.nome, item.email, item.senha, item.perfil, item.loja_id, item.ativo as i64]).map_err(|e| e.to_string())?;
         *stats.entry("usuarios".to_string()).or_insert(0) += 1;
