@@ -181,6 +181,11 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
             data_alerta TEXT NOT NULL,
             lido INTEGER NOT NULL DEFAULT 0
         );
+
+        CREATE TABLE IF NOT EXISTS app_config (
+            chave TEXT PRIMARY KEY,
+            valor TEXT NOT NULL
+        );
         "#,
     )?;
     // Migration: adiciona coluna custo_total se não existir
@@ -202,8 +207,29 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
 // ============================================================================
 
 pub fn seed_data(conn: &Connection) -> Result<()> {
-    let count: i64 = conn.query_row("SELECT COUNT(*) FROM produtos", [], |r| r.get(0))?;
-    if count > 0 {
+    // Migracao: bancos existentes que ja tem dados mas nao tem a flag
+    let tem_produtos: bool = conn
+        .query_row("SELECT COUNT(*) > 0 FROM produtos", [], |r| r.get(0))
+        .unwrap_or(false);
+    let ja_aplicado: bool = conn
+        .query_row(
+            "SELECT COUNT(*) > 0 FROM app_config WHERE chave = 'seed_v1'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap_or(false);
+
+    // Se ja tem produtos mas nao tem flag, marca como aplicado (banco antigo)
+    if tem_produtos && !ja_aplicado {
+        let _ = conn.execute(
+            "INSERT OR IGNORE INTO app_config (chave, valor) VALUES ('seed_v1', 'applied')",
+            [],
+        );
+        return Ok(());
+    }
+
+    // Se ja foi aplicado, nao faz nada
+    if ja_aplicado {
         return Ok(());
     }
 
@@ -291,6 +317,12 @@ pub fn seed_data(conn: &Connection) -> Result<()> {
             params![a.0, a.1, a.2, &now],
         )?;
     }
+
+    // Marcar seed como aplicado (nao sera executado novamente)
+    conn.execute(
+        "INSERT OR IGNORE INTO app_config (chave, valor) VALUES ('seed_v1', 'applied')",
+        [],
+    )?;
 
     Ok(())
 }
