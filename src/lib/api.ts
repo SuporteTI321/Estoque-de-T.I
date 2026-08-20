@@ -321,7 +321,22 @@ export const api = {
       return dados;
     }).then((dados) => { store.usuarios = dados; return dados; }),
     login: (email: string, senha: string) => apiCall<Usuario>("login", { email, senha }, () => {
-      const dados = loadFromLS<Usuario[]>("almox_usuarios", []);
+      let dados = loadFromLS<Usuario[]>("almox_usuarios", []);
+      // Seed automatico: se nao houver usuarios, criar admin padrao
+      if (dados.length === 0) {
+        const admin: Usuario = {
+          id: 1,
+          nome: "Administrador",
+          email: "admin@empresa.com",
+          senha: "admin123",
+          perfil: "admin",
+          loja_id: null,
+          loja_nome: null,
+          ativo: true,
+        };
+        dados = [admin];
+        persist("almox_usuarios", dados);
+      }
       const u = dados.find(x => x.email === email && x.senha === senha);
       if (!u) throw new Error("Credenciais inválidas");
       return u;
