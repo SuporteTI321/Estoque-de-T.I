@@ -22,19 +22,11 @@
     {
       "identifier": "fs:scope",
       "allow": [
-        { "path": "$HOME/**" },
-        { "path": "$DESKTOP/**" },
-        { "path": "$DOCUMENT/**" },
-        { "path": "$DOWNLOAD/**" },
-        { "path": "$APPCONFIG/**" },
         { "path": "$APPDATA/**" },
         { "path": "$APPLOCALDATA/**" },
-        { "path": "$RESOURCE/**" },
-        "C:/**",
-        "**"
+        { "path": "$DOCUMENT/**" },
+        { "path": "$RESOURCE/**" }
       ]
-    },
-    "shell:default",
-    "shell:allow-open"
+    }
   ]
 }

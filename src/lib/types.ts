@@ -38,7 +38,7 @@ export interface Usuario {
   id: number;
   nome: string;
   email: string;
-  senha: string;
+  senha?: string;
   perfil: "admin" | "filial" | "operador" | string;
   loja_id: number | null;
   loja_nome: string | null;

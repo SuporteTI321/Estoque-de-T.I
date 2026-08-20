@@ -1,9 +1,27 @@
 use rusqlite::{params, Connection, Result};
 use std::path::PathBuf;
 use std::sync::{Mutex, MutexGuard, OnceLock};
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHasher, SaltString},
+    Argon2, Algorithm, Version, Params,
+};
+
+fn argon2_hash(password: &str) -> String {
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, Params::default());
+    argon2.hash_password(password.as_bytes(), &salt)
+        .expect("Falha ao gerar hash de senha")
+        .to_string()
+}
 
 fn db_path() -> PathBuf {
-    // Sempre usa a raiz do projeto (3 níveis acima de target/debug/)
+    // %APPDATA%\EstoqueTI\almoxarifado.db — fora da pasta do projeto
+    if let Ok(appdata) = std::env::var("APPDATA") {
+        let dir = PathBuf::from(appdata).join("EstoqueTI");
+        let _ = std::fs::create_dir_all(&dir);
+        return dir.join("almoxarifado.db");
+    }
+    // Fallback: pasta do executavel
     if let Ok(exe) = std::env::current_exe() {
         let mut p = exe.parent().unwrap_or(std::path::Path::new("."));
         for _ in 0..3 {
@@ -246,8 +264,10 @@ pub fn seed_data(conn: &Connection) -> Result<()> {
         )?;
     }
 
+    // Seed com senha hasheada (Argon2id)
+    let default_senha = argon2_hash("admin123");
     let usuarios: &[(&str, &str, &str, &str, i64)] = &[
-        ("Administrador", "admin@empresa.com", "admin123", "admin", 1),
+        ("Administrador", "admin@empresa.com", &default_senha, "admin", 1),
     ];
     for u in usuarios {
         conn.execute(

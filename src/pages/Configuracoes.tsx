@@ -13,6 +13,7 @@ type Tab = "categorias" | "usuarios" | "perfil" | "geral";
 
 export default function Configuracoes() {
   const [tab, setTab] = useState<Tab>((localStorage.getItem("almox_active_tab") as Tab) || "categorias");
+  const { user } = useAuth();
 
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [importando, setImportando] = useState(false);
@@ -73,8 +74,8 @@ export default function Configuracoes() {
       selected.forEach(k => localStorage.removeItem(k));
       try {
         const { invoke } = await import("@tauri-apps/api/core");
-        if (selected.includes("almox_produtos")) await invoke("delete_all_produtos").catch(() => {});
-        if (selected.includes("almox_movimentacoes")) await invoke("delete_all_movimentacoes").catch(() => {});
+        if (selected.includes("almox_produtos")) await invoke("delete_all_produtos", { usuarioId: user?.id ?? 0 }).catch(() => {});
+        if (selected.includes("almox_movimentacoes")) await invoke("delete_all_movimentacoes", { usuarioId: user?.id ?? 0 }).catch(() => {});
       } catch {}
       localStorage.setItem("almox_reset_done", "1");
       localStorage.setItem("almox_active_tab", "geral");

@@ -27,9 +27,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, senha: string): Promise<Usuario> {
     const u = await api.usuarios.login(email, senha);
-    setUser(u);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(u));
-    return u;
+    // Remove senha antes de persistir — defense in depth
+    const { senha: _, ...safe } = u as any;
+    setUser(safe);
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(safe));
+    return safe;
   }
 
   function logout() {

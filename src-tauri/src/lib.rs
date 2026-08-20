@@ -2,6 +2,44 @@ mod db;
 
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
+use argon2::{
+    password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
+    Argon2, Algorithm, Version, Params,
+};
+
+// ============================================================================
+//  PASSWORD HASHING (Argon2id — OWASP 2024 recommendation)
+// ============================================================================
+
+fn hash_password(password: &str) -> String {
+    let salt = SaltString::generate(&mut OsRng);
+    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, Params::default());
+    argon2.hash_password(password.as_bytes(), &salt)
+        .expect("Falha ao gerar hash de senha")
+        .to_string()
+}
+
+fn verify_password(password: &str, hash: &str) -> bool {
+    // Tenta verificar como Argon2
+    if let Ok(parsed) = PasswordHash::new(hash) {
+        if Argon2::default().verify_password(password.as_bytes(), &parsed).is_ok() {
+            return true;
+        }
+    }
+    // Fallback: comparacao direta (senhas antigas em texto plano — migracao)
+    password == hash
+}
+
+/// Se a senha armazenada estiver em texto plano e bater, retorna Some(hash_novo).
+/// Chamado apos login bem-sucedido para migrar automaticamente.
+fn maybe_migrate_password(password: &str, stored_hash: &str) -> Option<String> {
+    let is_plaintext = PasswordHash::new(stored_hash).is_err();
+    if is_plaintext && password == stored_hash {
+        Some(hash_password(password))
+    } else {
+        None
+    }
+}
 
 // ============================================================================
 //  MODELS
@@ -61,6 +99,7 @@ pub struct Usuario {
     pub id: i64,
     pub nome: String,
     pub email: String,
+    #[serde(skip_serializing)]
     pub senha: String,
     pub perfil: String,
     pub loja_id: Option<i64>,
@@ -162,15 +201,29 @@ pub struct DashboardStats {
 // ============================================================================
 
 #[tauri::command(rename_all = "snake_case")]
-fn delete_all_produtos() -> Result<(), String> {
+fn delete_all_produtos(usuario_id: i64) -> Result<(), String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
+    // Verificar se usuario e admin
+    let perfil: String = conn
+        .query_row("SELECT perfil FROM usuarios WHERE id=?1 AND ativo=1", params![usuario_id], |r| r.get(0))
+        .map_err(|_| "Usuario nao encontrado".to_string())?;
+    if perfil != "admin" {
+        return Err("Apenas administradores podem excluir todos os produtos".to_string());
+    }
     conn.execute("DELETE FROM produtos", []).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command(rename_all = "snake_case")]
-fn delete_all_movimentacoes() -> Result<(), String> {
+fn delete_all_movimentacoes(usuario_id: i64) -> Result<(), String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
+    // Verificar se usuario e admin
+    let perfil: String = conn
+        .query_row("SELECT perfil FROM usuarios WHERE id=?1 AND ativo=1", params![usuario_id], |r| r.get(0))
+        .map_err(|_| "Usuario nao encontrado".to_string())?;
+    if perfil != "admin" {
+        return Err("Apenas administradores podem excluir todas as movimentacoes".to_string());
+    }
     conn.execute("DELETE FROM movimentacoes", []).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -795,23 +848,34 @@ fn list_usuarios() -> Result<Vec<Usuario>, String> {
 #[tauri::command(rename_all = "snake_case")]
 fn login(email: String, senha: String) -> Result<Usuario, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
+    // Busca usuario APENAS por email (senha verificada via Argon2)
     let mut stmt = conn
         .prepare(
             "SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.loja_id, l.nome, u.ativo
              FROM usuarios u
              LEFT JOIN lojas l ON u.loja_id = l.id
-             WHERE u.email=?1 AND u.senha=?2 AND u.ativo=1",
+             WHERE u.email=?1 AND u.ativo=1",
         )
         .map_err(|e| e.to_string())?;
     let mut rows = stmt
-        .query(params![email, senha])
+        .query(params![email])
         .map_err(|e| e.to_string())?;
     if let Some(row) = rows.next().map_err(|e| e.to_string())? {
+        let stored_hash: String = row.get(3).map_err(|e| e.to_string())?;
+        // Verifica senha com Argon2 (ou fallback para texto plano)
+        if !verify_password(&senha, &stored_hash) {
+            return Err("Credenciais inválidas".to_string());
+        }
+        // Migra senha de texto plano para Argon2 (lazy migration)
+        if let Some(new_hash) = maybe_migrate_password(&senha, &stored_hash) {
+            let uid: i64 = row.get(0).map_err(|e| e.to_string())?;
+            let _ = conn.execute("UPDATE usuarios SET senha=?1 WHERE id=?2", params![new_hash, uid]);
+        }
         Ok(Usuario {
             id: row.get(0).map_err(|e| e.to_string())?,
             nome: row.get(1).map_err(|e| e.to_string())?,
             email: row.get(2).map_err(|e| e.to_string())?,
-            senha: row.get(3).map_err(|e| e.to_string())?,
+            senha: stored_hash,
             perfil: row.get(4).map_err(|e| e.to_string())?,
             loja_id: row.get(5).map_err(|e| e.to_string())?,
             loja_nome: row.get(6).map_err(|e| e.to_string())?,
@@ -831,9 +895,10 @@ fn create_usuario(
     loja_id: Option<i64>,
 ) -> Result<Usuario, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let senha_hash = hash_password(&senha);
     conn.execute(
         "INSERT INTO usuarios (nome, email, senha, perfil, loja_id) VALUES (?1, ?2, ?3, ?4, ?5)",
-        params![nome, email, senha, perfil, loja_id],
+        params![nome, email, senha_hash, perfil, loja_id],
     )
     .map_err(|e| e.to_string())?;
     let id = conn.last_insert_rowid();
@@ -841,7 +906,7 @@ fn create_usuario(
         id,
         nome,
         email,
-        senha,
+        senha: senha_hash,
         perfil,
         loja_id,
         loja_nome: None,
@@ -859,16 +924,17 @@ fn update_usuario(
     loja_id: Option<i64>,
 ) -> Result<Usuario, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let senha_hash = hash_password(&senha);
     conn.execute(
         "UPDATE usuarios SET nome=?1, email=?2, senha=?3, perfil=?4, loja_id=?5 WHERE id=?6",
-        params![nome, email, senha, perfil, loja_id, id],
+        params![nome, email, senha_hash, perfil, loja_id, id],
     )
     .map_err(|e| e.to_string())?;
     Ok(Usuario {
         id,
         nome,
         email,
-        senha,
+        senha: senha_hash,
         perfil,
         loja_id,
         loja_nome: None,
