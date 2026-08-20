@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./lib/useAuth";
-import { syncAllFromBackend } from "./lib/api";
+import { syncAllFromBackend, api } from "./lib/api";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Entradas from "./pages/Entradas";
@@ -31,6 +31,28 @@ function Bootstrap() {
   useEffect(() => {
     if (!ready) return;
     const interval = setInterval(syncAllFromBackend, 30000);
+    return () => clearInterval(interval);
+  }, [ready]);
+
+  // Sync automatica via GitHub — pull a cada 30s se habilitado
+  useEffect(() => {
+    if (!ready) return;
+    if (!api.sync.isAutoSyncEnabled()) return;
+
+    // Pull imediato ao habilitar
+    api.sync.pullFromGithub().then((r) => {
+      if (r.changed) window.location.reload();
+    }).catch(() => {});
+
+    // Polling a cada 30s
+    const interval = setInterval(async () => {
+      if (!api.sync.isAutoSyncEnabled()) return;
+      try {
+        const r = await api.sync.pullFromGithub();
+        if (r.changed) window.location.reload();
+      } catch {}
+    }, 30000);
+
     return () => clearInterval(interval);
   }, [ready]);
 

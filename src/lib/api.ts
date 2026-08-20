@@ -642,6 +642,121 @@ export const api = {
         reader.readAsText(file);
       });
     },
+
+    // ---- Sync automatica via GitHub ----
+
+    /** Retorna configuracao de sync do GitHub */
+    getGithubConfig: (): { owner: string; repo: string; path: string; token: string } | null => {
+      const owner = localStorage.getItem("sync_github_owner");
+      const repo = localStorage.getItem("sync_github_repo");
+      const path = localStorage.getItem("sync_github_path");
+      const token = localStorage.getItem("sync_github_token");
+      if (!owner || !repo || !path || !token) return null;
+      return { owner, repo, path, token };
+    },
+
+    /** Salva configuracao de sync do GitHub */
+    setGithubConfig: (owner: string, repo: string, path: string, token: string) => {
+      localStorage.setItem("sync_github_owner", owner);
+      localStorage.setItem("sync_github_repo", repo);
+      localStorage.setItem("sync_github_path", path);
+      localStorage.setItem("sync_github_token", token);
+    },
+
+    /** Verifica se sync automatica esta habilitada */
+    isAutoSyncEnabled: (): boolean => {
+      return localStorage.getItem("sync_auto_enabled") === "true";
+    },
+
+    /** Habilita/desabilita sync automatica */
+    setAutoSync: (enabled: boolean) => {
+      localStorage.setItem("sync_auto_enabled", String(enabled));
+    },
+
+    /** Push dos dados locais para o GitHub */
+    pushToGithub: async (): Promise<{ ok: boolean; message: string }> => {
+      const config = api.sync.getGithubConfig();
+      if (!config) return { ok: false, message: "Configuracao do GitHub nao encontrada" };
+
+      const json = await api.sync.exportData();
+      const base64 = btoa(unescape(encodeURIComponent(json)));
+
+      // Buscar SHA existente (para atualizar, nao criar duplicata)
+      let sha: string | null = null;
+      try {
+        const getRes = await fetch(
+          `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+          { headers: { Authorization: `token ${config.token}`, Accept: "application/vnd.github.v3+json" } }
+        );
+        if (getRes.ok) {
+          const fileData = await getRes.json();
+          sha = fileData.sha;
+        }
+      } catch {}
+
+      const body: any = {
+        message: `sync: atualizacao automatica ${new Date().toISOString().slice(0, 19)}`,
+        content: base64,
+      };
+      if (sha) body.sha = sha;
+
+      const res = await fetch(
+        `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `token ${config.token}`,
+            Accept: "application/vnd.github.v3+json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
+        }
+      );
+
+      if (res.ok) {
+        localStorage.setItem("sync_last_push", new Date().toISOString());
+        return { ok: true, message: "Dados enviados ao GitHub com sucesso" };
+      }
+      const err = await res.text();
+      return { ok: false, message: `Erro ao enviar: ${err}` };
+    },
+
+    /** Pull dos dados do GitHub para o local */
+    pullFromGithub: async (): Promise<{ ok: boolean; message: string; changed: boolean }> => {
+      const config = api.sync.getGithubConfig();
+      if (!config) return { ok: false, message: "Configuracao do GitHub nao encontrada", changed: false };
+
+      try {
+        const res = await fetch(
+          `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+          { headers: { Authorization: `token ${config.token}`, Accept: "application/vnd.github.v3+json" } }
+        );
+
+        if (!res.ok) {
+          if (res.status === 404) return { ok: true, message: "Nenhum dado no GitHub ainda", changed: false };
+          return { ok: false, message: `Erro HTTP ${res.status}`, changed: false };
+        }
+
+        const fileData = await res.json();
+        const json = decodeURIComponent(escape(atob(fileData.content)));
+        const dadosRemotos = JSON.parse(json);
+
+        // Verificar se mudou comparando com o local
+        const lastPull = localStorage.getItem("sync_last_pull");
+        if (fileData.commit.committer.date === lastPull) {
+          return { ok: true, message: "Dados ja estao atualizados", changed: false };
+        }
+
+        // Importar dados do GitHub
+        await api.sync.importData(json);
+        localStorage.setItem("sync_last_pull", fileData.commit.committer.date);
+        localStorage.setItem("sync_last_sync", new Date().toISOString());
+
+        return { ok: true, message: "Dados sincronizados do GitHub", changed: true };
+      } catch (e: any) {
+        return { ok: false, message: `Erro ao baixar: ${e.message}`, changed: false };
+      }
+    },
   },
 };
 
