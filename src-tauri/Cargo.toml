@@ -1,0 +1,33 @@
+[package]
+name = "almoxarifado-pro"
+version = "0.1.0"
+description = "Sistema de Controle de Estoque - Almoxarifado Pro"
+authors = ["Henrique"]
+edition = "2021"
+rust-version = "1.77.2"
+
+[lib]
+name = "almoxarifado_pro_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[[bin]]
+name = "almoxarifado-pro"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+tauri-plugin-fs = "2"
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+chrono = { version = "0.4", features = ["serde"] }
+tempfile = "3"
+
+[features]
+default = ["custom-protocol"]
+custom-protocol = ["tauri/custom-protocol"]
