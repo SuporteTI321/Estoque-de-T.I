@@ -302,10 +302,10 @@ export default function Pedidos() {
             </div>
           </div>
 
-          {/* Janela 2: Saída — Almoxarifado → Loja */}
+          {/* Janela 2: Saida — Estoque → Loja */}
           <div className="w-1/2 h-[90vh] rounded-xl bg-white shadow-2xl border-2 border-emerald-200 flex flex-col" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between bg-emerald-600 text-white px-5 py-4 rounded-t-xl">
-              <div><h2 className="text-base font-semibold">Saída — Almoxarifado → Loja</h2><p className="mt-0.5 text-[11px] text-emerald-100">{lojaOf(viewing)?.nome||viewing.loja_nome||"—"}</p></div>
+              <div><h2 className="text-base font-semibold">Saida — Estoque → Loja</h2><p className="mt-0.5 text-[11px] text-emerald-100">{lojaOf(viewing)?.nome||viewing.loja_nome||"—"}</p></div>
               <button onClick={() => { setViewing(null); setPedidoItens([]); setItensDist([]); }} className="text-emerald-200 hover:text-white"><X className="h-4 w-4"/></button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-4 flex flex-col">

@@ -83,7 +83,7 @@ export default function Relatorios() {
     <Layout title="Relatórios" subtitle="Gere relatórios detalhados do sistema">
       <PageHeader
         title="Relatórios"
-        subtitle="Exporte dados e análises do almoxarifado"
+        subtitle="Exporte dados e analises do estoque"
         icon={<BarChart3 className="h-5 w-5" />}
       />
 

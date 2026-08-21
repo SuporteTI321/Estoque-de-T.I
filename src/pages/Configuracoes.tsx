@@ -105,7 +105,7 @@ export default function Configuracoes() {
       const blob = new Blob([json], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = "almoxarifado_" + new Date().toISOString().slice(0, 10) + ".json";
+      a.href = url; a.download = "estoque_ti_" + new Date().toISOString().slice(0, 10) + ".json";
       document.body.appendChild(a); a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
@@ -180,7 +180,7 @@ export default function Configuracoes() {
       const blob = new Blob(["\ufeff" + csv], { type: "text/csv;charset=utf-8" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
-      a.href = url; a.download = "almoxarifado_" + new Date().toISOString().slice(0, 10) + ".csv";
+      a.href = url; a.download = "estoque_ti_" + new Date().toISOString().slice(0, 10) + ".csv";
       document.body.appendChild(a); a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
@@ -561,7 +561,7 @@ function parseCSVLine(line: string): string[] {
           <p><strong>Licença de Uso Restrito</strong></p>
           <p>O <strong>Estoque de T.I</strong> é um software proprietário desenvolvido exclusivamente para uso interno da organização licenciada.</p>
           <p><strong>1. Titularidade:</strong> Todos os direitos de propriedade intelectual pertencem ao criador. O J.A.R.V.I.S. atua como assistente técnico de desenvolvimento, não como titular de direitos.</p>
-          <p><strong>2. Uso Permitido:</strong> O software destina-se exclusivamente ao controle de estoque, pedidos e almoxarifado da organização licenciada. É proibida a redistribuição, revenda ou sublicenciamento sem autorização expressa.</p>
+          <p><strong>2. Uso Permitido:</strong> O software destina-se exclusivamente ao controle de estoque e pedidos da organizacao licenciada. E proibida a redistribuicao, revenda ou sublicenciamento sem autorizacao expressa.</p>
           <p><strong>3. Limitação de Responsabilidade:</strong> O software é fornecido "como está". O criador e o assistente J.A.R.V.I.S. não se responsabilizam por perdas de dados, decisões operacionais baseadas nos relatórios ou danos indiretos decorrentes do uso.</p>
           <p><strong>4. Confidencialidade:</strong> Os dados armazenados são de propriedade exclusiva da organização. Nenhuma informação é transmitida a terceiros sem consentimento.</p>
           <p><strong>5. Vigência:</strong> Esta licença é válida por tempo indeterminado enquanto o software estiver em uso pela organização licenciada.</p>

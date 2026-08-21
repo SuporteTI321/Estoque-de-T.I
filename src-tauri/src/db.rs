@@ -15,7 +15,7 @@ fn argon2_hash(password: &str) -> String {
 }
 
 fn db_path() -> PathBuf {
-    // %APPDATA%\EstoqueTI\almoxarifado.db — fora da pasta do projeto
+    // %APPDATA%\EstoqueTI\estoque.db — fora da pasta do projeto
     if let Ok(appdata) = std::env::var("APPDATA") {
         let dir = PathBuf::from(appdata).join("EstoqueTI");
         let _ = std::fs::create_dir_all(&dir);
@@ -236,7 +236,7 @@ pub fn seed_data(conn: &Connection) -> Result<()> {
     // Apenas 1 loja base para o Admin
     conn.execute(
         "INSERT OR IGNORE INTO lojas (nome, codigo, endereco) VALUES (?1, ?2, ?3)",
-        params!["Almoxarifado Central", "ALM-001", "Matriz"],
+        params!["Controle de Estoque Central", "CE-001", "Matriz"],
     )?;
 
     let categorias: &[(&str, &str)] = &[

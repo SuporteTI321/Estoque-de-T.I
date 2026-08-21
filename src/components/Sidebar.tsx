@@ -40,7 +40,7 @@ export default function Sidebar({ user }: SidebarProps) {
       <div className="flex items-center gap-3 border-b border-gray-200 px-5 py-4">
         {(() => { const logo = localStorage.getItem("almox_logo"); return logo ? <img src={logo} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" /> : <img src="/icons/icon.png" alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" />; })()}
         <div>
-          <div className="text-sm font-bold text-gray-900">Almoxarifado</div>
+          <div className="text-sm font-bold text-gray-900">Controle de Estoque</div>
           <div className="text-[11px] text-gray-500">Controle de Estoque</div>
         </div>
       </div>

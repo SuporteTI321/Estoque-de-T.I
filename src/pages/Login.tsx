@@ -40,7 +40,7 @@ export default function Login() {
               </div>
               <div className="mt-16 space-y-4">
                 <h2 className="text-3xl font-bold leading-tight">
-                  Gestão completa do seu almoxarifado
+                  Gestao completa do seu estoque
                 </h2>
                 <p className="text-blue-100">
                   Controle estoque, solicitações, pedidos e transferências em um só lugar.
