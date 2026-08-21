@@ -23,8 +23,25 @@ function Bootstrap() {
   useEffect(() => {
     if (booted.current) return;
     booted.current = true;
-    // Sync bloqueante na inicialização
-    syncAllFromBackend().finally(() => setReady(true));
+
+    // Injeta sync config do arquivo %APPDATA%/EstoqueTI/sync_config.json no localStorage
+    const injectSyncConfig = async () => {
+      try {
+        const mod = await import("@tauri-apps/api/core");
+        const config: any = await mod.invoke("read_sync_config");
+        if (config) {
+          if (!localStorage.getItem("sync_github_owner")) localStorage.setItem("sync_github_owner", config.owner);
+          if (!localStorage.getItem("sync_github_repo")) localStorage.setItem("sync_github_repo", config.repo);
+          if (!localStorage.getItem("sync_github_path")) localStorage.setItem("sync_github_path", config.path);
+          if (!localStorage.getItem("sync_github_token")) localStorage.setItem("sync_github_token", config.token);
+          localStorage.setItem("sync_auto_enabled", String(config.auto_enabled));
+        }
+      } catch {}
+    };
+
+    injectSyncConfig().then(() => {
+      syncAllFromBackend().finally(() => setReady(true));
+    });
   }, []);
 
   // Auto-sync periódico — atualiza todas as janelas a cada 30s

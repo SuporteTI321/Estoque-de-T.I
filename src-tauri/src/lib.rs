@@ -1406,6 +1406,32 @@ fn mark_alerta_lido(id: i64) -> Result<(), String> {
 }
 
 // ============================================================================
+//  SYNC CONFIG — Leitura de sync_config.json do %APPDATA%
+// ============================================================================
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SyncConfig {
+    pub owner: String,
+    pub repo: String,
+    pub path: String,
+    pub token: String,
+    pub auto_enabled: bool,
+}
+
+#[tauri::command(rename_all = "snake_case")]
+fn read_sync_config() -> Result<SyncConfig, String> {
+    let appdata = std::env::var("APPDATA").map_err(|e| e.to_string())?;
+    let config_path = std::path::PathBuf::from(appdata)
+        .join("EstoqueTI")
+        .join("sync_config.json");
+    let content = std::fs::read_to_string(&config_path)
+        .map_err(|e| format!("Arquivo sync_config.json nao encontrado: {}", e))?;
+    let config: SyncConfig = serde_json::from_str(&content)
+        .map_err(|e| format!("Erro ao ler sync_config.json: {}", e))?;
+    Ok(config)
+}
+
+// ============================================================================
 //  INIT
 // ============================================================================
 
@@ -1477,6 +1503,7 @@ pub fn run() {
             open_in_browser,
             export_all_data,
             import_all_data,
+            read_sync_config,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
