@@ -207,6 +207,10 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
 // ============================================================================
 
 pub fn seed_data(conn: &Connection) -> Result<()> {
+    // Migracao: renomear categorias antigas com nomes inconsistentes (roda sempre)
+    let _ = conn.execute("UPDATE categorias SET nome = 'EPI' WHERE nome = 'EPIs'", []);
+    let _ = conn.execute("UPDATE categorias SET nome = 'Diversos' WHERE nome = 'Outros'", []);
+
     // Migracao: bancos existentes que ja tem dados mas nao tem a flag
     let tem_produtos: bool = conn
         .query_row("SELECT COUNT(*) > 0 FROM produtos", [], |r| r.get(0))
@@ -244,8 +248,8 @@ pub fn seed_data(conn: &Connection) -> Result<()> {
         ("Material de Limpeza", "Produtos de higiene e limpeza"),
         ("Ferramentas", "Ferramentas manuais e elétricas"),
         ("Material Elétrico", "Cabos, disjuntores e componentes"),
-        ("EPIs", "Equipamentos de Proteção Individual"),
-        ("Outros", "Demais itens"),
+        ("EPI", "Equipamentos de Proteção Individual"),
+        ("Diversos", "Itens não classificados"),
         ("Cabo de Força de PC", "Cabos de força, fontes de alimentação e periféricos de PC"),
         ("Cabo de Força de Impressora", "Cabos de força e fontes de alimentação para impressoras"),
     ];

@@ -673,11 +673,18 @@ function CategoriasTab() {
     loadCats();
   }
 
+  /** Normaliza nome de categoria: lowercase, trim, sem acentos, sem plural trailing 's' */
+  function normCat(s: string): string {
+    return s.toLowerCase().trim()
+      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // remove acentos
+      .replace(/s+$/, "");                                  // remove plural
+  }
+
   function loadCats() {
   api.categorias.list().then(async (sqliteCats) => {
   const excluidas = getExcluidas();
   const existentes = sqliteCats && sqliteCats.length > 0 ? sqliteCats : [];
-  // 26 categorias padrão
+  // 32 categorias padrão (nomes devem bater com o Rust seed quando possível)
   const padrao: Categoria[] = [
     { id: 1, nome: "Material de Escritório", descricao: "Papelaria e materiais administrativos", ativa: true },
     { id: 2, nome: "Material de Limpeza", descricao: "Produtos de higiene e limpeza", ativa: true },
@@ -712,27 +719,31 @@ function CategoriasTab() {
     { id: 31, nome: "Cabo de Força de PC", descricao: "Cabos de força, fontes de alimentação e periféricos de PC", ativa: true },
     { id: 32, nome: "Cabo de Força de Impressora", descricao: "Cabos de força e fontes de alimentação para impressoras", ativa: true },
   ];
-  // Sincroniza padrão → SQLite (cria as que faltam)
-  const sqlNomes = new Set(existentes.map((c: any) => c.nome.toLowerCase().trim()));
+  // Sincroniza padrão → SQLite (cria as que faltam, usando normalização)
+  const sqlNormSet = new Set(existentes.map((c: any) => normCat(c.nome)));
   const { invoke } = await import("@tauri-apps/api/core");
   for (const p of padrao) {
-    if (!sqlNomes.has(p.nome.toLowerCase().trim()) && !excluidas.includes(p.nome.toLowerCase().trim())) {
+    const pNorm = normCat(p.nome);
+    if (!sqlNormSet.has(pNorm) && !excluidas.includes(pNorm)) {
       try {
         const created = await invoke<any>("create_categoria", { nome: p.nome, descricao: p.descricao });
         if (created?.id) existentes.push(created);
+        sqlNormSet.add(pNorm);
       } catch (e) {
         console.error(`[sync] Erro ao criar ${p.nome}:`, e);
       }
     }
   }
-  // Merge final: padrao + SQLite (por nome, SQLite sobrescreve), ignorando excluídas
-  const porNome = new Map<string, Categoria>();
+  // Merge final: deduplica por nome normalizado, ignorando excluídas
+  const porNorm = new Map<string, Categoria>();
   for (const c of [...padrao, ...existentes]) {
-    if (!excluidas.includes(c.nome.toLowerCase().trim())) {
-      porNome.set(c.nome.toLowerCase(), c);
+    const n = normCat(c.nome);
+    if (!excluidas.includes(n)) {
+      // Se já existe uma com nome normalizado igual, mantém a do SQLite (existentes)
+      if (!porNorm.has(n)) porNorm.set(n, c);
     }
   }
-  const finalList = Array.from(porNome.values());
+  const finalList = Array.from(porNorm.values());
   setCategorias(finalList);
   localStorage.setItem("almox_categorias", JSON.stringify(finalList));
   });

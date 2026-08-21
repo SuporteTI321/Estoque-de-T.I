@@ -16,3 +16,8 @@ almoxarifado.db-wal
 __pycache__
 *.pyc
 .env
+
+# Local Netlify folder
+.netlify
+
+.vercel
