@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "../lib/api";
-import { Download, Upload, RefreshCw, FileJson, CheckCircle, AlertTriangle, Cloud, CloudOff } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft, Download, Upload, RefreshCw, FileJson, CheckCircle, AlertTriangle, Cloud, CloudOff } from "lucide-react";
 
 export default function Sincronizacao() {
+  const navigate = useNavigate();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [mensagem, setMensagem] = useState("");
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
@@ -129,7 +131,12 @@ export default function Sincronizacao() {
 
   return (
     <div className="mx-auto max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold text-gray-900">Sincronizacao</h1>
+      <div className="flex items-center gap-3">
+        <button onClick={() => navigate("/dashboard")} className="rounded-lg border border-gray-300 p-2 text-gray-600 hover:bg-gray-50">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
+        <h1 className="text-2xl font-bold text-gray-900">Sincronizacao</h1>
+      </div>
       <p className="text-sm text-gray-600">
         Sincronize dados entre Web e Desktop automaticamente via GitHub ou manualmente via arquivo JSON.
       </p>
