@@ -1,0 +1,14 @@
+{
+  "projectId": "prj_csLe4aKeJoJDoAbU3OY4rIuFeq2D",
+  "orgId": "team_RpDbNnQf6yKdH8deS4d5uXRo",
+  "projectName": "estoque-de-ti",
+  "settings": {
+    "createdAt": 1787314247857,
+    "framework": "vite",
+    "buildCommand": "npm run build",
+    "outputDirectory": "dist",
+    "installCommand": "npm install",
+    "directoryListing": false,
+    "nodeVersion": "24.x"
+  }
+}
