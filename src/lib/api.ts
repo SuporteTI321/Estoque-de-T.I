@@ -174,6 +174,10 @@ export const store = new BrowserStore();
 let _invoke: any = null;
 async function getInvoke() {
   if (_invoke) return _invoke;
+  // No browser (GitHub Pages), skip Tauri import entirely
+  if (typeof window === "undefined" || !(window as any).__TAURI_INTERNALS__) {
+    return null;
+  }
   try {
     const mod = await import("@tauri-apps/api/core");
     _invoke = mod.invoke;

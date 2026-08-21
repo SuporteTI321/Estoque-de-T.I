@@ -27,6 +27,7 @@ function Bootstrap() {
     // Injeta sync config do arquivo %APPDATA%/EstoqueTI/sync_config.json no localStorage
     const injectSyncConfig = async () => {
       try {
+        if (!(window as any).__TAURI_INTERNALS__) return;
         const mod = await import("@tauri-apps/api/core");
         const config: any = await mod.invoke("read_sync_config");
         if (config) {
@@ -39,9 +40,10 @@ function Bootstrap() {
       } catch {}
     };
 
-    injectSyncConfig().then(() => {
-      syncAllFromBackend().finally(() => setReady(true));
-    });
+    injectSyncConfig()
+      .then(() => syncAllFromBackend())
+      .catch(() => {})
+      .finally(() => setReady(true));
   }, []);
 
   // Auto-sync periódico — atualiza todas as janelas a cada 30s
