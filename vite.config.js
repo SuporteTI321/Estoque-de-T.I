@@ -3,7 +3,9 @@ import react from "@vitejs/plugin-react";
 import * as fs from "fs";
 import * as path from "path";
 var host = process.env.TAURI_DEV_HOST;
+var base = process.env.GITHUB_ACTIONS ? "/Estoque-de-T.I/" : "/";
 export default defineConfig({
+    base: base,
     plugins: [
         react(),
         {

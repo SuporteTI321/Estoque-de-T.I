@@ -5,7 +5,10 @@ import * as path from "path";
 
 const host = process.env.TAURI_DEV_HOST;
 
+const base = process.env.GITHUB_ACTIONS ? "/Estoque-de-T.I/" : "/";
+
 export default defineConfig({
+  base,
   plugins: [
     react(),
     {
