@@ -33,3 +33,10 @@ data/*.json
 *.tsbuildinfo
 vite.config.js
 vite.config.d.ts
+
+# Cache
+.vite/
+
+# Config opencode
+.opencode/
+.opencode-prompt.md
