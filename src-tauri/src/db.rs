@@ -186,6 +186,7 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
             chave TEXT PRIMARY KEY,
             valor TEXT NOT NULL
         );
+
         "#,
     )?;
     // Migration: adiciona coluna custo_total se não existir

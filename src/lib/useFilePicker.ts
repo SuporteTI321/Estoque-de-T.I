@@ -54,8 +54,12 @@ export function useFilePicker() {
   const fileRef = useRef<PickedFile | null>(null);
   useEffect(() => { fileRef.current = file; }, [file]);
 
+  // Guarda a opção de validação do último pick() para aplicar também no fallback HTML
+  const validatePdfRef = useRef(false);
+
   async function pick(opts: { validatePdf?: boolean } = {}): Promise<PickedFile | null> {
     setError(null);
+    validatePdfRef.current = !!opts.validatePdf;
 
     // Tenta via Tauri dialog
     try {
@@ -65,14 +69,18 @@ export function useFilePicker() {
         filters: [{ name: "PDF", extensions: ["pdf"] }],
         title: "Selecionar pedido em PDF",
       });
-      if (sel && typeof sel === "string") {
+      // Usuário cancelou o diálogo nativo: encerra sem abrir o seletor HTML
+      if (sel === null || sel === undefined) return null;
+      if (typeof sel === "string") {
         const pf = await buildFromPath(sel);
         if (pf.size === 0) {
           setError(`Arquivo vazio ou não pôde ser lido: ${pf.name}`);
           return null;
         }
+        // Bloqueia arquivo inválido (não apenas avisa)
         if (opts.validatePdf && !pf.preview.startsWith("%PDF-")) {
-          setError(`Aviso: arquivo não parece ser PDF (cabeçalho: "${pf.preview.slice(0, 8)}")`);
+          setError(`Arquivo inválido: não parece ser um PDF (cabeçalho: "${pf.preview.slice(0, 8)}")`);
+          return null;
         }
         setFile(pf);
         return pf;
@@ -81,7 +89,7 @@ export function useFilePicker() {
       console.warn("Tauri dialog falhou, usando seletor HTML:", e);
     }
 
-    // Fallback: seletor HTML
+    // Fallback: seletor HTML (somente quando o diálogo nativo falhou)
     fallbackRef.current?.click();
     return null;
   }
@@ -89,8 +97,14 @@ export function useFilePicker() {
   function onFallbackChange(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0];
     if (f) {
-      buildFromBrowserFile(f).then(pf => setFile(pf));
-      setError(null);
+      buildFromBrowserFile(f).then(pf => {
+        if (validatePdfRef.current && pf.bytes && !pf.preview.startsWith("%PDF-")) {
+          setError(`Arquivo inválido: não parece ser um PDF (cabeçalho: "${pf.preview.slice(0, 8)}")`);
+          return;
+        }
+        setFile(pf);
+        setError(null);
+      });
     }
     e.target.value = "";
   }

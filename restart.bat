@@ -1,7 +1,7 @@
 @echo off
 echo Matando processos...
-taskkill /F /IM almoxarifado-pro.exe /T >nul 2>&1
-taskkill /F /IM vite.exe /T >nul 2>&1
+taskkill /F /IM "Estoque de T.I.exe" /T >nul 2>&1
+rem taskkill vite.exe removido: o dev server roda em node, este kill nunca pegava nada
 timeout /t 2 /nobreak >nul
 
 echo Verificando porta 1423...

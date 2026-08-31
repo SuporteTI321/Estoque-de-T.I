@@ -18,12 +18,11 @@
         "minWidth": 1100,
         "minHeight": 700,
         "resizable": true,
-        "fullscreen": false,
-        "devtools": false
+        "fullscreen": false
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost; font-src 'self' data:"
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://*.supabase.co; connect-src 'self' ipc: http://ipc.localhost https://*.supabase.co https://api.github.com; font-src 'self' data:"
     }
   },
   "bundle": {

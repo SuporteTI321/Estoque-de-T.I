@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useAuth } from "../lib/useAuth";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
@@ -14,6 +14,7 @@ interface LayoutProps {
 export default function Layout({ title, subtitle, children }: LayoutProps) {
   const { user, logout, loading } = useAuth();
   const navigate = useNavigate();
+  const [drawer, setDrawer] = useState(false);
 
   if (loading) {
     return (
@@ -27,8 +28,8 @@ export default function Layout({ title, subtitle, children }: LayoutProps) {
 
   return (
     <div className="flex h-screen w-full bg-gray-50">
-      <Sidebar user={user} />
-      <div className="flex flex-1 flex-col">
+      <Sidebar user={user} open={drawer} onClose={() => setDrawer(false)} />
+      <div className="flex min-w-0 flex-1 flex-col">
         <Header
           user={user}
           title={title}
@@ -37,8 +38,9 @@ export default function Layout({ title, subtitle, children }: LayoutProps) {
             logout();
             navigate("/");
           }}
+          onMenu={() => setDrawer(!drawer)}
         />
-        <main className="flex-1 overflow-y-auto p-6 scrollbar-hide">{children}</main>
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-hide">{children}</main>
       </div>
     </div>
   );

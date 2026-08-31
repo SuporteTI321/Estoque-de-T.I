@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package as PackageIcon, Plus, Pencil, Trash2, ArrowDownToLine, ArrowUpFromLine, Tag } from "lucide-react";
+import { Package as PackageIcon, Plus, Pencil, Trash2, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
 import DataTable, { type Column } from "../components/DataTable";
@@ -9,6 +9,7 @@ import Window from "../components/Window";
 import type { Produto, Categoria } from "../lib/types";
 import { api, store } from "../lib/api";
 import { renumerar } from "../lib/utils";
+import { CATS_PADRAO, normCat } from "../lib/constants";
 
 export default function Produtos() {
   const navigate = useNavigate();
@@ -25,59 +26,42 @@ export default function Produtos() {
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkForm, setBulkForm] = useState<{ categoria_id: number | null; unidade: string }>({ categoria_id: null, unidade: "" });
 
+
+
+  async function syncCategorias(sqliteCats: Categoria[]): Promise<Categoria[]> {
+    const existentes = sqliteCats && sqliteCats.length > 0 ? sqliteCats : [];
+    const sqlNormSet = new Set(existentes.map((c) => normCat(c.nome)));
+    // Sincronizar categorias padrao para o SQLite
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      for (const p of CATS_PADRAO) {
+        if (!sqlNormSet.has(normCat(p.nome))) {
+          const created = await invoke<any>("create_categoria", { nome: p.nome, descricao: p.descricao });
+          if (created?.id) existentes.push(created);
+          sqlNormSet.add(normCat(p.nome));
+        }
+      }
+    } catch {}
+    // Merge final: categorias do banco primeiro; padrão apenas as que não existirem (por nome)
+    const porNorm = new Map<string, Categoria>();
+    for (const c of [...existentes, ...CATS_PADRAO]) {
+      const n = normCat(c.nome);
+      if (!porNorm.has(n)) porNorm.set(n, c);
+    }
+    return Array.from(porNorm.values());
+  }
+
   function load() {
     Promise.all([api.produtos.list(), api.categorias.list()])
-      .then(([p, c]) => {
+      .then(async ([p, c]) => {
+        // Exibe o código real do banco (renumerar só preenche produtos SEM código).
+        // Não persistir renumeração aqui: payload parcial falha e disparava loop de updates.
         const renum = renumerar(p);
         setItems(renum);
-        localStorage.setItem("almox_produtos", JSON.stringify(renum));
-        // Salvar codigos no backend
-        renum.forEach((prod, i) => {
-          const cat = (prod.categoria_nome || "PROD").toUpperCase().replace(/\s+/g, "");
-          const sigla = cat.substring(0, 4);
-          const esperado = `${String(i + 1).padStart(5, "0")}-${sigla}`;
-          if (prod.codigo !== esperado) {
-            api.produtos.update(Number(prod.id), { codigo: esperado }).catch(() => {});
-          }
-        });
-        if (c && c.length > 0) {
-          setCats(c);
-          localStorage.setItem("almox_categorias", JSON.stringify(c));
-        } else {
-          // Fallback: categorias padrao
-          const padrao = [
-            { id: 1, nome: "Material de Escritório", descricao: "Papelaria e materiais administrativos", ativa: true },
-            { id: 2, nome: "Material de Limpeza", descricao: "Produtos de higiene e limpeza", ativa: true },
-            { id: 3, nome: "Ferramentas", descricao: "Ferramentas manuais e elétricas", ativa: true },
-            { id: 4, nome: "Material Elétrico", descricao: "Cabos, disjuntores e componentes elétricos", ativa: true },
-            { id: 5, nome: "EPI", descricao: "Equipamentos de proteção individual", ativa: true },
-            { id: 6, nome: "Informática", descricao: "Suprimentos e acessórios de informática", ativa: true },
-            { id: 7, nome: "Serviços", descricao: "Prestação de serviços terceirizados", ativa: true },
-            { id: 8, nome: "Decoração", descricao: "Itens de decoração e ambientação", ativa: true },
-            { id: 9, nome: "Utilidades", descricao: "Utensílios e itens diversos", ativa: true },
-            { id: 10, nome: "Construção", descricao: "Materiais de construção e reparos", ativa: true },
-            { id: 11, nome: "Descartáveis", descricao: "Produtos descartáveis em geral", ativa: true },
-            { id: 12, nome: "Diversos", descricao: "Itens não classificados", ativa: true },
-            { id: 13, nome: "Automotivo", descricao: "Peças e acessórios automotivos", ativa: true },
-            { id: 14, nome: "Móveis", descricao: "Móveis e utensílios para escritório", ativa: true },
-            { id: 15, nome: "Vestuário", descricao: "Uniformes e vestuário profissional", ativa: true },
-            { id: 16, nome: "Alimentos", descricao: "Alimentos e bebidas em geral", ativa: true },
-            { id: 17, nome: "Hidráulico", descricao: "Conexões, tubos, registros e materiais hidráulicos", ativa: true },
-            { id: 18, nome: "Embalagem", descricao: "Sacos, fitas, caixas e materiais para embalagem", ativa: true },
-            { id: 19, nome: "Copa / Cozinha", descricao: "Utensílios e descartáveis para copa e cozinha", ativa: true },
-            { id: 20, nome: "Sinalização", descricao: "Placas, fitas, cones e materiais de sinalização", ativa: true },
-            { id: 21, nome: "Manutenção Predial", descricao: "Tintas, massas, cimentos e materiais para manutenção", ativa: true },
-            { id: 22, nome: "Proteção e Segurança", descricao: "Extintores, câmeras, alarmes e materiais de segurança patrimonial", ativa: true },
-            { id: 23, nome: "Esporte e Lazer", descricao: "Bolas, redes, jogos e materiais esportivos", ativa: true },
-            { id: 24, nome: "Didático / Cultural", descricao: "Livros, revistas e material pedagógico", ativa: true },
-            { id: 25, nome: "Jardinagem", descricao: "Sementes, adubos, ferramentas e materiais para jardim", ativa: true },
-            { id: 26, nome: "Primeiros Socorros", descricao: "Curativos, medicamentos básicos e materiais hospitalares", ativa: true },
-            { id: 27, nome: "Fonte Colmeia", descricao: "Fontes de alimentação tipo colmeia para computadores", ativa: true },
-            { id: 28, nome: "Produto Fonte Colmeia", descricao: "Produtos relacionados a fontes de alimentação colmeia", ativa: true },
-          ];
-          setCats(padrao);
-          localStorage.setItem("almox_categorias", JSON.stringify(padrao));
-        }
+        // Sincronizar categorias com Configuracoes (32 padrao)
+        const catsFinal = await syncCategorias(c || []);
+        setCats(catsFinal);
+        localStorage.setItem("almox_categorias", JSON.stringify(catsFinal));
       }).catch(() => { setItems([]); setCats([]); });
   }
   useEffect(() => { load(); }, []);
@@ -91,17 +75,6 @@ export default function Produtos() {
       pc: "PEÇA", jogo: "JOGO", ct: "CARTUCHO",
     };
     return nomes[u.toLowerCase()] || u;
-  }
-
-  function gerarCodigo(produto: string, marca: string, modelo: string): string {
-    // Gera código PRD-ABC (PRD + iniciais de Produto, Marca, Modelo)
-    const prod = produto.trim();
-    const marc = marca.trim();
-    const mod = modelo.trim();
-    const sigla = (prod ? prod.split(/\s+/).map(p => p[0]).join("").substring(0, 2) : "") +
-                  (marc ? marc.split(/\s+/).map(m => m[0]).join("").substring(0, 1) : "") +
-                  (mod ? mod.split(/\s+/).map(m => m[0]).join("").substring(0, 1) : "");
-    return sigla ? `PRD-${sigla.toUpperCase()}` : `PRD-001`;
   }
 
   function openNew() {
@@ -163,7 +136,6 @@ export default function Produtos() {
         <button onClick={() => navigate("/entradas?novo=true&produto=" + r.id)} title="Nova Entrada" className="rounded p-1.5 text-green-600 hover:bg-green-50"><ArrowDownToLine className="h-3.5 w-3.5" /></button>
         <button onClick={() => navigate("/saida-registro?novo=true&produto=" + r.id)} title="Nova Saída" className="rounded p-1.5 text-orange-600 hover:bg-orange-50"><ArrowUpFromLine className="h-3.5 w-3.5" /></button>
         <button onClick={() => openEdit(r)} className="rounded p-1.5 text-blue-600 hover:bg-blue-50"><Pencil className="h-3.5 w-3.5" /></button>
-        <button onClick={() => navigate("/etiquetas?produto=" + r.id)} title="Etiqueta" className="rounded p-1.5 text-purple-600 hover:bg-purple-50"><Tag className="h-3.5 w-3.5" /></button>
         <button onClick={() => del(r)} className="rounded p-1.5 text-red-600 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
     )},
@@ -214,12 +186,29 @@ export default function Produtos() {
             for (const id of selectedIds) {
               const prod = items.find(p => p.id === id);
               if (!prod) continue;
-              const catNome = bulkForm.categoria_id ? (cats.find(c => c.id === bulkForm.categoria_id)?.nome || null) : prod.categoria_nome;
               const { invoke } = await import("@tauri-apps/api/core");
               await invoke("update_produto_categoria", {
                 id: Number(id),
                 categoria_id: bulkForm.categoria_id !== null ? bulkForm.categoria_id : null,
               });
+              // update_produto exige payload completo (campos obrigatórios no backend)
+              if (bulkForm.unidade) {
+                await api.produtos.update(Number(id), {
+                  codigo: prod.codigo || "",
+                  nome: prod.nome,
+                  marca: prod.marca ?? null,
+                  modelo: prod.modelo ?? null,
+                  descricao: prod.descricao ?? null,
+                  categoria_id: bulkForm.categoria_id !== null ? bulkForm.categoria_id : (prod.categoria_id ?? null),
+                  fornecedor_id: prod.fornecedor_id ?? null,
+                  unidade: bulkForm.unidade,
+                  preco_compra: prod.preco_compra || 0,
+                  preco_venda: prod.preco_venda || 0,
+                  estoque: prod.estoque || 0,
+                  estoque_minimo: prod.estoque_minimo || 0,
+                  custo_total: prod.custo_total ?? 0,
+                });
+              }
             }
             setSelectedIds(new Set());
             setBulkOpen(false);
@@ -289,7 +278,7 @@ export default function Produtos() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700">CATEGORIA</label>
+              <label className="block text-sm font-medium text-gray-700">Categoria</label>
               <select value={showNewCat ? "new" : String(form.categoria_id || "")} onChange={(e) => {
                 if (e.target.value === "new") { setShowNewCat(true); }
                 else { setForm({ ...form, categoria_id: e.target.value ? Number(e.target.value) : null }); }
@@ -300,7 +289,7 @@ export default function Produtos() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700">UNIDADE PADRÃO</label>
+              <label className="block text-sm font-medium text-gray-700">Unidade Padrão</label>
               {["UNIDADE / 1","CAIXA / 12","PACOTE / 100","ROLO / 50","QUILORGRAMA / 1","LITRO / 1","METRO / 1","DÚZIA / 12","RESMA / 500","PAR / 2","PEÇA / 1","JOGO / 1"].includes(unidadeLabel(form.unidade || "")) ? (
               <select value={unidadeLabel(form.unidade || "") || "UNIDADE / 1"} onChange={(e) => {
                 if (e.target.value === "new") { setShowNewUnid(true); }

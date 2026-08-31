@@ -12,11 +12,21 @@ export default function Login() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
+    if (!email.trim() || !senha) {
+      setError("Informe o e-mail e a senha para entrar.");
+      return;
+    }
     setLoading(true);
     try {
       await login(email, senha);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao entrar");
+      const raw = err instanceof Error ? err.message : String(err);
+      // Mensagens amigáveis para os casos comuns (credenciais inválidas, senha vazia/sem hash etc.)
+      if (/credencial|senha|usu[áa]rio|login|n[ãa]o.*(encontrado|cadastrado)/i.test(raw)) {
+        setError("E-mail ou senha incorretos. Verifique seus dados e tente novamente.");
+      } else {
+        setError(raw || "Erro ao entrar. Tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
@@ -47,13 +57,11 @@ export default function Login() {
                 </p>
                 <ul className="mt-6 space-y-2 text-sm text-blue-50">
                   <li className="flex items-center gap-2">• Dashboard em tempo real</li>
-                  <li className="flex items-center gap-2">• Múltiplas lojas e filiais</li>
-                  <li className="flex items-center gap-2">• Importação de pedidos em PDF</li>
                   <li className="flex items-center gap-2">• Alertas automáticos de estoque</li>
                 </ul>
               </div>
             </div>
-            <p className="text-xs text-blue-200">v0.1.0 • Tauri + React + SQLite</p>
+            <p className="text-xs text-blue-200">Tauri + React + SQLite</p>
           </div>
 
           {/* Login form */}

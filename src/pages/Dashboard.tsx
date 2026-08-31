@@ -4,51 +4,54 @@ import {
   TrendingUp, TrendingDown, ShoppingCart, Truck,
 } from "lucide-react";
 import Layout from "../components/Layout";
-import type { DashboardStats, Alerta, Movimentacao, Produto } from "../lib/types";
+import type { DashboardStats, Movimentacao, Produto } from "../lib/types";
 import { api } from "../lib/api";
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [alertas, setAlertas] = useState<Alerta[]>([]);
   const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
   const [loading, setLoading] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
 
-  const carregarDados = useCallback(() => {
-    setLoading(true);
-    const carregarMovs = async () => {
-      try {
-        const { invoke } = await import("@tauri-apps/api/core");
-        const dados = await invoke<Movimentacao[]>("list_movimentacoes", {});
-        if (Array.isArray(dados) && dados.length > 0) {
-          localStorage.setItem("almox_movimentacoes", JSON.stringify(dados));
-          return dados;
-        }
-      } catch {}
-      localStorage.removeItem("almox_movimentacoes");
-      return [];
-    };
-    Promise.all([api.dashboardStats(), api.alertas.list(), carregarMovs(), api.produtos.list()])
-      .then(([s, al, movs, prods]) => {
-        setStats(s);
-        setAlertas(al);
-        if (movs.length === 0) {
-          localStorage.removeItem("almox_movimentacoes");
-        } else {
-          localStorage.setItem("almox_movimentacoes", JSON.stringify(movs));
-        }
-        setMovimentacoes(movs);
-        setProdutos(prods);
-      })
-      .catch(() => { setStats(null); setAlertas([]); setMovimentacoes([]); setProdutos([]); })
-      .finally(() => setLoading(false));
+  const carregarMovs = async (): Promise<Movimentacao[]> => {
+    try {
+      const { invoke } = await import("@tauri-apps/api/core");
+      const dados = await invoke<Movimentacao[]>("list_movimentacoes", {});
+      if (Array.isArray(dados)) return dados;
+    } catch (e) { console.warn("[Dashboard] carregarMovs fallback:", e); }
+    return [];
+  };
+
+  // mostrarLoading só no mount inicial; no intervalo/focus atualiza sem flicker.
+  const carregarDados = useCallback(async (mostrarLoading: boolean = false) => {
+    if (mostrarLoading) setLoading(true);
+    try {
+      const [s, , movs, prods] = await Promise.all([api.dashboardStats(), api.alertas.list(), carregarMovs(), api.produtos.list()]);
+      setStats(s);
+      setMovimentacoes(movs);
+      setProdutos(prods);
+      // Persistência centralizada (uma única escrita por ciclo)
+      if (movs.length === 0) {
+        localStorage.removeItem("almox_movimentacoes");
+      } else {
+        localStorage.setItem("almox_movimentacoes", JSON.stringify(movs));
+      }
+      setErro(null);
+    } catch (e) {
+      console.error("[Dashboard] falha ao carregar dados:", e);
+      setErro("Não foi possível carregar os dados do dashboard.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
-    carregarDados();
-    window.addEventListener("focus", carregarDados);
-    const interval = setInterval(carregarDados, 30000);
-    return () => { window.removeEventListener("focus", carregarDados); clearInterval(interval); };
+    carregarDados(true);
+    const onFocus = () => carregarDados();
+    window.addEventListener("focus", onFocus);
+    const interval = setInterval(onFocus, 30000);
+    return () => { window.removeEventListener("focus", onFocus); clearInterval(interval); };
   }, [carregarDados]);
 
   const totalProdutos = stats?.total_produtos ?? 0;
@@ -60,11 +63,17 @@ export default function Dashboard() {
 
   const entradas = movimentacoes.filter(m => m.tipo === "entrada");
   const saidas = movimentacoes.filter(m => m.tipo === "saida");
-  const totalEntradas = entradas.reduce((s, m) => s + m.quantidade, 0);
-  const totalSaidas = saidas.reduce((s, m) => s + m.quantidade, 0);
+
+  // Donut: contagem uniforme de PRODUTOS (não mistura com soma de unidades).
+  // Mesmas definições dos StatCards: disponível = estoque > mínimo; baixo = 0 < estoque <= mínimo; sem = estoque <= 0.
+  const dispCount = produtos.filter(p => (p.estoque || 0) > (p.estoque_minimo || 0)).length;
+  const baixoCount = produtos.filter(p => { const e = p.estoque || 0; return e > 0 && e <= (p.estoque_minimo || 0); }).length;
+  const semEstoqueCount = produtos.filter(p => (p.estoque || 0) <= 0).length;
+  const totalDonut = dispCount + baixoCount + semEstoqueCount;
 
   return (
     <Layout title="Dashboard" subtitle="Visão geral do estoque">
+      {erro && <div className="mb-3 rounded-lg bg-red-50 px-4 py-2.5 text-xs font-medium text-red-700">{erro}</div>}
       {/* KPI Cards */}
       <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
         <KpiCard
@@ -119,24 +128,22 @@ export default function Dashboard() {
 
       {/* Row: Donut + Categorias */}
       <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
-        {/* Donut Estoque */}
+        {/* Grafico Estoque */}
         <div className="rounded-xl border border-gray-200 bg-white p-5">
           <h3 className="text-sm font-semibold text-gray-900 mb-1">Distribuição do Estoque</h3>
           <p className="text-[11px] text-gray-400 mb-4">Status geral dos produtos</p>
-          <div className="flex flex-col items-center">
-            <DonutChart
+          <div className="space-y-4">
+            <BarChart
               data={[
-                { label: "Disponíveis", value: itensEstoque, color: "#10b981" },
-                { label: "Estoque Baixo", value: estoqueBaixo, color: "#f59e0b" },
-                { label: "Sem Estoque", value: indisponiveis, color: "#ef4444" },
+                { label: "Disponíveis", value: dispCount, color: "bg-emerald-500" },
+                { label: "Estoque Baixo", value: baixoCount, color: "bg-amber-500" },
+                { label: "Sem Estoque", value: semEstoqueCount, color: "bg-red-500" },
               ]}
-              centerLabel="Total"
-              centerValue={totalProdutos.toLocaleString("pt-BR")}
             />
             <div className="mt-4 w-full space-y-2">
-              <Legend color="#10b981" label="Disponíveis" value={`${itensEstoque} (${totalProdutos > 0 ? Math.round((itensEstoque / totalProdutos) * 100) : 0}%)`} />
-              <Legend color="#f59e0b" label="Estoque Baixo" value={`${estoqueBaixo} (${totalProdutos > 0 ? Math.round((estoqueBaixo / totalProdutos) * 100) : 0}%)`} />
-              <Legend color="#ef4444" label="Sem Estoque" value={`${indisponiveis} (${totalProdutos > 0 ? Math.round((indisponiveis / totalProdutos) * 100) : 0}%)`} />
+              <Legend color="#10b981" label="Disponíveis" value={`${dispCount} (${totalDonut > 0 ? Math.round((dispCount / totalDonut) * 100) : 0}%)`} />
+              <Legend color="#f59e0b" label="Estoque Baixo" value={`${baixoCount} (${totalDonut > 0 ? Math.round((baixoCount / totalDonut) * 100) : 0}%)`} />
+              <Legend color="#ef4444" label="Sem Estoque" value={`${semEstoqueCount} (${totalDonut > 0 ? Math.round((semEstoqueCount / totalDonut) * 100) : 0}%)`} />
             </div>
           </div>
         </div>
@@ -290,38 +297,24 @@ function Legend({ color, label, value }: { color: string; label: string; value: 
   );
 }
 
-function DonutChart({ data, centerLabel, centerValue }: {
-  data: { label: string; value: number; color: string }[];
-  centerLabel: string;
-  centerValue: string;
-}) {
-  const total = data.reduce((s, d) => s + d.value, 0) || 1;
-  const r = 58;
-  const c = 2 * Math.PI * r;
-  let offset = 0;
+function BarChart({ data }: { data: { label: string; value: number; color: string }[] }) {
+  const maxValue = Math.max(...data.map(d => d.value), 1);
   return (
-    <svg width="170" height="170" viewBox="0 0 170 170">
-      <g transform="translate(85,85) rotate(-90)">
-        {data.map((d, i) => {
-          const len = (d.value / total) * c;
-          const seg = (
-            <circle
-              key={i}
-              r={r}
-              fill="transparent"
-              stroke={d.color}
-              strokeWidth={26}
-              strokeDasharray={`${len} ${c - len}`}
-              strokeDashoffset={-offset}
-              strokeLinecap="round"
-            />
-          );
-          offset += len;
-          return seg;
-        })}
-      </g>
-      <text x="85" y="81" textAnchor="middle" className="fill-gray-400" style={{ fontSize: 10 }}>{centerLabel}</text>
-      <text x="85" y="100" textAnchor="middle" className="fill-gray-900" style={{ fontSize: 18, fontWeight: 700 }}>{centerValue}</text>
-    </svg>
+    <div className="space-y-3">
+      {data.map((d, i) => (
+        <div key={i}>
+          <div className="flex items-center justify-between text-xs mb-1">
+            <span className="font-medium text-gray-700">{d.label}</span>
+            <span className="text-gray-500 font-mono">{d.value}</span>
+          </div>
+          <div className="h-6 w-full rounded-lg bg-gray-100 overflow-hidden">
+            <div className={`h-full rounded-lg ${d.color} transition-all duration-700 ease-out flex items-center justify-end pr-2`}
+              style={{ width: `${d.value > 0 ? Math.max((d.value / maxValue) * 100, 8) : 0}%` }}>
+              {d.value > 0 && <span className="text-[10px] font-bold text-white">{d.value}</span>}
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }

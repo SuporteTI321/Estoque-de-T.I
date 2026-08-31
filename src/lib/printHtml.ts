@@ -3,55 +3,132 @@
  * Funciona tanto no Tauri (desktop) quanto no browser (web).
  */
 
-function isTauri(): boolean {
+let tauriInvoke: ((cmd: string, args?: Record<string, unknown>) => Promise<unknown>) | null = null;
+let tauriChecked = false;
+
+async function getTauriInvoke() {
+  if (tauriChecked) return tauriInvoke;
+  tauriChecked = true;
   try {
-    return typeof window !== "undefined" && "__TAURI__" in window;
-  } catch {
-    return false;
-  }
+    if (typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window || !!(window as any).__TAURI__)) {
+      const mod = await import("@tauri-apps/api/core");
+      tauriInvoke = mod.invoke;
+    }
+  } catch {}
+  return tauriInvoke;
 }
 
 export async function printHtml(html: string, titulo: string = "Impressao") {
-  // Injeta auto-print ao carregar a pagina
-  const autoPrint = `<script>window.addEventListener('load', function() { setTimeout(function() { window.print(); }, 500); window.onafterprint = function() { window.close(); }; });</` + `script>`;
-  let htmlFinal = html;
-  if (/<\/body>/i.test(htmlFinal)) {
-    htmlFinal = htmlFinal.replace(/<\/body>/i, autoPrint + "</body>");
-  } else {
-    htmlFinal = htmlFinal + autoPrint;
-  }
+  const invoke = await getTauriInvoke();
 
-  // Tenta via Tauri (desktop)
-  if (isTauri()) {
+  // Tenta via Tauri (desktop) — caminho rapido
+  if (invoke) {
     try {
-      const { invoke } = await import("@tauri-apps/api/core");
-      const filePath: string = await invoke("save_romaneio_html", {
-        html: htmlFinal,
-        numero: titulo,
-      });
-      await invoke("open_in_browser", { file_path: filePath });
+      await invoke("save_and_open_html", { html, titulo });
       return;
     } catch (err) {
       console.warn("[printHtml] Tauri falhou, usando fallback browser:", err);
     }
   }
 
-  // Fallback: abre em nova aba do navegador
+  // Fallback: blob URL + window.open
   try {
-    const blob = new Blob([htmlFinal], { type: "text/html" });
+    const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
     const win = window.open(url, "_blank");
     if (win) {
-      win.onload = () => {
-        setTimeout(() => {
-          try { win.print(); } catch {}
-        }, 500);
+      win.onload = () => { try { win.print(); } catch {} };
+    } else {
+      const iframe = document.createElement("iframe");
+      iframe.style.cssText = "position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;";
+      iframe.src = url;
+      iframe.onload = () => {
+        try { iframe.contentWindow?.print(); } catch {}
+        setTimeout(() => { URL.revokeObjectURL(url); iframe.remove(); }, 2000);
       };
+      document.body.appendChild(iframe);
     }
   } catch (err) {
     console.error("[printHtml] Falha:", err);
-    alert("Nao foi possivel abrir a impressao: " + String(err));
   }
+}
+
+/** Escapa caracteres especiais para interpolação segura em HTML */
+function esc(s: string): string {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+export type TamanhoEtiqueta = "pequena" | "media" | "grande";
+
+const ETIQUETA_DIMS: Record<TamanhoEtiqueta, { largura: string; altura: string; fs: string; fs_num: string }> = {
+  pequena: { largura: "70mm", altura: "35mm", fs: "8px", fs_num: "9" },
+  media: { largura: "100mm", altura: "50mm", fs: "10px", fs_num: "11" },
+  grande: { largura: "150mm", altura: "70mm", fs: "12px", fs_num: "14" },
+};
+
+/** Monta HTML A4 de etiquetas (JsBarcode CODE128 via CDN) — usado no preview/impressao browser. */
+export function montarHtmlEtiquetas(opts: {
+  produtos: { id: number; nome: string; codigo: string; marca?: string | null; modelo?: string | null; categoria_nome?: string | null }[];
+  quantidades: Record<number, number>;
+  empresa: string;
+  tamanho: TamanhoEtiqueta;
+}): string {
+  const { largura, altura, fs, fs_num } = ETIQUETA_DIMS[opts.tamanho] ?? ETIQUETA_DIMS.pequena;
+  const etiquetas: string[] = [];
+
+  opts.produtos.forEach((p, idx) => {
+    const qtd = Math.max(1, opts.quantidades[p.id] ?? opts.quantidades[idx] ?? 1);
+    for (let i = 0; i < qtd; i++) {
+      etiquetas.push(`<div class="etiq">
+  <div class="emp"><b>${esc(opts.empresa)}</b></div>
+  <div class="nome"><b>${esc(p.nome)}</b></div>
+  <div class="linha"><b>Código:</b> ${esc(p.codigo)}</div>
+  <div class="linha"><b>Marca:</b> ${esc(p.marca || "—")}</div>
+  <div class="linha"><b>Modelo:</b> ${esc(p.modelo || "—")}</div>
+  <div class="linha"><b>Categoria:</b> ${esc(p.categoria_nome || "—")}</div>
+  <svg class="bc" data-val="${esc(p.codigo)}"></svg>
+</div>`);
+    }
+  });
+
+  return `<!doctype html>
+<html><head><meta charset="utf-8"><title>Etiquetas</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
+<style>
+  @page { size: A4; margin: 10mm; }
+  body { font-family: monospace; margin: 0; padding: 3mm; color: #000;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .grid { display: flex; flex-wrap: wrap; gap: 3mm; }
+  .etiq { width: ${largura}; height: ${altura}; border: 1px solid #333; padding: 3mm;
+          box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column; }
+  .emp { text-align: center; font-size: ${fs}; }
+  .nome { text-align: center; font-size: ${fs}; font-weight: bold; }
+  .linha { font-size: ${fs}; }
+  .bc { margin-top: auto; max-width: 100%; }
+  @media print { .etiq { page-break-inside: avoid; } }
+</style></head>
+<body>
+  <div class="grid">${etiquetas.join(String.fromCharCode(10))}</div>
+  <script>
+    window.onload = function () {
+      setTimeout(function () {
+        document.querySelectorAll('.bc').forEach(function (el) {
+          try {
+            JsBarcode(el, el.getAttribute('data-val'), {
+              format: 'CODE128', displayValue: true,
+              fontSize: ${fs_num}, height: 30
+            });
+          } catch (e) {}
+        });
+      }, 100);
+    };
+  </script>
+</body></html>`;
 }
 
 /**
@@ -72,20 +149,20 @@ export function imprimirRomaneio(opts: {
   const css = `@page{size:80mm 297mm;margin:0}body{font-family:monospace;font-size:10px;margin:0;padding:6mm;color:#000;-webkit-print-color-adjust:exact;print-color-adjust:exact}h1{font-size:13px;text-align:center;margin:0 0 2mm;font-weight:bold}hr{border:none;border-top:1px dashed #000;margin:1mm 0}p{margin:0}b{font-weight:bold}${opts.cssExtra || ""}`;
 
   const h: string[] = [];
-  h.push(`<h1>${opts.titulo}</h1>`);
+  h.push(`<h1>${esc(opts.titulo)}</h1>`);
   h.push(`<hr>`);
-  h.push(`<p><b>PEDIDO:</b> ${opts.pedido}</p>`);
-  if (opts.codigo) h.push(`<p><b>CODIGO:</b> ${opts.codigo}</p>`);
-  if (opts.loja) h.push(`<p><b>LOJA:</b> ${opts.loja}</p>`);
-  if (opts.solicitante) h.push(`<p><b>SOLICITANTE:</b> ${opts.solicitante}</p>`);
-  if (opts.setor) h.push(`<p><b>SETOR:</b> ${opts.setor}</p>`);
-  if (opts.dataSolicitacao) h.push(`<p><b>SOLICITACAO:</b> ${opts.dataSolicitacao}</p>`);
-  if (opts.dataSaida) h.push(`<p><b>SAIDA:</b> ${opts.dataSaida}</p>`);
+  h.push(`<p><b>PEDIDO:</b> ${esc(opts.pedido)}</p>`);
+  if (opts.codigo) h.push(`<p><b>CODIGO:</b> ${esc(opts.codigo)}</p>`);
+  if (opts.loja) h.push(`<p><b>LOJA:</b> ${esc(opts.loja)}</p>`);
+  if (opts.solicitante) h.push(`<p><b>SOLICITANTE:</b> ${esc(opts.solicitante)}</p>`);
+  if (opts.setor) h.push(`<p><b>SETOR:</b> ${esc(opts.setor)}</p>`);
+  if (opts.dataSolicitacao) h.push(`<p><b>SOLICITACAO:</b> ${esc(opts.dataSolicitacao)}</p>`);
+  if (opts.dataSaida) h.push(`<p><b>SAIDA:</b> ${esc(opts.dataSaida)}</p>`);
   h.push(`<hr>`);
   h.push(`<p style="display:flex;justify-content:space-between"><b>ITEM</b><span style="text-align:center;min-width:20px"><b>QTD</b></span></p>`);
   const total = opts.itens.reduce((s, i) => s + i.qtd, 0);
   for (const item of opts.itens) {
-    const nome = item.produto.replace(/</g, "<");
+    const nome = esc(item.produto);
     h.push(`<p style="display:flex;justify-content:space-between"><span>${nome}</span><span style="text-align:center;min-width:20px">${item.qtd}</span></p>`);
   }
   h.push(`<hr>`);
@@ -96,7 +173,7 @@ export function imprimirRomaneio(opts: {
   h.push(`<p style="text-align:center">_________________________________</p>`);
   h.push(`<p style="text-align:center"><b>ASSINATURA DO RECEBEDOR</b></p>`);
 
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${opts.titulo} ${opts.pedido}</title><style>${css}</style></head><body>${h.join(String.fromCharCode(10))}</body></html>`;
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${esc(opts.titulo)} ${esc(opts.pedido)}</title><style>${css}</style></head><body>${h.join(String.fromCharCode(10))}</body></html>`;
 
   printHtml(html, `${opts.titulo} ${opts.pedido}`);
 }

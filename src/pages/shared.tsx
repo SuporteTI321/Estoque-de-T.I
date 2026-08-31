@@ -29,7 +29,7 @@ export function Vazio({ texto }: { texto: string }) {
 }
 
 // ---------- Grupo Expansível ----------
-export function Grupo({ titulo, icone, corIcone, totalItens, totalQtd, totalValor, aberto, onToggle, children }: {
+export function Grupo({ titulo, icone, corIcone: _corIcone, totalItens, totalQtd, totalValor, aberto, onToggle, children }: {
   titulo: string; icone: React.ReactNode; corIcone: string; totalItens?: number; totalQtd?: number; totalValor?: number;
   aberto: boolean; onToggle: () => void; children: React.ReactNode;
 }) {
@@ -118,22 +118,35 @@ function Row({ label, value }: { label: string; value: string }) {
 export type Linha = { id: number; produto: string; qtd: number; valor: number; data: string; origem: string; destino: string; obs: string };
 
 // ---------- Helpers ----------
+/** Converte "YYYY-MM-DD[...]" em Date no fuso local (new Date(string) interpretaria como UTC). */
+export function parseDataLocal(d: string): Date {
+  const p = (d || "").slice(0, 10).split("-");
+  if (p.length === 3) return new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]));
+  return new Date(d);
+}
+
+/** Neutraliza CSV formula injection: células iniciadas por = + - @ ou tabulação recebem apóstrofo. */
+export function csvSafe(v: unknown): string {
+  const s = v === null || v === undefined ? "" : String(v);
+  return /^[=+\-@\t\r]/.test(s) ? "'" + s : s;
+}
+
 export function anosDeMovs(movs: { data_movimento?: string; data_pedido?: string }[]): number[] {
   const s = new Set<number>(); s.add(new Date().getFullYear());
-  for (const m of movs) { const d = m.data_movimento || (m as any).data_pedido; if (d) s.add(new Date(d).getFullYear()); }
+  for (const m of movs) { const d = m.data_movimento || (m as any).data_pedido; if (d) s.add(parseDataLocal(d).getFullYear()); }
   return Array.from(s).sort((a, b) => b - a);
 }
 
 export function mesesDeMovs(movs: { data_movimento?: string }[], ano: number): number[] {
   const s = new Set<number>();
-  for (const m of movs) { if (m.data_movimento && new Date(m.data_movimento).getFullYear() === ano) s.add(new Date(m.data_movimento).getMonth()); }
+  for (const m of movs) { if (m.data_movimento && parseDataLocal(m.data_movimento).getFullYear() === ano) s.add(parseDataLocal(m.data_movimento).getMonth()); }
   return Array.from(s).sort((a, b) => a - b);
 }
 
 export function filtraData<T extends { data_movimento?: string; data_pedido?: string }>(items: T[], ano: number, mes: number): T[] {
   return items.filter(m => {
     const d = m.data_movimento || (m as any).data_pedido; if (!d) return true;
-    const dt = new Date(d); if (dt.getFullYear() !== ano) return false;
+    const dt = parseDataLocal(d); if (dt.getFullYear() !== ano) return false;
     return mes < 0 || dt.getMonth() === mes;
   });
 }

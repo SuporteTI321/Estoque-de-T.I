@@ -15,6 +15,13 @@ export default defineConfig({
       configureServer(server) {
         server.middlewares.use("/api/backup", (req, res) => {
           if (req.method === "POST") {
+            const MAX_BACKUP_BYTES = 50 * 1024 * 1024; // ~50MB
+            const len = Number(req.headers["content-length"] ?? 0);
+            if (!Number.isFinite(len) || len > MAX_BACKUP_BYTES) {
+              res.statusCode = 413;
+              res.end("Payload too large");
+              return;
+            }
             let body = "";
             req.on("data", (chunk) => (body += chunk));
             req.on("end", () => {

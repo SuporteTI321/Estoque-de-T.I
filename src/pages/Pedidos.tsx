@@ -2,10 +2,20 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { Building2, Package, Check, X, ChevronDown, ChevronRight as ChevronRightIcon, Search, Scale, Trash2, Pencil } from "lucide-react";
 import Layout from "../components/Layout";
 import type { Pedido, PedidoItem, Loja, Produto } from "../lib/types";
-import { api, store } from "../lib/api";
+import { api } from "../lib/api";
 import { imprimirRomaneio as imprimirRomaneioBase } from "../lib/printHtml";
 
 const MESES = ["Jan","Fev","Mar","Abr","Mai","Jun","Jul","Ago","Set","Out","Nov","Dez"];
+
+// Regex ancorada para localizar as saídas de um pedido na observação.
+// Movimentacao NÃO possui campo pedido_id no backend (src-tauri/src/lib.rs), então o
+// vínculo é feito pela observação "Pedido <numero>". A âncora [^0-9] evita que
+// "Pedido 10" case com "Pedido 101". Limitação: se o numero do pedido mudar,
+// as movimentações antigas deixam de ser encontradas.
+function regexPedido(numero: string): RegExp {
+  const esc = numero.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^0-9])Pedido ${esc}($|[^0-9])`);
+}
 
 // ====================== COMPONENTE PRINCIPAL ======================
 function parseDataPtBr(s: string): Date { return s.length <= 10 ? new Date(s + "T12:00:00-03:00") : new Date(s); }
@@ -21,7 +31,7 @@ export default function Pedidos() {
   const [confirmando, setConfirmando] = useState(0);
   const [removed, setRemoved] = useState<Set<number>>(new Set());
   const qtdsRef = useRef<Record<string, number>>({});
-  const [qtdsVer, setQtdsVer] = useState(0);
+  const [, setQtdsVer] = useState(0);
   const [ano, setAno] = useState(new Date().getFullYear());
   const [mes, setMes] = useState(-1);
   const [busca, setBusca] = useState("");
@@ -33,7 +43,7 @@ export default function Pedidos() {
   function loadData() {
     Promise.all([api.pedidos.list(), api.lojas.list(), api.produtos.list()])
       .then(([p, l, pr]) => { setPedidos(p); setLojas(l); setProdutos(pr); })
-      .catch(() => { setPedidos([]); setLojas([]); setProdutos([]); });
+      .catch((e) => { console.error("[Pedidos] falha ao carregar dados:", e); setMsg({ ok: false, text: "Não foi possível carregar os pedidos." }); });
     api.pedidos.listAllItens().then(setTodosItens).catch(() => {});
   }
 
@@ -54,14 +64,20 @@ export default function Pedidos() {
     return Array.from(map.entries()).map(([id, peds]) => ({ loja: lojas.find(l=>l.id===id), pedidos: peds }));
   }, [filtrados, lojas]);
 
-  // Recolhe grupos com todos pedidos atendidos
+  // Recolhe grupos com todos pedidos atendidos — sincroniza apenas quando a
+  // identidade dos grupos muda (ids + status), sem sobrescrever o recolhimento manual.
+  const gruposAssinatura = useMemo(
+    () => grupos.map(g => `${g.loja?.id ?? ""}:${g.pedidos.map(x => `${x.id}:${x.status}`).join(",")}`).join("|"),
+    [grupos]
+  );
   useEffect(() => {
     const ids = new Set<string>();
     for (const g of grupos) {
       if (g.pedidos.length > 0 && g.pedidos.every(p => p.status === "atendido")) ids.add(String(g.loja?.id || ""));
     }
     setCollapsed(ids);
-  }, [grupos]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gruposAssinatura]);
 
   function lojaOf(p: Pedido) { return lojas.find(l => l.id === p.loja_id); }
 
@@ -73,9 +89,9 @@ export default function Pedidos() {
       setPedidoItens(lista);
       if (p.status === "atendido") {
         api.movimentacoes.list().then((movs: any[]) => {
-          const saidas = movs.filter((m: any) => m.tipo === "saida" && m.observacao?.includes(`Pedido ${p.numero}`));
+          const saidas = movs.filter((m: any) => m.tipo === "saida" && regexPedido(p.numero).test(m.observacao || ""));
           setItensDist(saidas.map((s: any, i: number) => ({ id: i+1000, pedido_id: p.id, produto_id: s.produto_id||0, produto_nome: (s.produto_nome||"").trim(), unidade: s.unidade||"Un", quantidade: s.quantidade })));
-        });
+        }).catch((e) => { console.error("[Pedidos] falha ao carregar movimentações:", e); });
         qtdsRef.current = {};
         setQtdsVer(v => v+1);
       } else {
@@ -89,6 +105,9 @@ export default function Pedidos() {
         setQtdsVer(v => v+1);
       }
       setViewing(p);
+    }).catch((e) => {
+      console.error("[Pedidos] falha ao abrir pedido:", e);
+      setMsg({ ok: false, text: `Erro ao abrir o pedido ${p.numero}.` });
     });
   }
 
@@ -105,40 +124,55 @@ export default function Pedidos() {
       const qtdAtual = { ...qtdsRef.current };
       for (const item of itens) {
         const nome = chaveItem(item);
-        if (qtdAtual[nome] === undefined) qtdAtual[nome] = Number(item.quantidade) || 1;
+        if (qtdAtual[nome] === undefined) {
+          const v = Number(item.quantidade);
+          qtdAtual[nome] = Number.isFinite(v) && v > 0 ? v : 1;
+        }
       }
 
-      const movsE = await api.movimentacoes.list();
-      for (const m of movsE) { if (m.tipo==="saida" && m.observacao?.includes(`Pedido ${p.numero}`)) { try { await api.movimentacoes.delete(m.id); } catch {} } }
-
+      // Agrupa itens iguais ANTES de montar o romaneio e criar movimentações,
+      // para não imprimir/gravar quantidade dobrada em itens repetidos.
       const grupos = new Map<string, { item: any; qtd: number }>();
-      const romaneio: any[] = [];
+      const semProduto: string[] = [];
       for (const item of itens) {
         if (removed.has(item.id)) continue;
         const nome = chaveItem(item);
         const qtd = qtdAtual[nome];
-        if (qtd <= 0) continue;
-        if (!grupos.has(nome)) grupos.set(nome, { item, qtd });
-        romaneio.push({ ...item, produto_nome: nome, quantidade: qtd });
+        if (!Number.isFinite(qtd) || qtd <= 0) continue;
+        const existente = grupos.get(nome);
+        if (existente) existente.qtd += qtd;
+        else {
+          const prod = produtoMap.get(nome.toLowerCase());
+          if (!prod || !prod.id) { semProduto.push(nome); continue; }
+          grupos.set(nome, { item, qtd });
+        }
       }
+      if (semProduto.length > 0) {
+        alert(`Itens sem produto válido cadastrado ficaram FORA da saída:\n- ${semProduto.join("\n- ")}`);
+      }
+      const romaneio = Array.from(grupos.values()).map(({ item, qtd }) => ({ ...item, produto_nome: chaveItem(item), quantidade: qtd }));
 
+      // Ordem de confirmação: cria as novas primeiro, deleta as antigas depois
+      // e atualiza o status por último — evita perder as saídas se algo falhar no meio.
       let n = 0;
       for (const [, { item, qtd }] of grupos) {
-        const prod = produtoMap.get(chaveItem(item).toLowerCase());
+        const prod = produtoMap.get(chaveItem(item).toLowerCase())!;
         n++;
         await api.movimentacoes.create({
-          tipo: "saida", produto_id: prod?.id || 0, produto_nome: item.produto_nome||item.produto, quantidade: qtd,
+          tipo: "saida", produto_id: prod.id, produto_nome: item.produto_nome||item.produto, quantidade: qtd,
           loja_origem_id: p.loja_id, loja_origem_nome: p.loja_nome, loja_destino_id: null, loja_destino_nome: null,
           usuario_id: null, observacao: `Pedido ${p.numero} - ${item.produto_nome}`, preco_compra: prod?.preco_compra || 0, unidade: undefined,
         });
       }
+
+      const movsE = await api.movimentacoes.list();
+      for (const m of movsE) { if (m.tipo==="saida" && regexPedido(p.numero).test(m.observacao || "")) { try { await api.movimentacoes.delete(m.id); } catch {} } }
 
       setViewing(null);
       setPedidoItens([]);
       setItensDist([]);
       setRemoved(new Set());
       qtdsRef.current = {};
-      await api.pedidos.update(p.id, { status: "atendido" });
       // Mantém a quantidade SOLICITADA original no banco (Janela "Materiais do Pedido").
       // A quantidade CONFIRMADA/distribuída vai para movimentações ("Saída Almox→Loja").
       const itensFinais = itens.filter(item => !removed.has(item.id) && (qtdAtual[chaveItem(item)] ?? Number(item.quantidade)) > 0);
@@ -148,8 +182,8 @@ export default function Pedidos() {
         unidade: item.unidade || null,
         quantidade: Number(item.quantidade) || 1,
       })));
+      await api.pedidos.update(p.id, { status: "atendido" });
       setPedidos(prev => prev.map(x => x.id===p.id ? {...x, status:"atendido"} : x));
-      const dists = Array.from(grupos.entries()).map(([nome, { item, qtd }]) => ({ ...item, produto_nome: nome, quantidade: qtd }));
       setMsg({ ok: true, text: `Pedido ${p.numero} confirmado! ${n} item(ns).` });
       setTimeout(() => imprimirRomaneio(p, romaneio), 500);
     } catch (e: any) {
@@ -232,7 +266,7 @@ export default function Pedidos() {
                             <td className="px-4 py-2.5 text-center">
                               <div className="flex items-center justify-center gap-1">
                                 <button onClick={e => { e.stopPropagation(); abrirPedido(p); }} className="rounded p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50" title="Editar"><Pencil className="h-3.5 w-3.5" /></button>
-                                <button onClick={e => { e.stopPropagation(); if (confirm(`Excluir pedido ${p.numero}?`)) { api.pedidos.delete(p.id).then(() => setPedidos(prev => prev.filter(x => x.id !== p.id))).catch(() => {}); } }} className="rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
+                                <button onClick={e => { e.stopPropagation(); if (confirm(`Excluir pedido ${p.numero}?`)) { api.pedidos.delete(p.id).then(() => setPedidos(prev => prev.filter(x => x.id !== p.id))).catch((err) => { console.error("[Pedidos] falha ao excluir:", err); setMsg({ ok: false, text: `Erro ao excluir o pedido ${p.numero}.` }); }); } }} className="rounded p-1 text-gray-400 hover:text-red-600 hover:bg-red-50" title="Excluir"><Trash2 className="h-3.5 w-3.5" /></button>
                               </div>
                             </td>
                           </tr>
@@ -347,13 +381,15 @@ export default function Pedidos() {
                                 <span className="text-sm font-bold text-emerald-600">
                                   {(() => {
                                     const d = itensDist.find((dd:any) => (dd.produto_nome||"").trim().toLowerCase()===nome.toLowerCase())
+                                      // Aproximação: sem vínculo por id (Movimentacao não tem pedido_id),
+                                      // casa por prefixo do nome quando o match exato falha.
                                       || itensDist.find((dd:any) => (dd.produto_nome||"").toLowerCase().includes(nome.toLowerCase().substring(0,10)));
                                     return d ? d.quantidade : 0;
                                   })()}
                                 </span>
                               ) : (
                                 <input type="number" min="0" name={`qtd-${nome}`} id={`qtd-${viewing.id}-${nome}`} key={`q-${viewing.id}-${nome}`} defaultValue={qtdsRef.current[nome] ?? qtdItem}
-                                  onChange={e => { const v = Number(e.target.value); if (!isNaN(v)) { qtdsRef.current[nome] = v; setQtdsVer(x => x+1); } }}
+                                  onChange={e => { const v = Number(e.target.value); if (Number.isFinite(v) && v >= 0) { qtdsRef.current[nome] = v; setQtdsVer(x => x+1); } }}
                                   className="w-16 rounded border border-gray-300 px-2 py-1 text-center text-sm font-semibold" />
                               )}
                             </td>

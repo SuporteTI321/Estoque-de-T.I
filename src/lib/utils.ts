@@ -9,6 +9,8 @@ export function renumerar(lista: Produto[]): Produto[] {
   return [...lista]
     .sort((a, b) => a.id - b.id)
     .map((p, i) => {
+      // Preserva o codigo real vindo do banco; só gera código para produtos SEM código.
+      if (p.codigo) return p;
       const cat = (p.categoria_nome || "PROD")
         .toUpperCase()
         .replace(/\s+/g, "");

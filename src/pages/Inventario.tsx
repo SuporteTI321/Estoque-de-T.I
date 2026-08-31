@@ -5,11 +5,12 @@ import PageHeader from "../components/PageHeader";
 import Button from "../components/Button";
 import type { Produto } from "../lib/types";
 import { api } from "../lib/api";
+import { csvSafe } from "./shared";
 
 function exportCSV(produtos: Produto[]) {
   const headers = "Código,Produto,Categoria,Unidade,Estoque,Estoque Mínimo,Preço Compra";
   const rows = produtos.map(p =>
-    `"${p.codigo}","${p.nome}","${p.categoria_nome || ""}","${p.unidade || ""}",${p.estoque},${p.estoque_minimo},"${(p.preco_compra || 0).toFixed(2)}"`
+    `"${csvSafe(p.codigo)}","${csvSafe(p.nome)}","${csvSafe(p.categoria_nome || "")}","${csvSafe(p.unidade || "")}",${p.estoque},${p.estoque_minimo},"${csvSafe((p.preco_compra || 0).toFixed(2))}"`
   );
   const bom = "\uFEFF";
   const csv = bom + headers + "\n" + rows.join("\n");
@@ -30,8 +31,6 @@ export default function Inventario() {
   const total = produtos.length;
   const baixo = produtos.filter((p) => p.estoque > 0 && p.estoque <= p.estoque_minimo).length;
   const zerado = produtos.filter((p) => p.estoque === 0).length;
-  const valorTotal = produtos.reduce((s, p) => s + p.estoque * p.preco_compra, 0);
-
   return (
     <Layout title="Inventário" subtitle="Visão geral consolidada do estoque">
       <PageHeader

@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import {
   ClipboardList, Plus, Check, X, Eye, Trash2, Package,
-  Search, Calendar, Building2, User, Pencil, ChevronRight,
+  Search, Calendar, Building2, User, Pencil,
 } from "lucide-react";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
@@ -86,10 +86,10 @@ export default function Solicitacoes() {
     setForm({ loja_id: String(s.loja_id), observacao: s.observacao ?? "" });
     setOpen(true);
     setLoadingItens(true);
-    api.solicitacoes.listItens(s.id).then((it) => {
-      setItens(it);
-      setLoadingItens(false);
-    });
+    api.solicitacoes.listItens(s.id)
+      .then((it) => setItens(it))
+      .catch(() => showToast(false, "Erro ao carregar os itens da solicitação."))
+      .finally(() => setLoadingItens(false));
   }
 
   async function handleSave() {
@@ -114,16 +114,28 @@ export default function Solicitacoes() {
           observacao: form.observacao || null,
           loja_nome: null, usuario_nome: null, total_itens: 0,
         });
-        if (novo) {
-          solicitacaoId = novo.id;
-          setSolicitacoes((prev) => [novo, ...prev]);
-        }
+        if (!novo) throw new Error("Não foi possível criar a solicitação.");
+        solicitacaoId = novo.id;
+        setSolicitacoes((prev) => [novo, ...prev]);
         showToast(true, `Solicitação #${solicitacaoId} criada`);
       }
       // Add pending items (only on create, for simplicity)
       if (!editing && solicitacaoId) {
+        let falhas = 0;
         for (const it of itens) {
-          await api.solicitacoes.addItem(solicitacaoId, it.produto_id, it.quantidade);
+          try {
+            await api.solicitacoes.addItem(solicitacaoId, it.produto_id, it.quantidade);
+          } catch (err) {
+            falhas++;
+            showToast(false, `Erro ao adicionar "${it.produto_nome ?? it.produto_id}": ` + (err instanceof Error ? err.message : ""));
+          }
+        }
+        if (falhas > 0) {
+          // Não cria outra solicitação: a criada fica parcial e pode ser complementada na edição
+          loadData();
+          setOpen(false);
+          showToast(false, `${itens.length - falhas} de ${itens.length} item(ns) adicionado(s). A solicitação #${solicitacaoId} foi criada — edite-a para incluir os itens que faltaram.`);
+          return;
         }
       }
       setOpen(false);
@@ -160,10 +172,10 @@ export default function Solicitacoes() {
   function openView(s: Solicitacao) {
     setViewing(s);
     setLoadingItens(true);
-    api.solicitacoes.listItens(s.id).then((it) => {
-      setItens(it);
-      setLoadingItens(false);
-    });
+    api.solicitacoes.listItens(s.id)
+      .then((it) => setItens(it))
+      .catch(() => showToast(false, "Erro ao carregar os itens da solicitação."))
+      .finally(() => setLoadingItens(false));
   }
 
   // ---------------- Itens ----------------

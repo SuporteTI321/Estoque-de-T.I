@@ -13,6 +13,7 @@ export default function Perfil() {
   const [nome, setNome] = useState(user?.nome || "");
   const [senhaAtual, setSenhaAtual] = useState("");
   const [senhaNova, setSenhaNova] = useState("");
+  const [senhaNovaConf, setSenhaNovaConf] = useState("");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [saving, setSaving] = useState(false);
 
@@ -23,16 +24,35 @@ export default function Perfil() {
     try {
       if (senhaNova && senhaNova.length < 4) {
         setMsg({ ok: false, text: "A nova senha deve ter no mínimo 4 caracteres." });
-        setSaving(false);
         return;
       }
-      await api.usuarios.update(user.id!, { nome });
-      if (senhaNova && senhaAtual) {
-        await api.usuarios.update(user.id!, { senha: senhaNova });
+      if (senhaNova) {
+        if (!senhaAtual) {
+          setMsg({ ok: false, text: "Informe a senha atual para alterar a senha." });
+          return;
+        }
+        if (senhaNova !== senhaNovaConf) {
+          setMsg({ ok: false, text: "A confirmação da nova senha não coincide." });
+          return;
+        }
+        try {
+          const { invoke } = await import("@tauri-apps/api/core");
+          const ok = await invoke<boolean>("verify_password", { usuarioId: user.id, senha: senhaAtual });
+          if (!ok) {
+            setMsg({ ok: false, text: "Senha atual incorreta." });
+            return;
+          }
+        } catch {
+          // Modo web (sem comando Rust verify_password): a validação da senha atual não é
+          // possível aqui — a troca é protegida apenas pela confirmação dupla da nova senha.
+        }
       }
+      // Uma única chamada: update_usuario trata senha vazia como "manter a atual"
+      await api.usuarios.update(user.id!, { nome, email: user.email, perfil: user.perfil, senha: senhaNova || "" });
       setMsg({ ok: true, text: "Perfil atualizado com sucesso!" });
       setSenhaAtual("");
       setSenhaNova("");
+      setSenhaNovaConf("");
     } catch (e) {
       setMsg({ ok: false, text: "Erro: " + (e instanceof Error ? e.message : "") });
     } finally {
@@ -108,6 +128,11 @@ export default function Perfil() {
                 <label className="block text-sm font-medium text-gray-700">Nova senha</label>
                 <input type="password" value={senhaNova} onChange={(e) => setSenhaNova(e.target.value)}
                   className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Mínimo 4 caracteres" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Confirmar nova senha</label>
+                <input type="password" value={senhaNovaConf} onChange={(e) => setSenhaNovaConf(e.target.value)}
+                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" placeholder="Repita a nova senha" />
               </div>
             </div>
           </div>

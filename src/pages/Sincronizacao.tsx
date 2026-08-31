@@ -1,39 +1,73 @@
 import { useState, useRef, useEffect } from "react";
 import { api } from "../lib/api";
+import { getCloudConfig, setCloudConfig, clearCloudConfig, cloudPullAll, cloudPushAll } from "../lib/cloudDb";
+import { hasVault, isUnlocked, tryRestoreSession, unlockVault, createOrUpdateVault } from "../lib/vault";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Download, Upload, RefreshCw, FileJson, CheckCircle, AlertTriangle, Cloud, CloudOff } from "lucide-react";
+import { ArrowLeft, Download, Upload, RefreshCw, FileJson, CheckCircle, AlertTriangle, Cloud, CloudOff, Database, CloudUpload } from "lucide-react";
 
 export default function Sincronizacao() {
   const navigate = useNavigate();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [mensagem, setMensagem] = useState("");
   const [isDesktop, setIsDesktop] = useState<boolean | null>(null);
-  const [autoSync, setAutoSync] = useState(false);
-  const [githubConfig, setGithubConfig] = useState({ owner: "", repo: "", path: "sync_data.json", token: "" });
-  const [hasConfig, setHasConfig] = useState(false);
+  const [autoSync, setAutoSync] = useState(api.sync.isAutoSyncEnabled());
+  const [githubConfig, setGithubConfig] = useState({ owner: "SuporteTI321", repo: "estoque-sync", path: "sync_data.json", token: "" });
+  const [hasConfig, setHasConfig] = useState(() => {
+    const c = api.sync.getGithubConfig();
+    return !!(c && c.owner && c.repo && c.token);
+  });
   const [lastSync, setLastSync] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // ---- Banco na nuvem (com cofre) ----
+  const [cloudCfg, setCloudCfg] = useState({ url: "", key: "" });
+  const [hasCloud, setHasCloud] = useState(() => !!getCloudConfig());
+  const [cloudStatus, setCloudStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [cloudMsg, setCloudMsg] = useState("");
+  const [vaultPw, setVaultPw] = useState("");
+  const [vaultLocked, setVaultLocked] = useState(() => hasVault() && !isUnlocked());
+
+  useEffect(() => {
+    const c = getCloudConfig();
+    if (c) setCloudCfg(c);
+    // Tenta restaurar sessão do cofre
+    tryRestoreSession().then((ok: boolean) => { if (ok) setVaultLocked(false); });
+  }, []);
+
   // Carregar config existente
   useEffect(() => {
-    const config = api.sync.getGithubConfig();
-    if (config) {
-      setGithubConfig(config);
-      setHasConfig(true);
-    }
-    setAutoSync(api.sync.isAutoSyncEnabled());
-    setLastSync(localStorage.getItem("sync_last_sync"));
-
-    // Detectar desktop
+    // 1. Tenta carregar do Tauri primeiro (Desktop)
     (async () => {
       try {
         const { invoke } = await import("@tauri-apps/api/core");
-        await invoke("export_all_data");
-        setIsDesktop(true);
+        const rustConfig: any = await invoke("read_sync_config");
+        if (rustConfig && rustConfig.owner) {
+          setGithubConfig(rustConfig);
+          setHasConfig(true);
+          setAutoSync(!!rustConfig.auto_enabled);
+          // Sincroniza para localStorage tambem (sem o token, que fica só no Rust/cofre)
+          localStorage.setItem("sync_github_owner", rustConfig.owner);
+          localStorage.setItem("sync_github_repo", rustConfig.repo);
+          localStorage.setItem("sync_github_path", rustConfig.path || "sync_data.json");
+          localStorage.setItem("sync_auto_enabled", String(!!rustConfig.auto_enabled));
+          setIsDesktop(true);
+          return;
+        }
       } catch {
         setIsDesktop(false);
       }
+      // 2. Fallback: localStorage (Web)
+      const config = api.sync.getGithubConfig();
+      if (config && config.owner && config.repo && config.token) {
+        setGithubConfig(config);
+        setHasConfig(true);
+      } else {
+        // Mantem os valores padrao preenchidos (owner/repo/path/token)
+        // hasConfig ja comeca true com os valores padrao
+      }
+      setAutoSync(api.sync.isAutoSyncEnabled());
     })();
+    setLastSync(localStorage.getItem("sync_last_sync"));
   }, []);
 
   async function handleExportar() {
@@ -126,6 +160,80 @@ export default function Sincronizacao() {
     } catch (e: any) {
       setStatus("error");
       setMensagem(`Erro: ${e.message || e}`);
+    }
+  }
+
+  // ---- Banco na nuvem (com cofre criptografado) ----
+  async function handleSaveCloud() {
+    const isUrlOk = cloudCfg.url.includes("supabase.co");
+    const isKeyOk = cloudCfg.key.startsWith("ey") || cloudCfg.key.startsWith("sb_");
+    if (!isUrlOk || !isKeyOk) {
+      setCloudStatus("error");
+      setCloudMsg("Verifique a URL (https://xxx.supabase.co) e a key (eyJ... ou sb_publishable_...).");
+      return;
+    }
+    if (!vaultPw) {
+      setCloudStatus("error");
+      setCloudMsg("Defina uma senha mestra para o cofre — só você saberá. Ela criptografa as chaves localmente.");
+      return;
+    }
+    try {
+      await createOrUpdateVault({ cloud_url: cloudCfg.url, cloud_key: cloudCfg.key }, vaultPw);
+      // Mantém compatibilidade legada
+      setCloudConfig(cloudCfg.url, cloudCfg.key);
+      setHasCloud(true);
+      setVaultLocked(false);
+      setCloudStatus("success");
+      setCloudMsg("Cofre criado — chaves criptografadas! Recarregando...");
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (e: any) {
+      setCloudStatus("error");
+      setCloudMsg(e.message || String(e));
+    }
+  }
+
+  async function handleUnlockVault() {
+    try {
+      const ok = await unlockVault(vaultPw);
+      if (!ok) { setCloudStatus("error"); setCloudMsg("Senha incorreta"); return; }
+      const c = getCloudConfig();
+      if (c) setCloudCfg(c);
+      setVaultLocked(false);
+      setHasCloud(!!c);
+      setCloudStatus("success");
+      setCloudMsg("Cofre desbloqueado");
+    } catch (e: any) {
+      setCloudStatus("error");
+      setCloudMsg(e.message || String(e));
+    }
+  }
+
+  async function handleCloudPush() {
+    if (!confirm("Enviar TODOS os dados locais para a nuvem? Isso SUBSTITUIRA os dados atuais da nuvem.")) return;
+    setCloudStatus("loading");
+    setCloudMsg("Enviando dados locais para a nuvem...");
+    try {
+      const total = await cloudPushAll();
+      setCloudStatus("success");
+      setCloudMsg(`${total} registros enviados. Outros dispositivos agora veem esses dados.`);
+    } catch (e: any) {
+      setCloudStatus("error");
+      setCloudMsg(`Erro: ${e.message || e}`);
+    }
+  }
+
+  async function handleCloudPull() {
+    if (!confirm("Baixar dados da nuvem? Isso SUBSTITUIRA os dados locais deste dispositivo.")) return;
+    setCloudStatus("loading");
+    setCloudMsg("Baixando dados da nuvem...");
+    try {
+      const total = await cloudPullAll();
+      setCloudStatus("success");
+      setCloudMsg(`${total} registros recebidos. Recarregando...`);
+      setTimeout(() => window.location.reload(), 1500);
+    } catch (e: any) {
+      setCloudStatus("error");
+      setCloudMsg(`Erro: ${e.message || e}`);
     }
   }
 
@@ -251,6 +359,65 @@ export default function Sincronizacao() {
                 Limpar
               </button>
             </div>
+          </div>
+        )}
+      </div>
+
+      {/* === BANCO DE DADOS NA NUVEM === */}
+      <div className="rounded-xl border border-blue-200 bg-blue-50/50 p-5 shadow-sm">
+        <div className="mb-4 flex items-center gap-2">
+          <Database className="h-5 w-5 text-blue-600" />
+          <h3 className="text-sm font-semibold text-gray-900">Banco de Dados na Nuvem (Supabase)</h3>
+          {hasCloud && (
+            <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-medium text-green-800">
+              <Cloud className="h-3 w-3" /> Conectado
+            </span>
+          )}
+        </div>
+        <p className="mb-4 text-xs text-gray-600">
+          Configure um projeto gratuito no supabase.com, execute o script <code>supabase/schema.sql</code> no SQL Editor
+          e cole aqui a URL e a anon key. Todos os dispositivos passam a compartilhar o mesmo banco.
+        </p>
+
+        {cloudStatus !== "idle" && (
+          <div className={`mb-4 rounded-lg p-3 text-sm ${
+            cloudStatus === "success" ? "bg-green-50 text-green-800" :
+            cloudStatus === "error" ? "bg-red-50 text-red-800" : "bg-blue-50 text-blue-800"
+          }`}>
+            {cloudMsg}
+          </div>
+        )}
+
+        {vaultLocked ? (
+          <div className="space-y-3">
+            <p className="text-xs text-amber-700 bg-amber-50 rounded-lg p-3">🔒 Cofre trancado — digite sua senha mestra para desbloquear.</p>
+            <input type="password" placeholder="Senha mestra" value={vaultPw} onChange={(e) => setVaultPw(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm w-full" />
+            <button onClick={handleUnlockVault} className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">Desbloquear</button>
+          </div>
+        ) : !hasCloud ? (
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-3">
+              <input placeholder="Project URL (https://xxxx.supabase.co)" value={cloudCfg.url} onChange={(e) => setCloudCfg({ ...cloudCfg, url: e.target.value })} className="rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              <input placeholder="Anon public key (eyJ...)" value={cloudCfg.key} onChange={(e) => setCloudCfg({ ...cloudCfg, key: e.target.value })} className="rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs" />
+              <input type="password" placeholder="Senha mestra do cofre (só você saberá)" value={vaultPw} onChange={(e) => setVaultPw(e.target.value)} className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm" />
+            </div>
+            <button onClick={handleSaveCloud} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Salvar no Cofre (criptografado)</button>
+            <p className="text-[11px] text-gray-500">As chaves são criptografadas com sua senha (PBKDF2 + AES-GCM). Sem a senha ninguém lê — nem inspecionando o navegador.</p>
+          </div>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            <button onClick={handleCloudPush} disabled={cloudStatus === "loading"}
+              className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 disabled:opacity-50">
+              <CloudUpload className="h-4 w-4" /> Enviar dados locais para nuvem
+            </button>
+            <button onClick={handleCloudPull} disabled={cloudStatus === "loading"}
+              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+              <Download className="h-4 w-4" /> Baixar dados da nuvem
+            </button>
+            <button onClick={() => { clearCloudConfig(); setHasCloud(false); setCloudCfg({ url: "", key: "" }); }}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+              Desconectar
+            </button>
           </div>
         )}
       </div>

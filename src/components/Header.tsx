@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Bell, HelpCircle, Search, ChevronDown, LogOut, AlertCircle, AlertTriangle } from "lucide-react";
+import { Bell, HelpCircle, Search, ChevronDown, LogOut, AlertCircle, AlertTriangle, Menu } from "lucide-react";
 import type { Usuario, Alerta, Produto } from "../lib/types";
 import { api } from "../lib/api";
 
@@ -8,9 +8,10 @@ interface HeaderProps {
   title: string;
   subtitle?: string;
   onLogout: () => void;
+  onMenu?: () => void;
 }
 
-export default function Header({ user, title, subtitle, onLogout }: HeaderProps) {
+export default function Header({ user, title, subtitle, onLogout, onMenu }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -79,7 +80,12 @@ export default function Header({ user, title, subtitle, onLogout }: HeaderProps)
     .toUpperCase();
 
   return (
-    <header className="flex h-16 items-center gap-4 border-b border-gray-200 bg-white px-6">
+    <header className="sticky top-0 z-40 flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 md:px-6">
+      {onMenu && (
+        <button onClick={onMenu} className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100 md:hidden">
+          <Menu className="h-5 w-5" />
+        </button>
+      )}
       <div className="min-w-0 flex-1">
         <h1 className="text-xl font-bold text-gray-900">{title}</h1>
         {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}

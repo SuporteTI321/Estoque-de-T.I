@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "./lib/useAuth";
 import { syncAllFromBackend, api } from "./lib/api";
 import Login from "./pages/Login";
@@ -42,34 +42,37 @@ function Bootstrap() {
 
     injectSyncConfig()
       .then(() => syncAllFromBackend())
-      .catch(() => {})
+      .catch((e) => console.warn("[Bootstrap] sync inicial falhou:", e))
       .finally(() => setReady(true));
   }, []);
 
-  // Auto-sync periódico — atualiza todas as janelas a cada 30s
+  // Auto-sync consolidado — pull GitHub + syncAll a cada 30s (uma única interval)
   useEffect(() => {
     if (!ready) return;
-    const interval = setInterval(syncAllFromBackend, 30000);
-    return () => clearInterval(interval);
-  }, [ready]);
 
-  // Sync automatica via GitHub — pull a cada 30s se habilitado
-  useEffect(() => {
-    if (!ready) return;
-    if (!api.sync.isAutoSyncEnabled()) return;
+    const isDesktop = !!(window as any).__TAURI_INTERNALS__;
+    const hasGithubConfig = !!localStorage.getItem("sync_github_token");
+    const githubEnabled = isDesktop || api.sync.isAutoSyncEnabled();
 
-    // Pull imediato ao habilitar
-    api.sync.pullFromGithub().then((r) => {
-      if (r.changed) window.location.reload();
-    }).catch(() => {});
+    // Pull imediato ao iniciar (se GitHub configurado)
+    if (githubEnabled && hasGithubConfig) {
+      api.sync.pullFromGithub().then(async (r) => {
+        if (r.changed) await syncAllFromBackend();
+      }).catch((e) => console.warn("[Bootstrap] pull GitHub inicial falhou:", e));
+    }
 
-    // Polling a cada 30s
     const interval = setInterval(async () => {
-      if (!api.sync.isAutoSyncEnabled()) return;
       try {
-        const r = await api.sync.pullFromGithub();
-        if (r.changed) window.location.reload();
-      } catch {}
+        // GitHub pull primeiro (se habilitado)
+        if (githubEnabled && hasGithubConfig) {
+          const r = await api.sync.pullFromGithub();
+          if (r.changed) { await syncAllFromBackend(); return; }
+        }
+        // Senão, apenas sync local
+        await syncAllFromBackend();
+      } catch (e) {
+        console.warn("[Bootstrap] sync periódico falhou:", e);
+      }
     }, 30000);
 
     return () => clearInterval(interval);
@@ -96,7 +99,7 @@ function Bootstrap() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(dados),
-        }).catch(() => {});
+        }).catch((e) => console.warn("[Bootstrap] backup falhou:", e));
       }
     };
     backup(); // executa já na inicialização
@@ -117,7 +120,6 @@ function Bootstrap() {
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     if (!loading && !user) navigate("/login", { replace: true });
@@ -142,7 +144,7 @@ function AppRoutes() {
       <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/entradas" element={<ProtectedRoute><Entradas /></ProtectedRoute>} />
       <Route path="/saida-registro" element={<ProtectedRoute><SaidaRegistro /></ProtectedRoute>} />
-            <Route path="/inventario" element={<ProtectedRoute><Inventario /></ProtectedRoute>} />
+      <Route path="/inventario" element={<ProtectedRoute><Inventario /></ProtectedRoute>} />
       <Route path="/categorias" element={<ProtectedRoute><Categorias /></ProtectedRoute>} />
       <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />

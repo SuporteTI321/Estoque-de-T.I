@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import type { Usuario } from "./types";
 import { api } from "./api";
+import { clearAuthToken } from "./cloudDb";
 
 interface AuthContextType {
   user: Usuario | null;
@@ -37,6 +38,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   function logout() {
     setUser(null);
     localStorage.removeItem(STORAGE_KEY);
+    clearAuthToken();
   }
 
   return (

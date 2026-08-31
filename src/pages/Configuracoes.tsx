@@ -5,9 +5,18 @@ import PageHeader from "../components/PageHeader";
 import DataTable, { type Column } from "../components/DataTable";
 import Button from "../components/Button";
 import Window from "../components/Window";
-import type { Categoria, Produto, Movimentacao, Usuario } from "../lib/types";
-import { api, store } from "../lib/api";
+import type { Categoria, Usuario } from "../lib/types";
+import { api } from "../lib/api";
+import { CATS_PADRAO, normCat } from "../lib/constants";
 import { useAuth } from "../lib/useAuth";
+import { csvSafe } from "./shared";
+
+/** Chaves almox_* de dados permitidas em imports (nunca permitir chaves sensíveis como estoque_ti_user). */
+const CHAVES_IMPORT_PERMITIDAS = [
+  "almox_lojas", "almox_categorias", "almox_fornecedores", "almox_produtos",
+  "almox_usuarios", "almox_movimentacoes", "almox_solicitacoes", "almox_solicitacao_itens",
+  "almox_pedidos", "almox_pedido_itens", "almox_alertas",
+];
 
 type Tab = "categorias" | "usuarios" | "perfil" | "geral";
 
@@ -32,9 +41,9 @@ export default function Configuracoes() {
   useEffect(() => {
     const carregar = async () => {
       try {
-        const [lojas, categorias, produtos, usuarios, movimentacoes, pedidos, alertas] = await Promise.all([
+        const [_lojas, categorias, produtos, usuarios, movimentacoes, pedidos, alertas] = await Promise.all([
           api.lojas.list().then(r => Array.isArray(r) ? r.length : 0).catch(() => 0),
-          Promise.resolve().then(() => { try { const d = JSON.parse(localStorage.getItem("almox_categorias") || "[]"); return Array.isArray(d) ? d.length : 0; } catch { return 0; } }),
+          api.categorias.list().then(r => Array.isArray(r) ? r.length : 0).catch(() => 0),
           api.produtos.list().then(r => Array.isArray(r) ? r.length : 0).catch(() => 0),
           api.usuarios.list().then(r => Array.isArray(r) ? r.length : 0).catch(() => 0),
           api.movimentacoes.list().then(r => Array.isArray(r) ? r.length : 0).catch(() => 0),
@@ -54,15 +63,14 @@ export default function Configuracoes() {
     carregar();
   }, []);
 
+  // Alertas não entram no reset: não existe comando Rust para limpá-los no SQLite desktop
   const resetTargetsState = {
     almox_movimentacoes: true,
-    almox_alertas: true,
   };
   const [resetTargets, setResetTargets] = useState<Record<string, boolean>>(resetTargetsState);
 
   const RESET_OPTIONS = [
     { key: "almox_movimentacoes", label: "Movimentações", desc: "Remove entradas, saídas e transferências" },
-    { key: "almox_alertas", label: "Alertas", desc: "Remove alertas de estoque" },
   ];
 
   async function resetAll() {
@@ -74,8 +82,24 @@ export default function Configuracoes() {
       selected.forEach(k => localStorage.removeItem(k));
       try {
         const { invoke } = await import("@tauri-apps/api/core");
-        if (selected.includes("almox_produtos")) await invoke("delete_all_produtos", { usuarioId: user?.id ?? 0 }).catch(() => {});
         if (selected.includes("almox_movimentacoes")) await invoke("delete_all_movimentacoes", { usuarioId: user?.id ?? 0 }).catch(() => {});
+        // Limitação: alertas não são limpos no SQLite desktop (não há comando Rust delete_all_alertas)
+      } catch {}
+      // Web + nuvem: limpa as tabelas compartilhadas tambem
+      try {
+        const { getCloudConfig, del } = await import("../lib/cloudDb");
+        if (getCloudConfig()) {
+          if (selected.includes("almox_movimentacoes")) {
+            try {
+              await del("movimentacoes", {});
+            } catch {
+              // cloudDb.del passou a exigir match específico (deleção total bloqueada lá);
+              // avisa o usuário em vez de falhar em silêncio.
+              alert("As movimentações locais foram limpas, mas não foi possível limpá-las na nuvem automaticamente.");
+            }
+          }
+          // Limitação: idem alertas — sem comando Rust correspondente
+        }
       } catch {}
       localStorage.setItem("almox_reset_done", "1");
       localStorage.setItem("almox_active_tab", "geral");
@@ -84,12 +108,6 @@ export default function Configuracoes() {
     } catch (e) {
       alert("Erro ao resetar: " + String(e));
     }
-  }
-
-  function getStats() {
-    const keys = ["almox_categorias","almox_produtos","almox_usuarios","almox_movimentacoes","almox_pedidos","almox_alertas"];
-    const labels: Record<string,string> = {almox_categorias:"Categorias",almox_produtos:"Produtos",almox_usuarios:"Usuários",almox_movimentacoes:"Movimentações",almox_pedidos:"Pedidos",almox_alertas:"Alertas"};
-    return keys.map(k => ({ key: k, label: labels[k] || k, count: (() => { try { return JSON.parse(localStorage.getItem(k) || "[]").length; } catch { return 0; }})() }));
   }
 
   function exportData() {
@@ -126,6 +144,9 @@ export default function Configuracoes() {
         const text = await file.text();
         const map = JSON.parse(text);
         for (const key of Object.keys(map)) {
+          // Whitelist: só chaves almox_* de dados e apenas listas — nunca credenciais/configs sensíveis
+          if (!CHAVES_IMPORT_PERMITIDAS.includes(key)) continue;
+          if (!Array.isArray(map[key])) continue;
           localStorage.setItem(key, JSON.stringify(map[key]));
         }
         setMsg({ ok: true, text: "Dados importados! Recarregando..." });
@@ -213,6 +234,9 @@ export default function Configuracoes() {
           } catch {}
         }
         for (const key of Object.keys(map)) {
+          // Whitelist: só chaves almox_* de dados e apenas listas — nunca credenciais/configs sensíveis
+          if (!CHAVES_IMPORT_PERMITIDAS.includes(key)) continue;
+          if (!Array.isArray(map[key])) continue;
           localStorage.setItem(key, JSON.stringify(map[key]));
         }
         setMsg({ ok: true, text: `Importados dados de ${Object.keys(map).length} tabela(s)! Recarregando...` });
@@ -240,7 +264,7 @@ export default function Configuracoes() {
       for (const p of produtos) {
         csv.push(colunas.map(c => {
           const v = p[c.key] ?? "";
-          return `"${String(v).replace(/"/g, '""')}"`;
+          return '"' + csvSafe(String(v).replace(/"/g, '""')) + '"';
         }).join(","));
       }
       const blob = new Blob(["\ufeff" + csv.join("\n")], { type: "text/csv;charset=utf-8" });
@@ -269,7 +293,7 @@ export default function Configuracoes() {
         if (lines.length < 2) throw new Error("CSV vazio");
         const raw = lines[0];
         const sep = raw.includes(";") ? ";" : ",";
-        const headers = raw.split(sep).map((h: string) => h.replace(/^["']|["']$/g, "").replace(/^\uFEFF/, "").trim().toLowerCase());
+        const headers = parseCSVLine(raw, sep).map((h: string) => h.replace(/^\uFEFF/, "").trim().toLowerCase());
         const colunas = [
           { key: "nome", aliases: ["produto", "nome", "descricao", "descrição", "prod"] },
           { key: "categoria_nome", aliases: ["categoria_nome", "categoria", "cat"] },
@@ -293,7 +317,7 @@ export default function Configuracoes() {
         let importados = 0;
         const novos: any[] = [];
         for (let i = 1; i < lines.length; i++) {
-          const parts = lines[i].split(sep).map((p: string) => p.replace(/^["']|["']$/g, "").trim());
+          const parts = parseCSVLine(lines[i], sep).map((p: string) => p.trim());
           if (parts.length < headers.length) continue;
           const prod: any = {};
           colMap.forEach(c => {
@@ -370,7 +394,7 @@ export default function Configuracoes() {
     input.click();
   }
 
-function parseCSVLine(line: string): string[] {
+function parseCSVLine(line: string, sep: string = ","): string[] {
     const result: string[] = [];
     let current = "";
     let inQuotes = false;
@@ -382,7 +406,7 @@ function parseCSVLine(line: string): string[] {
         else { current += ch; }
       } else {
         if (ch === '"') { inQuotes = true; }
-        else if (ch === ",") { result.push(current); current = ""; }
+        else if (ch === sep) { result.push(current); current = ""; }
         else { current += ch; }
       }
     }
@@ -545,7 +569,7 @@ function parseCSVLine(line: string): string[] {
       <div className="rounded-xl border border-gray-200 bg-white p-5">
         <h3 className="text-sm font-semibold text-gray-900 mb-1">Sobre</h3>
         <div className="text-xs text-gray-500 space-y-1">
-          <p><strong>Estoque de T.I</strong> v0.1.0</p>
+          <p><strong>Estoque de T.I</strong></p>
           <p>Sistema de controle de estoque e pedidos.</p>
           <p>Dados armazenados localmente no navegador.</p>
           <p className="mt-3 pt-3 border-t border-gray-100">
@@ -613,8 +637,9 @@ function CategoriasTab() {
     try { return JSON.parse(localStorage.getItem(EXCLUIDAS_KEY) || "[]"); } catch { return []; }
   }
   function marcarExcluida(nome: string) {
+    const n = normCat(nome); // mesma normalização usada na verificação de excluídas
     const lista = getExcluidas();
-    if (!lista.includes(nome.toLowerCase().trim())) lista.push(nome.toLowerCase().trim());
+    if (!lista.includes(n)) lista.push(n);
     localStorage.setItem(EXCLUIDAS_KEY, JSON.stringify(lista));
   }
 
@@ -648,7 +673,7 @@ function CategoriasTab() {
     };
     const descricao = form.descricao.trim() || autoDesc[nome] || nome;
     // Reativar categoria que tinha sido excluída (remove da lista de excluídas)
-    const lista = getExcluidas().filter(n => n !== nome.toLowerCase().trim());
+    const lista = getExcluidas().filter(n => n !== normCat(nome));
     localStorage.setItem(EXCLUIDAS_KEY, JSON.stringify(lista));
     await api.categorias.create({ nome, descricao, ativa: true });
     setOpen(false);
@@ -668,57 +693,18 @@ function CategoriasTab() {
     // Tenta remover do SQLite via Tauri
     try {
       const { invoke } = await import("@tauri-apps/api/core");
-      await invoke("delete_categoria", { id }).catch(() => {});
-    } catch {}
+      await invoke("delete_categoria", { id });
+    } catch {
+      alert("Não foi possível excluir a categoria do banco de dados. Ela pode reaparecer ao recarregar a página.");
+    }
     loadCats();
-  }
-
-  /** Normaliza nome de categoria: lowercase, trim, sem acentos, sem plural trailing 's' */
-  function normCat(s: string): string {
-    return s.toLowerCase().trim()
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // remove acentos
-      .replace(/s+$/, "");                                  // remove plural
   }
 
   function loadCats() {
   api.categorias.list().then(async (sqliteCats) => {
   const excluidas = getExcluidas();
   const existentes = sqliteCats && sqliteCats.length > 0 ? sqliteCats : [];
-  // 32 categorias padrão (nomes devem bater com o Rust seed quando possível)
-  const padrao: Categoria[] = [
-    { id: 1, nome: "Material de Escritório", descricao: "Papelaria e materiais administrativos", ativa: true },
-    { id: 2, nome: "Material de Limpeza", descricao: "Produtos de higiene e limpeza", ativa: true },
-    { id: 3, nome: "Ferramentas", descricao: "Ferramentas manuais e elétricas", ativa: true },
-    { id: 4, nome: "Material Elétrico", descricao: "Cabos, disjuntores e componentes elétricos", ativa: true },
-    { id: 5, nome: "EPI", descricao: "Equipamentos de proteção individual", ativa: true },
-    { id: 6, nome: "Informática", descricao: "Suprimentos e acessórios de informática", ativa: true },
-    { id: 7, nome: "Serviços", descricao: "Prestação de serviços terceirizados", ativa: true },
-    { id: 8, nome: "Decoração", descricao: "Itens de decoração e ambientação", ativa: true },
-    { id: 9, nome: "Utilidades", descricao: "Utensílios e itens diversos", ativa: true },
-    { id: 10, nome: "Construção", descricao: "Materiais de construção e reparos", ativa: true },
-    { id: 11, nome: "Descartáveis", descricao: "Produtos descartáveis em geral", ativa: true },
-    { id: 12, nome: "Diversos", descricao: "Itens não classificados", ativa: true },
-    { id: 13, nome: "Automotivo", descricao: "Peças e acessórios automotivos", ativa: true },
-    { id: 14, nome: "Móveis", descricao: "Móveis e utensílios para escritório", ativa: true },
-    { id: 15, nome: "Vestuário", descricao: "Uniformes e vestuário profissional", ativa: true },
-    { id: 16, nome: "Alimentos", descricao: "Alimentos e bebidas em geral", ativa: true },
-    { id: 17, nome: "Hidráulico", descricao: "Conexões, tubos, registros e materiais hidráulicos", ativa: true },
-    { id: 18, nome: "Embalagem", descricao: "Sacos, fitas, caixas e materiais para embalagem", ativa: true },
-    { id: 19, nome: "Copa / Cozinha", descricao: "Utensílios e descartáveis para copa e cozinha", ativa: true },
-    { id: 20, nome: "Sinalização", descricao: "Placas, fitas, cones e materiais de sinalização", ativa: true },
-    { id: 21, nome: "Manutenção Predial", descricao: "Tintas, massas, cimentos e materiais para manutenção", ativa: true },
-    { id: 22, nome: "Proteção e Segurança", descricao: "Extintores, câmeras, alarmes e materiais de segurança patrimonial", ativa: true },
-    { id: 23, nome: "Esporte e Lazer", descricao: "Bolas, redes, jogos e materiais esportivos", ativa: true },
-    { id: 24, nome: "Didático / Cultural", descricao: "Livros, revistas e material pedagógico", ativa: true },
-    { id: 25, nome: "Jardinagem", descricao: "Sementes, adubos, ferramentas e materiais para jardim", ativa: true },
-    { id: 26, nome: "Primeiros Socorros", descricao: "Curativos, medicamentos básicos e materiais hospitalares", ativa: true },
-    { id: 27, nome: "Fonte Colmeia", descricao: "Fontes de alimentação tipo colmeia para computadores", ativa: true },
-    { id: 28, nome: "Produto Fonte Colmeia", descricao: "Produtos relacionados a fontes de alimentação colmeia", ativa: true },
-    { id: 29, nome: "Áudio e Vídeo", descricao: "Equipamentos, cabos, microfones e materiais de áudio e vídeo", ativa: true },
-    { id: 30, nome: "Eletrônicos", descricao: "Componentes, dispositivos e equipamentos eletrônicos", ativa: true },
-    { id: 31, nome: "Cabo de Força de PC", descricao: "Cabos de força, fontes de alimentação e periféricos de PC", ativa: true },
-    { id: 32, nome: "Cabo de Força de Impressora", descricao: "Cabos de força e fontes de alimentação para impressoras", ativa: true },
-  ];
+  const padrao = CATS_PADRAO;
   // Sincroniza padrão → SQLite (cria as que faltam, usando normalização)
   const sqlNormSet = new Set(existentes.map((c: any) => normCat(c.nome)));
   const { invoke } = await import("@tauri-apps/api/core");
@@ -808,7 +794,7 @@ function CategoriasTab() {
 function UsuariosTab() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
 
-  useEffect(() => { api.usuarios.list().then(setUsuarios); }, []);
+  useEffect(() => { api.usuarios.list().then(setUsuarios).catch(() => setUsuarios([])); }, []);
 
   const columns: Column<Usuario>[] = [
     { key: "nome", label: "Nome" },

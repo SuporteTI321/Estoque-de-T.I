@@ -1,3 +1,4 @@
+/// <reference types="vite/client" />
 /**
  * Utilitário para ler PDFs de pedidos e extrair:
  * - Nome da loja
@@ -5,14 +6,13 @@
  */
 
 import * as pdfjsLib from "pdfjs-dist";
+// Worker resolvido pelo Vite (?url) — bare specifier em new URL() quebra o build.
+import workerUrl from "pdfjs-dist/build/pdf.worker.min.mjs?url";
 
 // Carrega o worker do pdf.js
 if (typeof window !== "undefined" && "Worker" in window) {
   try {
-    pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-      "pdfjs-dist/build/pdf.worker.min.mjs",
-      import.meta.url
-    ).toString();
+    pdfjsLib.GlobalWorkerOptions.workerSrc = workerUrl;
   } catch {
     // Fallback: worker padrão pode não funcionar em alguns contextos
   }
@@ -73,7 +73,8 @@ export async function lerPDFdeBytes(data: ArrayBuffer | Uint8Array): Promise<Res
     return extrairDados(textoCompleto);
   } catch (e) {
     console.error("[pdfParser] Erro ao ler PDF:", e);
-    return { loja: null, solicitante: null, setor: null, codigo: null, numero_pedido: null, data_pedido: null, itens: [] };
+    // Propaga o erro para o caller exibir mensagem amigável (não confundir com "PDF sem dados")
+    throw new Error("Não foi possível ler o PDF. Verifique se o arquivo é válido e tente novamente.");
   }
 }
 
@@ -209,6 +210,9 @@ function extrairDados(texto: string): ResultadoLeitura {
 
   const itens = extrairTabela(linhas);
 
+  // Aproximação: derivamos o numero_pedido das iniciais da loja (até 5 letras),
+  // pois o PDF não traz um número de pedido confiável. Usado apenas como identificador
+  // provisório até o Pedido ser criado com numeração oficial (CODLOJA-ANO-SEQ).
   const prefixo = loja ? loja.split(/\s+/).map(w => w[0]).join('').toUpperCase().substring(0, 5) : 'PED';
   const numero_pedido = prefixo;
 
@@ -369,7 +373,8 @@ function extrairVertical(linhas: string[], inicio: number): ItemExtraido[] {
     if (!/^\d+$/.test(linha)) continue;
     const qtd = parseInt(linha, 10);
     if (qtd <= 0) continue;
-    if (i < 2) continue;
+    // Sem descarte por índice: linhas sem produto/unidade anteriores válidas
+    // já são filtradas pelos checks abaixo (não pular itens válidos no fallback).
     let produto = linhas[i - 2]?.trim() || "";
     let unidade = linhas[i - 1]?.trim() || "";
     if (ignorar.test(produto)) continue;

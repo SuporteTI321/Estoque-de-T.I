@@ -22,24 +22,29 @@ export default function Usuarios() {
   useEffect(() => { load(); }, []);
 
   function openNew() { setEditing(null); setForm({ perfil: "operador", ativo: true }); setOpen(true); }
-  function openEdit(u: Usuario) { setEditing(u); setForm(u); setOpen(true); }
+  function openEdit(u: Usuario) { setEditing(u); setForm({ ...u, senha: "" }); setOpen(true); } // nunca pré-preenche o hash
 
   async function save() {
     try {
+      if (!form.nome?.trim()) { alert("Informe o nome do usuário."); return; }
       if (editing?.id) {
-        const u = await api.usuarios.update(editing.id, form);
+        // Envia senha vazia quando não digitada — backend trata "" como "manter a senha atual"
+        const u = await api.usuarios.update(editing.id, { ...form, senha: form.senha || "" });
         setItems((p) => p.map((x) => (x.id === editing.id ? { ...x, ...u } : x)));
       } else {
+        if (!form.senha) { alert("A senha é obrigatória para novos usuários."); return; }
         const n = await api.usuarios.create(form as Omit<Usuario, "id">);
         if (n) setItems((p) => [...p, n]);
       }
       setOpen(false);
-    } catch (e) { alert("Erro: " + (e instanceof Error ? e.message : "")); }
+    } catch (e) { alert("Erro ao salvar usuário: " + (e instanceof Error ? e.message : "")); }
   }
 
   function del(u: Usuario) {
     if (!confirm(`Excluir ${u.nome}?`)) return;
-    api.usuarios.delete(u.id!).then(() => setItems((p) => p.filter((x) => x.id !== u.id))).catch(() => setItems((p) => p.filter((x) => x.id !== u.id)));
+    api.usuarios.delete(u.id!)
+      .then(() => setItems((p) => p.filter((x) => x.id !== u.id)))
+      .catch((e) => alert("Falha ao excluir usuário: " + (e instanceof Error ? e.message : e)));
   }
 
   const perfilBadge = (p: string) => {
@@ -97,7 +102,8 @@ export default function Usuarios() {
           <div>
             <label className="block text-sm font-medium text-gray-700">Senha</label>
             <input type="password" value={form.senha || ""} onChange={(e) => setForm({ ...form, senha: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm" />
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              placeholder={editing ? "Deixe vazio para manter a senha atual" : "Senha do usuário"} />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Perfil</label>

@@ -1,13 +1,15 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
-  BarChart3, FileBarChart,
-  Settings, Tag, RefreshCw,
+  BarChart3, FileBarChart, Tag,
+  Settings, RefreshCw,
 } from "lucide-react";
 import type { Usuario } from "../lib/types";
 
 interface SidebarProps {
   user: Usuario;
+  open?: boolean;
+  onClose?: () => void;
 }
 
 interface NavItem {
@@ -25,23 +27,28 @@ const NAV: NavItem[] = [
   { to: "/saida-registro", label: "Saída", icon: ArrowUpFromLine },
   { to: "/inventario", label: "Inventário", icon: BarChart3 },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
+  { to: "/etiquetas", label: "Etiquetas", icon: Tag },
 
-  { to: "/configuracoes", label: "Configuracoes", icon: Settings, adminOnly: true },
+  { to: "/configuracoes", label: "Configurações", icon: Settings, adminOnly: true },
   { to: "/sincronizacao", label: "Sincronizar", icon: RefreshCw, adminOnly: true },
 ];
 
-export default function Sidebar({ user }: SidebarProps) {
+export default function Sidebar({ user, open = false, onClose }: SidebarProps) {
   const isAdmin = user.perfil === "admin";
   const items = NAV.filter(n => !n.adminOnly || isAdmin);
 
   return (
-    <aside className="flex w-60 shrink-0 flex-col border-r border-gray-200 bg-white">
+    <>
+      {/* backdrop mobile */}
+      {open && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={onClose} />}
+      <aside className={`flex w-60 shrink-0 flex-col border-r border-gray-200 bg-white fixed inset-y-0 left-0 z-40 transform transition-transform duration-200 lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+
       {/* Brand */}
       <div className="flex items-center gap-3 border-b border-gray-200 px-5 py-4">
-        {(() => { const logo = localStorage.getItem("almox_logo"); return logo ? <img src={logo} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" /> : <img src="/icons/icon.png" alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" />; })()}
+        {(() => { const logo = localStorage.getItem("almox_logo"); return logo ? <img src={logo} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" /> : <img src={"./icons/icon.png"} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" />; })()}
         <div>
           <div className="text-sm font-bold text-gray-900">Controle de Estoque</div>
-          <div className="text-[11px] text-gray-500">Controle de Estoque</div>
+          <div className="text-[11px] text-gray-500">Sistema de Gestão</div>
         </div>
       </div>
 
@@ -83,5 +90,6 @@ export default function Sidebar({ user }: SidebarProps) {
         {user.loja_nome && <div className="mt-0.5">{user.loja_nome}</div>}
       </div>
     </aside>
+    </>
   );
 }

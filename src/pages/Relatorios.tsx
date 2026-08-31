@@ -3,13 +3,14 @@ import { BarChart3, Download, FileText } from "lucide-react";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
 import Button from "../components/Button";
-import type { Produto } from "../lib/types";
+import type { Movimentacao, Produto } from "../lib/types";
 import { api } from "../lib/api";
+import { csvSafe } from "./shared";
 
 function exportCSV(produtos: Produto[], title: string) {
   const headers = "Código,Produto,Categoria,Unidade,Estoque,Estoque Mínimo,Preço Compra";
   const rows = produtos.map(p =>
-    `"${p.codigo}","${p.nome}","${p.categoria_nome || ""}","${p.unidade || ""}",${p.estoque},${p.estoque_minimo},"${(p.preco_compra || 0).toFixed(2)}"`
+    `"${csvSafe(p.codigo)}","${csvSafe(p.nome)}","${csvSafe(p.categoria_nome || "")}","${csvSafe(p.unidade || "")}",${p.estoque},${p.estoque_minimo},"${csvSafe((p.preco_compra || 0).toFixed(2))}"`
   );
   const bom = "\uFEFF";
   const csv = bom + headers + "\n" + rows.join("\n");
@@ -23,6 +24,62 @@ function exportCSV(produtos: Produto[], title: string) {
 }
 
 import { printHtml } from "../lib/printHtml";
+
+const TIPO_LABEL: Record<string, string> = { entrada: "Entrada", saida: "Saída", transferencia: "Transferência" };
+
+/** Formata "YYYY-MM-DD[...]" como DD/MM/AAAA (fuso local, sem deslocamento de UTC). */
+function fmtData(d: string) {
+  const p = (d || "").slice(0, 10).split("-");
+  return p.length === 3 ? `${p[2]}/${p[1]}/${p[0]}` : d;
+}
+
+function downloadCsv(csv: string, title: string) {
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `${title}_${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportMovsCSV(movs: Movimentacao[], title: string) {
+  const headers = "Data,Tipo,Código,Produto,Quantidade,Loja Origem,Loja Destino";
+  const rows = movs.map(m =>
+    `"${fmtData(m.data_movimento)}","${TIPO_LABEL[m.tipo] || m.tipo}","${csvSafe(m.produto_codigo || "")}","${csvSafe(m.produto_nome || "")}",${m.quantidade},"${csvSafe(m.loja_origem_nome || "")}","${csvSafe(m.loja_destino_nome || "")}"`
+  );
+  downloadCsv("\uFEFF" + headers + "\n" + rows.join("\n"), title);
+}
+
+function exportMovsPDF(movs: Movimentacao[], title: string) {
+  const agora = new Date().toLocaleString("pt-BR");
+  let html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title>
+    <style>
+      body{font-family:Arial,sans-serif;font-size:12px;margin:20px;}
+      h1{font-size:18px;margin-bottom:4px;}
+      .sub{color:#666;font-size:11px;margin-bottom:16px;}
+      table{width:100%;border-collapse:collapse;}
+      th{background:#f3f4f6;text-align:left;padding:6px 8px;font-size:11px;text-transform:uppercase;border:1px solid #e5e7eb;}
+      td{padding:5px 8px;border:1px solid #e5e7eb;font-size:11px;}
+      .r{text-align:right;}
+      @media print{body{margin:0;}}
+    </style></head><body>
+    <h1>${title}</h1>
+    <div class="sub">Gerado em ${agora} — ${movs.length} movimentação(ões)</div>
+    <table>
+      <tr><th>Data</th><th>Tipo</th><th>Código</th><th>Produto</th><th class="r">Qtd</th><th>Loja Origem</th><th>Loja Destino</th></tr>`;
+  for (const m of movs) {
+    html += `<tr>
+      <td>${fmtData(m.data_movimento)}</td><td>${TIPO_LABEL[m.tipo] || m.tipo}</td>
+      <td>${m.produto_codigo || ""}</td><td>${m.produto_nome || ""}</td>
+      <td class="r">${m.quantidade}</td>
+      <td>${m.loja_origem_nome || "—"}</td><td>${m.loja_destino_nome || "—"}</td>
+    </tr>`;
+  }
+  html += `</table></body></html>`;
+
+  printHtml(html, title);
+}
 
 function exportPDF(produtos: Produto[], title: string) {
   const agora = new Date().toLocaleString("pt-BR");
@@ -56,7 +113,9 @@ function exportPDF(produtos: Produto[], title: string) {
 
 export default function Relatorios() {
   const [produtos, setProdutos] = useState<Produto[]>([]);
+  const [movimentacoes, setMovimentacoes] = useState<Movimentacao[]>([]);
   useEffect(() => { api.produtos.list().then(setProdutos).catch(() => setProdutos([])); }, []);
+  useEffect(() => { api.movimentacoes.list().then(setMovimentacoes).catch(() => setMovimentacoes([])); }, []);
 
   const relatorios = [
     {
@@ -68,8 +127,8 @@ export default function Relatorios() {
     {
       title: "Movimentações",
       desc: "Entradas, saídas e transferências por período.",
-      onPDF: () => exportPDF(produtos.filter(p => p.estoque > 0), "Movimentações"),
-      onExcel: () => exportCSV(produtos, "Movimentações"),
+      onPDF: () => exportMovsPDF(movimentacoes, "Movimentações"),
+      onExcel: () => exportMovsCSV(movimentacoes, "Movimentacoes"),
     },
     {
       title: "Estoque Crítico",

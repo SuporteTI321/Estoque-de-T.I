@@ -2,5 +2,5 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-    almoxarifado_pro_lib::run()
+    estoque_ti_lib::run()
 }

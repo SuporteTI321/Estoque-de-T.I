@@ -2,6 +2,7 @@ mod db;
 
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
+use base64::Engine;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2, Algorithm, Version, Params,
@@ -19,7 +20,7 @@ fn hash_password(password: &str) -> String {
         .to_string()
 }
 
-fn verify_password(password: &str, hash: &str) -> bool {
+fn check_password_hash(password: &str, hash: &str) -> bool {
     // Tenta verificar como Argon2
     if let Ok(parsed) = PasswordHash::new(hash) {
         return Argon2::default().verify_password(password.as_bytes(), &parsed).is_ok();
@@ -97,7 +98,9 @@ pub struct Usuario {
     pub id: i64,
     pub nome: String,
     pub email: String,
-    #[serde(skip_serializing)]
+    // default: leitura tolera ausencia de senha em exports antigos.
+    // A senha (hash Argon2) E serializada no export p/ sync; comandos ao frontend retornam senha vazia.
+    #[serde(default)]
     pub senha: String,
     pub perfil: String,
     pub loja_id: Option<i64>,
@@ -200,7 +203,7 @@ pub struct DashboardStats {
 
 #[tauri::command(rename_all = "snake_case")]
 fn delete_all_produtos(usuario_id: i64) -> Result<(), String> {
-    let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let mut conn = db::open_conn().map_err(|e| e.to_string())?;
     // Verificar se usuario e admin
     let perfil: String = conn
         .query_row("SELECT perfil FROM usuarios WHERE id=?1 AND ativo=1", params![usuario_id], |r| r.get(0))
@@ -208,7 +211,16 @@ fn delete_all_produtos(usuario_id: i64) -> Result<(), String> {
     if perfil != "admin" {
         return Err("Apenas administradores podem excluir todos os produtos".to_string());
     }
-    conn.execute("DELETE FROM produtos", []).map_err(|e| e.to_string())?;
+    // Excluir em transação, removendo antes os registros que referenciam produtos (FK)
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    tx.execute("DELETE FROM movimentacoes WHERE produto_id IN (SELECT id FROM produtos)", [])
+        .map_err(|e| e.to_string())?;
+    tx.execute("DELETE FROM pedido_itens WHERE produto_id IN (SELECT id FROM produtos)", [])
+        .map_err(|e| e.to_string())?;
+    tx.execute("DELETE FROM solicitacao_itens WHERE produto_id IN (SELECT id FROM produtos)", [])
+        .map_err(|e| e.to_string())?;
+    tx.execute("DELETE FROM produtos", []).map_err(|e| e.to_string())?;
+    tx.commit().map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -233,10 +245,77 @@ fn delete_produto(id: i64) -> Result<(), String> {
         .query_row("SELECT COALESCE(estoque, 0) FROM produtos WHERE id=?1", params![id], |r| r.get(0))
         .unwrap_or(0);
     if estoque > 0 {
-        let _ = conn.execute("UPDATE produtos SET estoque = 0, custo_total = 0 WHERE id=?1", params![id]);
+        conn.execute("UPDATE produtos SET estoque = 0, custo_total = 0 WHERE id=?1", params![id])
+            .map_err(|e| e.to_string())?;
     }
     conn.execute("DELETE FROM movimentacoes WHERE produto_id=?1", params![id]).map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM produtos WHERE id=?1", params![id]).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+/// Aplica o efeito de uma movimentação no estoque/custo do produto.
+fn aplicar_efeito_estoque(
+    conn: &rusqlite::Connection,
+    tipo: &str,
+    produto_id: i64,
+    quantidade: i64,
+    preco_compra: Option<f64>,
+) -> Result<(), String> {
+    if produto_id <= 0 {
+        return Ok(());
+    }
+    match tipo {
+        "entrada" => {
+            let preco = preco_compra.unwrap_or(0.0);
+            let qty = quantidade as f64;
+            conn.execute(
+                "UPDATE produtos SET estoque = estoque + ?1, custo_total = custo_total + (?2 * ?3) WHERE id=?4",
+                params![quantidade, preco, qty, produto_id],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+        "saida" | "transferencia" => {
+            conn.execute(
+                "UPDATE produtos SET estoque = MAX(0, estoque - ?1) WHERE id=?2",
+                params![quantidade, produto_id],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+        _ => {}
+    }
+    Ok(())
+}
+
+/// Reverte o efeito de uma movimentação no estoque/custo do produto.
+fn reverter_efeito_estoque(
+    conn: &rusqlite::Connection,
+    tipo: &str,
+    produto_id: i64,
+    quantidade: i64,
+    preco_compra: Option<f64>,
+) -> Result<(), String> {
+    if produto_id <= 0 {
+        return Ok(());
+    }
+    match tipo {
+        "entrada" => {
+            let preco = preco_compra.unwrap_or(0.0);
+            let qty = quantidade as f64;
+            conn.execute(
+                "UPDATE produtos SET estoque = MAX(0, estoque - ?1), custo_total = MAX(0, custo_total - (?2 * ?3)) WHERE id=?4",
+                params![quantidade, preco, qty, produto_id],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+        "saida" | "transferencia" => {
+            conn.execute(
+                "UPDATE produtos SET estoque = estoque + ?1 WHERE id=?2",
+                params![quantidade, produto_id],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+        _ => {}
+    }
     Ok(())
 }
 
@@ -248,19 +327,40 @@ fn update_movimentacao(
     unidade: Option<i64>,
     observacao: Option<String>,
 ) -> Result<Movimentacao, String> {
-    let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let mut conn = db::open_conn().map_err(|e| e.to_string())?;
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    // Estado antigo para reverter o efeito no estoque
+    let (tipo_antigo, prod_antigo, qtd_antiga, preco_antigo): (String, i64, i64, Option<f64>) = tx
+        .query_row(
+            "SELECT tipo, produto_id, quantidade, preco_compra FROM movimentacoes WHERE id=?1",
+            params![id],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+        )
+        .map_err(|_| "Movimentação não encontrada".to_string())?;
     if let Some(q) = quantidade {
-        conn.execute("UPDATE movimentacoes SET quantidade=?1 WHERE id=?2", params![q, id]).map_err(|e| e.to_string())?;
+        tx.execute("UPDATE movimentacoes SET quantidade=?1 WHERE id=?2", params![q, id]).map_err(|e| e.to_string())?;
     }
     if let Some(pc) = preco_compra {
-        conn.execute("UPDATE movimentacoes SET preco_compra=?1 WHERE id=?2", params![pc, id]).map_err(|e| e.to_string())?;
+        tx.execute("UPDATE movimentacoes SET preco_compra=?1 WHERE id=?2", params![pc, id]).map_err(|e| e.to_string())?;
     }
     if let Some(u) = unidade {
-        conn.execute("UPDATE movimentacoes SET unidade=?1 WHERE id=?2", params![u, id]).map_err(|e| e.to_string())?;
+        tx.execute("UPDATE movimentacoes SET unidade=?1 WHERE id=?2", params![u, id]).map_err(|e| e.to_string())?;
     }
     if let Some(o) = observacao {
-        conn.execute("UPDATE movimentacoes SET observacao=?1 WHERE id=?2", params![o, id]).map_err(|e| e.to_string())?;
+        tx.execute("UPDATE movimentacoes SET observacao=?1 WHERE id=?2", params![o, id]).map_err(|e| e.to_string())?;
     }
+    // Estado novo após as alterações
+    let (tipo_novo, prod_novo, qtd_nova, preco_novo): (String, i64, i64, Option<f64>) = tx
+        .query_row(
+            "SELECT tipo, produto_id, quantidade, preco_compra FROM movimentacoes WHERE id=?1",
+            params![id],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+        )
+        .map_err(|e| e.to_string())?;
+    // Reverter efeito antigo e aplicar o novo
+    reverter_efeito_estoque(&tx, &tipo_antigo, prod_antigo, qtd_antiga, preco_antigo)?;
+    aplicar_efeito_estoque(&tx, &tipo_novo, prod_novo, qtd_nova, preco_novo)?;
+    tx.commit().map_err(|e| e.to_string())?;
     // Retornar movimentação atualizada
     let mov = conn.query_row(
         "SELECT m.id, m.tipo, m.produto_id, COALESCE(m.produto_nome, p.nome), m.quantidade, m.loja_origem_id, COALESCE(m.loja_origem_nome, lo.nome), m.loja_destino_id, COALESCE(m.loja_destino_nome, ld.nome), m.usuario_id, m.observacao, m.data_movimento, m.preco_compra, m.unidade
@@ -278,9 +378,10 @@ fn update_movimentacao(
 
 #[tauri::command(rename_all = "snake_case")]
 fn delete_movimentacao(id: i64) -> Result<(), String> {
-    let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let mut conn = db::open_conn().map_err(|e| e.to_string())?;
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
     // Buscar dados da movimentação antes de deletar
-    let mov: Option<(String, i64, i64, Option<f64>)> = conn
+    let mov: Option<(String, i64, i64, Option<f64>)> = tx
         .query_row(
             "SELECT tipo, produto_id, quantidade, preco_compra FROM movimentacoes WHERE id=?1",
             params![id],
@@ -288,21 +389,10 @@ fn delete_movimentacao(id: i64) -> Result<(), String> {
         )
         .ok();
     if let Some((tipo, produto_id, quantidade, preco)) = mov {
-        if tipo == "entrada" && produto_id > 0 {
-            let preco_val = preco.unwrap_or(0.0);
-            let qty = quantidade as f64;
-            let _ = conn.execute(
-                "UPDATE produtos SET estoque = MAX(0, estoque - ?1), custo_total = MAX(0, custo_total - (?2 * ?3)) WHERE id=?4",
-                params![quantidade, preco_val, qty, produto_id],
-            );
-        } else if tipo == "saida" && produto_id > 0 {
-            let _ = conn.execute(
-                "UPDATE produtos SET estoque = estoque + ?1 WHERE id=?2",
-                params![quantidade, produto_id],
-            );
-        }
+        reverter_efeito_estoque(&tx, &tipo, produto_id, quantidade, preco)?;
     }
-    conn.execute("DELETE FROM movimentacoes WHERE id=?1", params![id]).map_err(|e| e.to_string())?;
+    tx.execute("DELETE FROM movimentacoes WHERE id=?1", params![id]).map_err(|e| e.to_string())?;
+    tx.commit().map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -458,12 +548,16 @@ fn update_loja(id: i64, nome: String, codigo: String, endereco: Option<String>) 
         params![nome, codigo, endereco, id],
     )
     .map_err(|e| e.to_string())?;
+    let ativa: bool = conn
+        .query_row("SELECT ativa FROM lojas WHERE id=?1", params![id], |r| r.get::<_, i64>(0))
+        .map_err(|_| "Loja não encontrada".to_string())?
+        != 0;
     Ok(Loja {
         id,
         nome,
         codigo,
         endereco,
-        ativa: true,
+        ativa,
     })
 }
 
@@ -547,11 +641,15 @@ fn update_categoria(id: i64, nome: String, descricao: Option<String>) -> Result<
         params![nome, descricao, id],
     )
     .map_err(|e| e.to_string())?;
+    let ativa: bool = conn
+        .query_row("SELECT ativa FROM categorias WHERE id=?1", params![id], |r| r.get::<_, i64>(0))
+        .map_err(|_| "Categoria não encontrada".to_string())?
+        != 0;
     Ok(Categoria {
         id,
         nome,
         descricao,
-        ativa: true,
+        ativa,
     })
 }
 
@@ -634,6 +732,10 @@ fn update_fornecedor(
         params![nome, cnpj, contato, email, telefone, id],
     )
     .map_err(|e| e.to_string())?;
+    let ativo: bool = conn
+        .query_row("SELECT ativo FROM fornecedores WHERE id=?1", params![id], |r| r.get::<_, i64>(0))
+        .map_err(|_| "Fornecedor não encontrado".to_string())?
+        != 0;
     Ok(Fornecedor {
         id,
         nome,
@@ -641,7 +743,7 @@ fn update_fornecedor(
         contato,
         email,
         telefone,
-        ativo: true,
+        ativo,
     })
 }
 
@@ -786,6 +888,10 @@ fn update_produto(
             |r| r.get(0),
         )
         .ok();
+    let ativo: bool = conn
+        .query_row("SELECT ativo FROM produtos WHERE id=?1", params![id], |r| r.get::<_, i64>(0))
+        .map_err(|_| "Produto não encontrado".to_string())?
+        != 0;
     Ok(Produto {
         id,
         codigo,
@@ -803,7 +909,7 @@ fn update_produto(
         estoque,
         estoque_minimo,
         custo_total,
-        ativo: true,
+        ativo,
     })
 }
 
@@ -828,7 +934,7 @@ fn list_usuarios() -> Result<Vec<Usuario>, String> {
                 id: row.get(0)?,
                 nome: row.get(1)?,
                 email: row.get(2)?,
-                senha: row.get(3)?,
+                senha: String::new(), // Nunca expor hash ao frontend
                 perfil: row.get(4)?,
                 loja_id: row.get(5)?,
                 loja_nome: row.get(6)?,
@@ -846,13 +952,13 @@ fn list_usuarios() -> Result<Vec<Usuario>, String> {
 #[tauri::command(rename_all = "snake_case")]
 fn login(email: String, senha: String) -> Result<Usuario, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
-    // Busca usuario APENAS por email (senha verificada via Argon2)
+    // Busca usuario APENAS por email (senha verificada via Argon2), case-insensitive
     let mut stmt = conn
         .prepare(
             "SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.loja_id, l.nome, u.ativo
              FROM usuarios u
              LEFT JOIN lojas l ON u.loja_id = l.id
-             WHERE u.email=?1 AND u.ativo=1",
+             WHERE LOWER(u.email)=LOWER(?1) AND u.ativo=1",
         )
         .map_err(|e| e.to_string())?;
     let mut rows = stmt
@@ -861,7 +967,7 @@ fn login(email: String, senha: String) -> Result<Usuario, String> {
     if let Some(row) = rows.next().map_err(|e| e.to_string())? {
         let stored_hash: String = row.get(3).map_err(|e| e.to_string())?;
         // Verifica senha com Argon2 (ou fallback para texto plano)
-        if !verify_password(&senha, &stored_hash) {
+        if !check_password_hash(&senha, &stored_hash) {
             return Err("Credenciais inválidas".to_string());
         }
         // Migra senha de texto plano para Argon2 (lazy migration)
@@ -893,6 +999,8 @@ fn create_usuario(
     loja_id: Option<i64>,
 ) -> Result<Usuario, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
+    // Normaliza email para minúsculas (login é case-insensitive, evita duplicados)
+    let email = email.to_lowercase();
     let senha_hash = hash_password(&senha);
     conn.execute(
         "INSERT INTO usuarios (nome, email, senha, perfil, loja_id) VALUES (?1, ?2, ?3, ?4, ?5)",
@@ -904,7 +1012,7 @@ fn create_usuario(
         id,
         nome,
         email,
-        senha: senha_hash,
+        senha: String::new(), // Nunca retornar hash ao frontend
         perfil,
         loja_id,
         loja_nome: None,
@@ -922,7 +1030,15 @@ fn update_usuario(
     loja_id: Option<i64>,
 ) -> Result<Usuario, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
-    let senha_hash = hash_password(&senha);
+    // Normaliza email para minúsculas (login é case-insensitive)
+    let email = email.to_lowercase();
+    // Senha vazia = não alterar a senha atual
+    let senha_hash = if senha.is_empty() {
+        conn.query_row("SELECT senha FROM usuarios WHERE id=?1", params![id], |r| r.get(0))
+            .map_err(|_| "Usuário não encontrado".to_string())?
+    } else {
+        hash_password(&senha)
+    };
     conn.execute(
         "UPDATE usuarios SET nome=?1, email=?2, senha=?3, perfil=?4, loja_id=?5 WHERE id=?6",
         params![nome, email, senha_hash, perfil, loja_id, id],
@@ -932,12 +1048,22 @@ fn update_usuario(
         id,
         nome,
         email,
-        senha: senha_hash,
+        senha: String::new(), // Nunca retornar hash ao frontend
         perfil,
         loja_id,
         loja_nome: None,
         ativo: true,
     })
+}
+
+/// Valida a senha atual de um usuário (usado no Perfil antes de trocar a senha).
+#[tauri::command(rename_all = "snake_case")]
+fn verify_password(usuario_id: i64, senha: String) -> Result<bool, String> {
+    let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let hash: String = conn
+        .query_row("SELECT senha FROM usuarios WHERE id=?1", params![usuario_id], |r| r.get(0))
+        .map_err(|_| "Usuário não encontrado".to_string())?;
+    Ok(check_password_hash(&senha, &hash))
 }
 
 // ============================================================================
@@ -1000,71 +1126,77 @@ fn create_movimentacao(
     unidade: Option<i64>,
     data_movimento: Option<String>,
 ) -> Result<Movimentacao, String> {
+    eprintln!("[create_movimentacao] tipo={}, produto_id={}, quantidade={}, preco={:?}, unidade={:?}, data={:?}", tipo, produto_id, quantidade, preco_compra, unidade, data_movimento);
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     let now = chrono::Local::now().to_rfc3339();
     let dt = data_movimento.unwrap_or_else(|| now.clone());
 
-    // Atualizar estoque apenas se produto existe no catálogo
-    if tipo == "entrada" && produto_id > 0 {
-        let preco = preco_compra.unwrap_or(0.0);
-        let qty = quantidade as f64;
-        conn.execute(
-            "UPDATE produtos SET estoque = estoque + ?1, custo_total = custo_total + (?2 * ?3) WHERE id=?4",
-            params![quantidade, preco, qty, produto_id],
-        )
-        .map_err(|e| e.to_string())?;
-    } else if tipo == "saida" && produto_id > 0 {
-        conn.execute(
-            "UPDATE produtos SET estoque = MAX(0, estoque - ?1) WHERE id=?2",
-            params![quantidade, produto_id],
-        )
-        .map_err(|e| e.to_string())?;
-    } else if tipo == "transferencia" {
-        if let Some(orig) = loja_origem_id {
-            if produto_id > 0 {
-                conn.execute(
-                    "UPDATE produtos SET estoque = MAX(0, estoque - ?1) WHERE id=?2",
-                    params![quantidade, produto_id],
-                )
-                .map_err(|e| e.to_string())?;
-            }
-            let _ = orig;
-        }
-    }
-
-    // Desabilitar FK checks se produto_id = 0 (produto não cadastrado)
+    // Desabilitar FK checks se produto_id = 0 (produto não cadastrado).
+    // A FK é religada mesmo em caso de erro (guard abaixo), dentro de transação.
     if produto_id == 0 {
         conn.execute("PRAGMA foreign_keys = OFF", []).map_err(|e| e.to_string())?;
     }
+    let result = (|| -> Result<Movimentacao, String> {
+        let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
 
-    conn.execute(
-        "INSERT INTO movimentacoes (tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, preco_compra, unidade, data_movimento) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
-        params![tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, preco_compra, unidade, dt],
-    )
-    .map_err(|e| e.to_string())?;
+        // Atualizar estoque apenas se produto existe no catálogo.
+        // Nota: o estoque do produto é único/global (não há estoque por loja no schema),
+        // portanto "transferencia" registra a saída da loja de origem; a loja de destino
+        // fica registrada na própria movimentação (loja_destino_id/nome) para rastreio,
+        // sem gerar movimentação de entrada (o que dobraria a contagem de entradas).
+        if tipo == "entrada" && produto_id > 0 {
+            let preco = preco_compra.unwrap_or(0.0);
+            let qty = quantidade as f64;
+            tx.execute(
+                "UPDATE produtos SET estoque = estoque + ?1, custo_total = custo_total + (?2 * ?3) WHERE id=?4",
+                params![quantidade, preco, qty, produto_id],
+            )
+            .map_err(|e| e.to_string())?;
+        } else if tipo == "saida" && produto_id > 0 {
+            tx.execute(
+                "UPDATE produtos SET estoque = MAX(0, estoque - ?1) WHERE id=?2",
+                params![quantidade, produto_id],
+            )
+            .map_err(|e| e.to_string())?;
+        } else if tipo == "transferencia" && produto_id > 0 {
+            // Saída global: origem → destino registrados nos campos da movimentação
+            tx.execute(
+                "UPDATE produtos SET estoque = MAX(0, estoque - ?1) WHERE id=?2",
+                params![quantidade, produto_id],
+            )
+            .map_err(|e| e.to_string())?;
+        }
 
-    // Reabilitar FK checks
+        tx.execute(
+            "INSERT INTO movimentacoes (tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, preco_compra, unidade, data_movimento) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
+            params![tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, preco_compra, unidade, dt],
+        )
+        .map_err(|e| e.to_string())?;
+        let id = tx.last_insert_rowid();
+        tx.commit().map_err(|e| { eprintln!("[create_movimentacao] ERRO no commit: {}", e); e.to_string() })?;
+        eprintln!("[create_movimentacao] Sucesso! id={}", id);
+        Ok(Movimentacao {
+            id,
+            tipo,
+            produto_id,
+            produto_nome,
+            quantidade,
+            loja_origem_id,
+            loja_origem_nome,
+            loja_destino_id,
+            loja_destino_nome,
+            usuario_id,
+            observacao,
+            data_movimento: dt,
+            preco_compra,
+            unidade,
+        })
+    })();
+    // Reabilitar FK checks sempre, mesmo se o INSERT falhou
     if produto_id == 0 {
         conn.execute("PRAGMA foreign_keys = ON", []).map_err(|e| e.to_string())?;
     }
-
-    let id = conn.last_insert_rowid();
-    Ok(Movimentacao {
-        id,
-        tipo,
-        produto_id,
-        produto_nome,
-        quantidade,
-        loja_origem_id,
-        loja_origem_nome,
-        loja_destino_id,
-        loja_destino_nome,
-        usuario_id,
-        observacao,
-        data_movimento: dt,
-        preco_compra,
-        unidade,
-    })
+    result
 }
 
 // ============================================================================
@@ -1418,17 +1550,203 @@ pub struct SyncConfig {
     pub auto_enabled: bool,
 }
 
+/// Lê o token do cofre (vault.enc) — Rust puro, sem dependência de Python.
+fn read_token_from_vault() -> Option<String> {
+    use aes_gcm::{aead::Aead, Aes256Gcm, KeyInit, Nonce};
+    use pbkdf2::pbkdf2_hmac;
+    use sha2::Sha256;
+
+    let appdata = std::env::var("APPDATA").ok()?;
+    let vault_dir = std::path::PathBuf::from(&appdata).join("EstoqueTI");
+    let vault_path = vault_dir.join("vault.enc");
+
+    if !vault_path.exists() {
+        return None;
+    }
+
+    // Ler e decodificar base64
+    let raw_b64 = std::fs::read_to_string(&vault_path).ok()?;
+    let blob = base64::engine::general_purpose::STANDARD
+        .decode(raw_b64.trim())
+        .ok()?;
+
+    // Formato: salt(16) + iv(12) + ciphertext+tag
+    if blob.len() < 16 + 12 + 16 {
+        return None;
+    }
+    let salt = &blob[..16];
+    let iv = &blob[16..28];
+    let ct = &blob[28..];
+
+    // Ler senha do vault.pw
+    let pw_path = vault_dir.join("vault.pw");
+    let pw = if pw_path.exists() {
+        std::fs::read_to_string(&pw_path)
+            .map(|s| s.trim().to_string())
+            .unwrap_or_default()
+    } else {
+        String::new()
+    };
+
+    // Derivar chave: PBKDF2-HMAC-SHA256, 32 bytes, 100000 iterações
+    let mut key = [0u8; 32];
+    pbkdf2_hmac::<Sha256>(pw.as_bytes(), salt, 100_000, &mut key);
+
+    // Decriptar AES-256-GCM
+    let cipher = Aes256Gcm::new_from_slice(&key).ok()?;
+    let nonce = Nonce::from_slice(iv);
+    let pt = cipher.decrypt(nonce, ct).ok()?;
+
+    // Parse JSON e extrair token
+    let data: serde_json::Value = serde_json::from_slice(&pt).ok()?;
+    let token = data
+        .get("github_token")
+        .or_else(|| data.get("token"))
+        .or_else(|| data.get("sync_token"))
+        .and_then(|v| v.as_str())
+        .map(|s| s.to_string());
+
+    token.filter(|s| !s.is_empty())
+}
+
 #[tauri::command(rename_all = "snake_case")]
 fn read_sync_config() -> Result<SyncConfig, String> {
     let appdata = std::env::var("APPDATA").map_err(|e| e.to_string())?;
-    let config_path = std::path::PathBuf::from(appdata)
-        .join("EstoqueTI")
-        .join("sync_config.json");
-    let content = std::fs::read_to_string(&config_path)
+    let appdata_path = std::path::PathBuf::from(&appdata);
+    
+    // 1. Tentar ler do cofre (vault.enc) se existir
+    let vault_token = read_token_from_vault();
+    
+    // 2. Ler configuração base do sync_config.json
+    let config_path = appdata_path.join("EstoqueTI").join("sync_config.json");
+    let mut content = std::fs::read_to_string(&config_path)
         .map_err(|e| format!("Arquivo sync_config.json nao encontrado: {}", e))?;
-    let config: SyncConfig = serde_json::from_str(&content)
+    
+    // Remover BOM UTF-8 se presente
+    if content.starts_with('\u{FEFF}') {
+        content = content[3..].to_string();
+    }
+    
+    let mut config: SyncConfig = serde_json::from_str(&content)
         .map_err(|e| format!("Erro ao ler sync_config.json: {}", e))?;
+    
+    // 3. Se token do cofre existe, usar ele (mais seguro)
+    if let Some(token) = vault_token {
+        config.token = token;
+    }
+    
     Ok(config)
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SyncConfigStatus {
+    pub owner: String,
+    pub repo: String,
+    pub path: String,
+    pub auto_enabled: bool,
+    pub has_token: bool,
+}
+
+/// Retorna a configuração de sync SEM expor o PAT ao frontend.
+#[tauri::command(rename_all = "snake_case")]
+fn read_sync_config_status() -> Result<SyncConfigStatus, String> {
+    let config = read_sync_config()?;
+    Ok(SyncConfigStatus {
+        owner: config.owner,
+        repo: config.repo,
+        path: config.path,
+        auto_enabled: config.auto_enabled,
+        has_token: !config.token.is_empty(),
+    })
+}
+
+// ============================================================================
+//  SYNC — PUSH/PULL GITHUB (Desktop)
+// ============================================================================
+
+#[tauri::command(rename_all = "snake_case")]
+async fn push_to_github() -> Result<String, String> {
+    let config = read_sync_config()?;
+    let dados = export_all_data()?;
+    let json = serde_json::to_string_pretty(&dados).map_err(|e| e.to_string())?;
+    let encoded = base64::engine::general_purpose::STANDARD.encode(json.as_bytes());
+
+    let client = reqwest::Client::builder()
+        .user_agent("EstoqueTI/1.0")
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| format!("Erro ao criar cliente HTTP: {}", e))?;
+
+    let url = format!("https://api.github.com/repos/{}/{}/contents/{}", config.owner, config.repo, config.path);
+    let mut sha: Option<String> = None;
+    let get_res = client.get(&url)
+        .header("Authorization", format!("token {}", config.token))
+        .header("Accept", "application/vnd.github.v3+json")
+        .send().await;
+    if let Ok(resp) = get_res {
+        if resp.status().is_success() {
+            if let Ok(file_data) = resp.json::<serde_json::Value>().await {
+                sha = file_data.get("sha").and_then(|s| s.as_str()).map(|s| s.to_string());
+            }
+        }
+    }
+
+    let mut body = serde_json::json!({
+        "message": format!("sync: atualizacao desktop {}", chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ")),
+        "content": encoded,
+    });
+    if let Some(sha_val) = sha {
+        body["sha"] = serde_json::json!(sha_val);
+    }
+
+    let put_res = client.put(&url)
+        .header("Authorization", format!("token {}", config.token))
+        .header("Accept", "application/vnd.github.v3+json")
+        .header("Content-Type", "application/json")
+        .json(&body)
+        .send().await
+        .map_err(|e| format!("Erro de rede: {}", e))?;
+
+    if put_res.status().is_success() {
+        Ok("Dados enviados ao GitHub com sucesso".to_string())
+    } else {
+        let status = put_res.status();
+        let text = put_res.text().await.unwrap_or_default();
+        Err(format!("Erro HTTP {}: {}", status, text))
+    }
+}
+
+#[tauri::command(rename_all = "snake_case")]
+async fn pull_from_github() -> Result<String, String> {
+    let config = read_sync_config()?;
+
+    let client = reqwest::Client::builder()
+        .user_agent("EstoqueTI/1.0")
+        .timeout(std::time::Duration::from_secs(30))
+        .build()
+        .map_err(|e| format!("Erro ao criar cliente HTTP: {}", e))?;
+
+    let url = format!("https://api.github.com/repos/{}/{}/contents/{}", config.owner, config.repo, config.path);
+    let res = client.get(&url)
+        .header("Authorization", format!("token {}", config.token))
+        .header("Accept", "application/vnd.github.v3+json")
+        .send().await
+        .map_err(|e| format!("Erro de rede: {}", e))?;
+
+    if res.status().as_u16() == 404 {
+        return Ok("Nenhum dado no GitHub ainda".to_string());
+    }
+    if !res.status().is_success() {
+        return Err(format!("Erro HTTP {}", res.status()));
+    }
+
+    let file_data: serde_json::Value = res.json().await.map_err(|e| e.to_string())?;
+    let content_b64 = file_data.get("content").and_then(|c| c.as_str()).unwrap_or("");
+    let decoded = base64::engine::general_purpose::STANDARD.decode(content_b64.replace('\n', "")).map_err(|e| e.to_string())?;
+    let json_str = String::from_utf8(decoded).map_err(|e| e.to_string())?;
+    let dados: ExportData = serde_json::from_str(&json_str).map_err(|e| e.to_string())?;
+
+    import_all_data(dados)
 }
 
 // ============================================================================
@@ -1475,6 +1793,7 @@ pub fn run() {
             login,
             create_usuario,
             update_usuario,
+            verify_password,
             list_movimentacoes,
             create_movimentacao,
             list_solicitacoes,
@@ -1501,9 +1820,15 @@ pub fn run() {
             print_romaneio,
             save_romaneio_html,
             open_in_browser,
+            save_and_open_html,
+            print_product_label,
             export_all_data,
             import_all_data,
             read_sync_config,
+            read_sync_config_status,
+            push_to_github,
+            pull_from_github,
+
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -1513,15 +1838,179 @@ pub fn run() {
 //  PRINT — ROMANEIO TÉRMICO (ESC/POS via Windows)
 // ============================================================================
 
-/// Abre um arquivo no navegador padrão do sistema (Windows).
-/// Usa cmd /C start que aceita qualquer caminho, sem validação de scope do Tauri.
+/// Abre um arquivo .html gerado pelo app no navegador padrão (Windows).
+/// Valida o caminho por segurança antes de executar.
 #[tauri::command(rename_all = "snake_case")]
 fn open_in_browser(file_path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&file_path);
+    if !path.is_absolute() {
+        return Err("Caminho inválido: o caminho deve ser absoluto".to_string());
+    }
+    if !path.exists() {
+        return Err(format!("Arquivo não encontrado: {}", file_path));
+    }
+    let eh_html = path
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.eq_ignore_ascii_case("html"))
+        .unwrap_or(false);
+    if !eh_html {
+        return Err("Apenas arquivos .html podem ser abertos".to_string());
+    }
+    // Deve estar dentro do diretório de dados do app (%APPDATA%\EstoqueTI) ou da pasta temporária
+    let canon = path.canonicalize().map_err(|e| format!("Caminho inválido: {}", e))?;
+    let mut bases: Vec<std::path::PathBuf> = Vec::new();
+    if let Ok(appdata) = std::env::var("APPDATA") {
+        bases.push(std::path::PathBuf::from(appdata).join("EstoqueTI"));
+    }
+    bases.push(std::env::temp_dir());
+    let permitido = bases
+        .iter()
+        .any(|b| b.canonicalize().map(|cb| canon.starts_with(cb)).unwrap_or(false));
+    if !permitido {
+        return Err("Acesso negado: arquivo fora do diretório de dados do aplicativo".to_string());
+    }
     std::process::Command::new("cmd")
         .args(["/C", "start", "", &file_path])
         .status()
         .map_err(|e| e.to_string())?;
     Ok(())
+}
+
+/// Salva HTML em arquivo temporario e abre no navegador em uma unica chamada.
+#[tauri::command(rename_all = "snake_case")]
+fn save_and_open_html(html: String, titulo: String) -> Result<(), String> {
+    let name = format!("{}.html", titulo.replace(|c: char| !c.is_alphanumeric(), "_"));
+    let tmp = std::env::temp_dir().join(&name);
+    std::fs::write(&tmp, &html).map_err(|e| e.to_string())?;
+    let path_str = tmp.to_string_lossy().to_string();
+    std::process::Command::new("cmd")
+        .args(["/C", "start", "", &path_str])
+        .status()
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ============================================================================
+//  PRINT — ETIQUETA DE PRODUTO (A4, grid dinamico)
+// ============================================================================
+
+/// Escapa texto para interpolacao segura em HTML.
+fn esc_html(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#39;")
+}
+
+/// Gera HTML de etiquetas A4 (JsBarcode CODE128 via CDN) e abre no navegador.
+/// - pequena: 70x35mm | media: 100x50mm | grande: 150x70mm
+#[tauri::command(rename_all = "snake_case")]
+fn print_product_label(
+    produto_id: i64,
+    quantidade: i32,
+    empresa: String,
+    tamanho: String,
+) -> Result<(), String> {
+    let conn = db::open_conn().map_err(|e| e.to_string())?;
+
+    // Busca dados do produto (nome, codigo, marca, modelo, categoria)
+    let produto: (String, String, Option<String>, Option<String>, Option<String>) = conn
+        .query_row(
+            "SELECT p.nome, p.codigo, p.marca, p.modelo, c.nome
+             FROM produtos p
+             LEFT JOIN categorias c ON p.categoria_id = c.id
+             WHERE p.id = ?1",
+            params![produto_id],
+            |r| {
+                Ok((
+                    r.get(0)?,
+                    r.get(1)?,
+                    r.get(2)?,
+                    r.get(3)?,
+                    r.get(4)?,
+                ))
+            },
+        )
+        .map_err(|e| format!("Produto nao encontrado: {}", e))?;
+
+    let (nome, codigo, marca, modelo, categoria) = produto;
+    let qtd = quantidade.max(1);
+
+    // Dimensoes por tamanho (A4, grid dinamico)
+    let (largura, altura, fs) = match tamanho.as_str() {
+        "media" => ("100mm", "50mm", "10px"),
+        "grande" => ("150mm", "70mm", "12px"),
+        _ => ("70mm", "35mm", "8px"), // pequena (padrao)
+    };
+
+    // Gera N etiquetas (uma por unidade)
+    let mut etiquetas = String::new();
+    for _ in 0..qtd {
+        etiquetas.push_str(&format!(
+            r#"<div class="etiq">
+  <div class="emp"><b>{empresa}</b></div>
+  <div class="nome"><b>{nome}</b></div>
+  <div class="linha"><b>Código:</b> {codigo}</div>
+  <div class="linha"><b>Marca:</b> {marca}</div>
+  <div class="linha"><b>Modelo:</b> {modelo}</div>
+  <div class="linha"><b>Categoria:</b> {categoria}</div>
+  <svg class="bc" data-val="{codigo}"></svg>
+</div>"#,
+            empresa = esc_html(&empresa),
+            nome = esc_html(&nome),
+            codigo = esc_html(&codigo),
+            marca = esc_html(marca.as_deref().unwrap_or("—")),
+            modelo = esc_html(modelo.as_deref().unwrap_or("—")),
+            categoria = esc_html(categoria.as_deref().unwrap_or("—")),
+        ));
+    }
+
+    let html = format!(
+        r#"<!doctype html>
+<html><head><meta charset="utf-8"><title>Etiquetas {nome}</title>
+<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
+<style>
+  @page {{ size: A4; margin: 10mm; }}
+  body {{ font-family: monospace; margin: 0; padding: 3mm; color: #000;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+  .grid {{ display: flex; flex-wrap: wrap; gap: 3mm; }}
+  .etiq {{ width: {largura}; height: {altura}; border: 1px solid #333; padding: 3mm;
+          box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column; }}
+  .emp {{ text-align: center; font-size: {fs}; }}
+  .nome {{ text-align: center; font-size: {fs}; font-weight: bold; }}
+  .linha {{ font-size: {fs}; }}
+  .bc {{ margin-top: auto; max-width: 100%; }}
+  @media print {{ .etiq {{ page-break-inside: avoid; }} }}
+</style></head>
+<body>
+  <div class="grid">{etiquetas}</div>
+  <script>
+    window.onload = function () {{
+      setTimeout(function () {{
+        document.querySelectorAll('.bc').forEach(function (el) {{
+          try {{
+            JsBarcode(el, el.getAttribute('data-val'), {{
+              format: 'CODE128', displayValue: true,
+              fontSize: {fs_num}, height: 30
+            }});
+          }} catch (e) {{}}
+        }});
+        window.print();
+      }}, 100);
+    }};
+  </script>
+</body></html>"#,
+        nome = esc_html(&nome),
+        largura = largura,
+        altura = altura,
+        fs = fs,
+        fs_num = if tamanho == "grande" { "14" } else if tamanho == "media" { "11" } else { "9" },
+        etiquetas = etiquetas,
+    );
+
+    save_and_open_html(html, format!("etiqueta_{}", nome))
 }
 
 // ============================================================================
@@ -1532,29 +2021,28 @@ fn open_in_browser(file_path: String) -> Result<(), String> {
 pub struct ExportData {
     pub versao: String,
     pub data_exportacao: String,
+    #[serde(default)]
     pub lojas: Vec<Loja>,
+    #[serde(default)]
     pub categorias: Vec<Categoria>,
+    #[serde(default)]
     pub fornecedores: Vec<Fornecedor>,
+    #[serde(default)]
     pub produtos: Vec<Produto>,
-    pub usuarios: Vec<Usuario>, // serde skip_serializing na senha
+    #[serde(default)]
+    pub usuarios: Vec<Usuario>,
+    #[serde(default)]
     pub movimentacoes: Vec<Movimentacao>,
+    #[serde(default)]
     pub solicitacoes: Vec<Solicitacao>,
+    #[serde(default)]
     pub solicitacao_itens: Vec<SolicitacaoItem>,
+    #[serde(default)]
     pub pedidos: Vec<Pedido>,
+    #[serde(default)]
     pub pedido_itens: Vec<PedidoItem>,
+    #[serde(default)]
     pub alertas: Vec<Alerta>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct UsuarioSync {
-    pub id: i64,
-    pub nome: String,
-    pub email: String,
-    pub senha: String,
-    pub perfil: String,
-    pub loja_id: Option<i64>,
-    pub loja_nome: Option<String>,
-    pub ativo: bool,
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -1640,49 +2128,71 @@ fn export_all_data() -> Result<ExportData, String> {
 
 #[tauri::command(rename_all = "snake_case")]
 fn import_all_data(dados: ExportData) -> Result<String, String> {
+    // Se todos os arrays estiverem vazios, nao sobrescrever dados locais
+    let total = dados.lojas.len() + dados.categorias.len() + dados.produtos.len()
+        + dados.usuarios.len() + dados.movimentacoes.len() + dados.pedidos.len();
+    if total == 0 {
+        return Ok("Nada para importar — dados remotos estao vazios".to_string());
+    }
+
     let conn = db::open_conn().map_err(|e| e.to_string())?;
-    let mut stats = std::collections::HashMap::new();
+    // Desligar FKs durante a importação (INSERT OR REPLACE pode violar ordem de referências).
+    // A FK é religada sempre, mesmo em erro, e tudo roda em transação (commit/rollback garantido).
+    conn.execute("PRAGMA foreign_keys = OFF", []).map_err(|e| e.to_string())?;
+    let result = (|| -> Result<String, String> {
+        let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+        let mut stats = std::collections::HashMap::new();
+
+        // DELETE ordenado (filhas antes de mães) para importação limpa
+        for tabela in &["pedido_itens", "pedidos", "solicitacao_itens", "solicitacoes", "movimentacoes", "alertas", "usuarios", "produtos", "fornecedores", "categorias", "lojas"] {
+            tx.execute(&format!("DELETE FROM {}", tabela), []).map_err(|e| e.to_string())?;
+        }
 
     // Lojas
     for item in &dados.lojas {
-        conn.execute("INSERT OR REPLACE INTO lojas (id, nome, codigo, endereco, ativa) VALUES (?1, ?2, ?3, ?4, ?5)",
+        tx.execute("INSERT OR REPLACE INTO lojas (id, nome, codigo, endereco, ativa) VALUES (?1, ?2, ?3, ?4, ?5)",
             params![item.id, item.nome, item.codigo, item.endereco, item.ativa as i64]).map_err(|e| e.to_string())?;
         *stats.entry("lojas".to_string()).or_insert(0) += 1;
     }
 
     // Categorias
     for item in &dados.categorias {
-        conn.execute("INSERT OR REPLACE INTO categorias (id, nome, descricao, ativa) VALUES (?1, ?2, ?3, ?4)",
+        tx.execute("INSERT OR REPLACE INTO categorias (id, nome, descricao, ativa) VALUES (?1, ?2, ?3, ?4)",
             params![item.id, item.nome, item.descricao, item.ativa as i64]).map_err(|e| e.to_string())?;
         *stats.entry("categorias".to_string()).or_insert(0) += 1;
     }
 
     // Fornecedores
     for item in &dados.fornecedores {
-        conn.execute("INSERT OR REPLACE INTO fornecedores (id, nome, cnpj, contato, email, telefone, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        tx.execute("INSERT OR REPLACE INTO fornecedores (id, nome, cnpj, contato, email, telefone, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![item.id, item.nome, item.cnpj, item.contato, item.email, item.telefone, item.ativo as i64]).map_err(|e| e.to_string())?;
         *stats.entry("fornecedores".to_string()).or_insert(0) += 1;
     }
 
     // Produtos
     for item in &dados.produtos {
-        conn.execute("INSERT OR REPLACE INTO produtos (id, codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+        tx.execute("INSERT OR REPLACE INTO produtos (id, codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
             params![item.id, item.codigo, item.nome, item.marca, item.modelo, item.descricao,
                 item.categoria_id, item.fornecedor_id, item.unidade, item.preco_compra,
                 item.preco_venda, item.estoque, item.estoque_minimo, item.custo_total, item.ativo as i64]).map_err(|e| e.to_string())?;
         *stats.entry("produtos".to_string()).or_insert(0) += 1;
     }
 
-    // Usuarios (senhas sao exportadas apenas no import manual, nunca no sync GitHub)
+    // Usuarios — preservar a senha local quando o export vier sem senha
     for item in &dados.usuarios {
-        conn.execute("INSERT OR REPLACE INTO usuarios (id, nome, email, senha, perfil, loja_id, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-            params![item.id, item.nome, item.email, item.senha, item.perfil, item.loja_id, item.ativo as i64]).map_err(|e| e.to_string())?;
+        let mut senha_final = item.senha.clone();
+        if senha_final.is_empty() {
+            senha_final = tx.query_row("SELECT senha FROM usuarios WHERE id=?1", params![item.id], |r| r.get(0))
+                .unwrap_or_default();
+        }
+        tx.execute("INSERT OR REPLACE INTO usuarios (id, nome, email, senha, perfil, loja_id, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![item.id, item.nome, item.email, senha_final, item.perfil, item.loja_id, item.ativo as i64]).map_err(|e| e.to_string())?;
         *stats.entry("usuarios".to_string()).or_insert(0) += 1;
     }
 
     // Movimentacoes
     for item in &dados.movimentacoes {
-        conn.execute("INSERT OR REPLACE INTO movimentacoes (id, tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, data_movimento, preco_compra, unidade) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+        tx.execute("INSERT OR REPLACE INTO movimentacoes (id, tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, data_movimento, preco_compra, unidade) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
             params![item.id, item.tipo, item.produto_id, item.produto_nome, item.quantidade,
                 item.loja_origem_id, item.loja_origem_nome, item.loja_destino_id, item.loja_destino_nome,
                 item.usuario_id, item.observacao, item.data_movimento, item.preco_compra, item.unidade]).map_err(|e| e.to_string())?;
@@ -1691,48 +2201,55 @@ fn import_all_data(dados: ExportData) -> Result<String, String> {
 
     // Solicitacoes
     for item in &dados.solicitacoes {
-        conn.execute("INSERT OR REPLACE INTO solicitacoes (id, loja_id, usuario_id, observacao, status, data_solicitacao) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        tx.execute("INSERT OR REPLACE INTO solicitacoes (id, loja_id, usuario_id, observacao, status, data_solicitacao) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             params![item.id, item.loja_id, item.usuario_id, item.observacao, item.status, item.data_solicitacao]).map_err(|e| e.to_string())?;
         *stats.entry("solicitacoes".to_string()).or_insert(0) += 1;
     }
 
     // Solicitacao Itens
     for item in &dados.solicitacao_itens {
-        conn.execute("INSERT OR REPLACE INTO solicitacao_itens (id, solicitacao_id, produto_id, quantidade) VALUES (?1, ?2, ?3, ?4)",
+        tx.execute("INSERT OR REPLACE INTO solicitacao_itens (id, solicitacao_id, produto_id, quantidade) VALUES (?1, ?2, ?3, ?4)",
             params![item.id, item.solicitacao_id, item.produto_id, item.quantidade]).map_err(|e| e.to_string())?;
         *stats.entry("solicitacao_itens".to_string()).or_insert(0) += 1;
     }
 
     // Pedidos
     for item in &dados.pedidos {
-        conn.execute("INSERT OR REPLACE INTO pedidos (id, numero, loja_id, solicitante, origem, status, arquivo_pdf, data_pedido, setor) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+        tx.execute("INSERT OR REPLACE INTO pedidos (id, numero, loja_id, solicitante, origem, status, arquivo_pdf, data_pedido, setor) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
             params![item.id, item.numero, item.loja_id, item.solicitante, item.origem, item.status, item.arquivo_pdf, item.data_pedido, item.setor]).map_err(|e| e.to_string())?;
         *stats.entry("pedidos".to_string()).or_insert(0) += 1;
     }
 
     // Pedido Itens
     for item in &dados.pedido_itens {
-        conn.execute("INSERT OR REPLACE INTO pedido_itens (id, pedido_id, produto_id, produto_nome, unidade, quantidade) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        tx.execute("INSERT OR REPLACE INTO pedido_itens (id, pedido_id, produto_id, produto_nome, unidade, quantidade) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             params![item.id, item.pedido_id, item.produto_id, item.produto_nome, item.unidade, item.quantidade]).map_err(|e| e.to_string())?;
         *stats.entry("pedido_itens".to_string()).or_insert(0) += 1;
     }
 
     // Alertas
     for item in &dados.alertas {
-        conn.execute("INSERT OR REPLACE INTO alertas (id, tipo, titulo, mensagem, data_alerta, lido) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+        tx.execute("INSERT OR REPLACE INTO alertas (id, tipo, titulo, mensagem, data_alerta, lido) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
             params![item.id, item.tipo, item.titulo, item.mensagem, item.data_alerta, item.lido as i64]).map_err(|e| e.to_string())?;
         *stats.entry("alertas".to_string()).or_insert(0) += 1;
     }
 
     // Resetar sequences para evitar conflitos de ID futuro
     for tabela in &["lojas", "categorias", "fornecedores", "produtos", "usuarios", "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos", "pedido_itens", "alertas"] {
-        let max_id: i64 = conn.query_row(&format!("SELECT COALESCE(MAX(id), 0) FROM {}", tabela), [], |r| r.get(0)).unwrap_or(0);
-        let _ = conn.execute(&format!("INSERT OR REPLACE INTO sqlite_sequence (name, seq) VALUES ('{}', {})", tabela, max_id), []);
+        let max_id: i64 = tx.query_row(&format!("SELECT COALESCE(MAX(id), 0) FROM {}", tabela), [], |r| r.get(0)).unwrap_or(0);
+        if max_id > 0 {
+            let _ = tx.execute(&format!("INSERT OR REPLACE INTO sqlite_sequence (name, seq) VALUES ('{}', {})", tabela, max_id), []);
+        }
     }
 
     let total: i64 = stats.values().sum();
     let relatorio: String = stats.iter().map(|(k, v)| format!("{}: {}", k, v)).collect::<Vec<_>>().join(", ");
+    tx.commit().map_err(|e| e.to_string())?;
     Ok(format!("Importacao concluida! {} registros em: {}", total, relatorio))
+    })();
+    // Reabilitar FK checks sempre, mesmo se a importação falhou
+    conn.execute("PRAGMA foreign_keys = ON", []).map_err(|e| e.to_string())?;
+    result
 }
 #[tauri::command(rename_all = "snake_case")]
 fn save_romaneio_html(html: String, numero: String) -> Result<String, String> {
@@ -1785,3 +2302,5 @@ fn print_romaneio(texto: String) -> Result<(), String> {
 
     Err("Falha ao imprimir. Verifique se a impressora Epson está ligada e configurada como padrão.".to_string())
 }
+
+

@@ -6,6 +6,10 @@ import type {
   Loja, Categoria, Produto, Usuario, Movimentacao,
   Solicitacao, SolicitacaoItem, Pedido, PedidoItem, Alerta, DashboardStats
 } from "./types";
+import { getCloudConfig, verificarSenha } from "./cloudDb";
+import { remoteCall } from "./remoteApi";
+import * as vault from "./vault";
+import { printHtml, montarHtmlEtiquetas, type TamanhoEtiqueta } from "./printHtml";
 
 function loadFromLS<T>(key: string, fallback: T): T {
   try {
@@ -187,26 +191,97 @@ async function getInvoke() {
   }
 }
 
+// Auto-sync: push para GitHub apos cada operacao (Desktop only)
+let _syncTimeout: ReturnType<typeof setTimeout> | null = null;
+export function triggerAutoSync() {
+  // Debounce real: cada nova operação reagenda o push, garantindo que ele
+  // roda 2s depois da ÚLTIMA escrita (e não da primeira)
+  if (_syncTimeout) clearTimeout(_syncTimeout);
+  _syncTimeout = setTimeout(async () => {
+    _syncTimeout = null;
+    if (!api.sync.isAutoSyncEnabled()) return;
+    const invoke = await getInvoke();
+    if (!invoke) return; // browser nao usa push Tauri
+    try {
+      await invoke("push_to_github");
+      localStorage.setItem("sync_last_push", new Date().toISOString());
+    } catch (e) {
+      console.warn("[auto-sync] push falhou:", e);
+    }
+  }, 2000);
+}
+
 function nextId(arr: { id: number }[]): number {
   return arr.length === 0 ? 1 : Math.max(...arr.map(a => a.id)) + 1;
 }
 
-async function apiCall<T>(command: string, args: any, fallback: () => T): Promise<T> {
-  const invoke = await getInvoke();
-  if (!invoke) return fallback();
+/** Avisa as páginas que o backend falhou e o fallback local foi usado em escrita. */
+function notifyApiError(command: string, origem: string, erro: unknown) {
+  const message = erro instanceof Error ? erro.message : String(erro ?? "erro desconhecido");
+  console.error(`[apiCall] ${origem} ${command} falhou — usando fallback local: ${message}`);
   try {
-    return await invoke(command, args);
-  } catch (e) {
-    // Log sem expor dados sensiveis
-    console.warn(`[apiCall] Tauri ${command} failed`);
-    return fallback();
+    window.dispatchEvent(new CustomEvent("almox-api-error", { detail: { command, origem, message } }));
+  } catch {}
+}
+
+/** Operações de escrita (create/update/delete) merecem aviso ao usuário; leituras não. */
+function isEscrita(command: string): boolean {
+  return !command.startsWith("list_") && command !== "login";
+}
+
+async function apiCall<T>(command: string, args: any, fallback: () => T | Promise<T>): Promise<T> {
+  const invoke = await getInvoke();
+  const cloudCfg = getCloudConfig();
+  console.log(`[apiCall-v2] ${command} | invoke=${!!invoke} | cloudConfig=${!!cloudCfg}`);
+  if (invoke) {
+    try {
+      const result = await invoke(command, args);
+      if (result === undefined && isEscrita(command)) {
+        console.warn(`[apiCall] ${command} retornou undefined — possível problema de serialização`);
+      }
+      return result;
+    } catch (e) {
+      const errorMsg = e instanceof Error ? e.message : String(e);
+      console.error(`[apiCall] Tauri ${command} ERRO:`, errorMsg, "\nArgs enviados:", JSON.stringify(args, null, 2));
+      if (isEscrita(command)) notifyApiError(command, "Tauri", e);
+      else console.warn(`[apiCall] Tauri ${command} failed`);
+      return fallback();
+    }
   }
+  // Web + nuvem configurada: usa banco compartilhado (Supabase)
+  if (getCloudConfig()) {
+    try {
+      const remoto = await remoteCall<T>(command, args);
+      console.log(`[apiCall] ${command} | remoteCall retornou:`, remoto !== undefined ? "definido" : "undefined");
+      if (remoto !== undefined) return remoto;
+      // Escritas sem retorno (update/delete): executa o fallback tambem para
+      // manter o cache local (store/localStorage) coerente com a nuvem
+      if (!command.startsWith("list_") && !command.startsWith("login")) {
+        triggerAutoSync();
+        return await fallback();
+      }
+    } catch (e: any) {
+      console.warn(`[apiCall] Nuvem ${command} falhou:`, e?.message || e);
+      if (isEscrita(command)) notifyApiError(command, "Nuvem", e);
+    }
+  }
+  console.log(`[apiCall] ${command} | chamando fallback final`);
+  return fallback();
+}
+
+// Like apiCall but triggers auto-sync after successful write
+async function writeCall<T>(command: string, args: any, fallback: () => T | Promise<T>): Promise<T> {
+  const result = await apiCall(command, args, fallback);
+  triggerAutoSync();
+  return result;
 }
 
 function todayISO() { return new Date().toISOString(); }
 
 // ---- Dashboard ----
 export const api = {
+  // Lê direto do localStorage — que é mantido em sincronia com o
+  // backend/nuvem por syncAllFromBackend e pelos caches do apiCall.
   dashboardStats: async (): Promise<DashboardStats> => {
     const ps = loadFromLS<Produto[]>("almox_produtos", []);
     const movs = loadFromLS<Movimentacao[]>("almox_movimentacoes", []);
@@ -233,16 +308,16 @@ export const api = {
       store.lojas = dados;
       return dados;
     }).then((dados) => { store.lojas = dados; return dados; }),
-    create: (l: Omit<Loja, "id">) => apiCall<Loja>("create_loja", l, () => {
+    create: (l: Omit<Loja, "id">) => writeCall<Loja>("create_loja", l, () => {
       const novo: Loja = { ...l, id: nextId(store.getLojas()) };
       return store.addLoja(novo);
     }),
-    update: (id: number, l: Partial<Loja>) => apiCall<Loja>("update_loja", { id, ...l }, () => {
+    update: (id: number, l: Partial<Loja>) => writeCall<Loja>("update_loja", { id, ...l }, () => {
       const existing = store.getLojas().find(x => x.id === id);
       if (!existing) throw new Error("Loja não encontrada");
       return store.updateLoja({ ...existing, ...l, id });
     }),
-    delete: (id: number) => apiCall<void>("delete_loja", { id }, () => {
+    delete: (id: number) => writeCall<void>("delete_loja", { id }, () => {
       store.removeLoja(id);
     }).then(() => {
       store.removeLoja(id);
@@ -252,16 +327,16 @@ export const api = {
   // ---- Categorias ----
   categorias: {
     list: () => apiCall<Categoria[]>("list_categorias", {}, () => store.getCategorias()),
-    create: (c: Omit<Categoria, "id">) => apiCall<Categoria>("create_categoria", c, () => {
+    create: (c: Omit<Categoria, "id">) => writeCall<Categoria>("create_categoria", c, () => {
       const novo: Categoria = { ...c, id: nextId(store.getCategorias()) };
       return store.addCategoria(novo);
     }),
-    update: (id: number, c: Partial<Categoria>) => apiCall<Categoria>("update_categoria", { id, ...c }, () => {
+    update: (id: number, c: Partial<Categoria>) => writeCall<Categoria>("update_categoria", { id, ...c }, () => {
       const existing = store.getCategorias().find(x => x.id === id);
       if (!existing) throw new Error("Categoria não encontrada");
       return store.updateCategoria({ ...existing, ...c, id });
     }),
-    remove: (id: number) => apiCall<void>("delete_categoria", { id }, () => store.removeCategoria(id)),
+    remove: (id: number) => writeCall<void>("delete_categoria", { id }, () => store.removeCategoria(id)),
   },
 
   // ---- Produtos ----
@@ -274,7 +349,7 @@ export const api = {
       store.produtos = dados;
       return dados;
     }),
-    create: (p: Omit<Produto, "id">) => apiCall<Produto>("create_produto", p, () => {
+    create: (p: Omit<Produto, "id">) => writeCall<Produto>("create_produto", p, () => {
       const novo: Produto = { ...p, id: nextId(store.getProdutos()) };
       return store.addProduto(novo);
     }).then((prod) => {
@@ -283,17 +358,42 @@ export const api = {
       }
       return prod;
     }),
-    delete: (id: number) => apiCall<void>("delete_produto", { id }, () => {
+    delete: (id: number) => writeCall<void>("delete_produto", { id }, () => {
       store.removeProduto(id);
     }).then(() => {
       store.removeProduto(id);
     }),
-    resetAllStock: () => {
-      for (const p of store.getProdutos()) p.estoque = 0;
-      persist("almox_produtos", store.getProdutos());
-      return Promise.resolve();
+    resetAllStock: async () => {
+      // Persiste no backend (Tauri/nuvem) produto a produto via update_produto,
+      // que exige o payload completo — preserva todos os campos, só zera estoque.
+      const erros: unknown[] = [];
+      for (const p of store.getProdutos()) {
+        if ((p.estoque || 0) === 0) continue;
+        try {
+          await api.produtos.update(p.id, {
+            codigo: p.codigo,
+            nome: p.nome,
+            marca: p.marca,
+            modelo: p.modelo,
+            descricao: p.descricao,
+            categoria_id: p.categoria_id,
+            fornecedor_id: p.fornecedor_id,
+            unidade: p.unidade,
+            preco_compra: p.preco_compra,
+            preco_venda: p.preco_venda,
+            estoque: 0,
+            estoque_minimo: p.estoque_minimo,
+            custo_total: p.custo_total ?? 0,
+          });
+        } catch (e) {
+          erros.push(e);
+        }
+      }
+      if (erros.length > 0) {
+        throw new Error(`Falha ao zerar o estoque de ${erros.length} produto(s).`);
+      }
     },
-    update: (id: number, p: Partial<Produto>) => apiCall<Produto>("update_produto", { id, ...p }, () => {
+    update: (id: number, p: Partial<Produto>) => writeCall<Produto>("update_produto", { id, ...p }, () => {
       const existing = store.getProdutos().find(x => x.id === id);
       if (!existing) throw new Error("Produto não encontrado");
       return store.updateProduto({ ...existing, ...p, id });
@@ -313,7 +413,7 @@ export const api = {
           id: 1,
           nome: "Administrador",
           email: "admin@empresa.com",
-          senha: "",  // Nao armazenar senha no browser
+          senha: "admin123",  // Texto puro legado — verificarSenha aceita comparação direta
           perfil: "admin",
           loja_id: null,
           loja_nome: null,
@@ -325,15 +425,16 @@ export const api = {
       store.usuarios = dados;
       return dados;
     }).then((dados) => { store.usuarios = dados; return dados; }),
-    login: (email: string, senha: string) => apiCall<Usuario>("login", { email, senha }, () => {
+    login: (email: string, senha: string) => apiCall<Usuario>("login", { email, senha }, async () => {
       let dados = loadFromLS<Usuario[]>("almox_usuarios", []);
+      console.log("[LOGIN DEBUG] dados do localStorage:", dados.map(u => ({ email: u.email, senha_len: u.senha?.length, senha_preview: u.senha?.substring(0, 20) })));
       // Seed automatico: se nao houver usuarios, criar admin padrao
       if (dados.length === 0) {
         const admin: Usuario = {
           id: 1,
           nome: "Administrador",
           email: "admin@empresa.com",
-          senha: "",  // Nao armazenar senha no browser (fallback web)
+          senha: "admin123",  // Texto puro legado — verificarSenha aceita comparação direta
           perfil: "admin",
           loja_id: null,
           loja_nome: null,
@@ -341,13 +442,18 @@ export const api = {
         };
         dados = [admin];
         persist("almox_usuarios", dados);
+        console.log("[LOGIN DEBUG] seed criado com senha:", admin.senha);
       }
-      // No browser mode, matching only by email (no password stored)
       const u = dados.find(x => x.email === email);
-      if (!u) throw new Error("Credenciais inválidas");
+      console.log("[LOGIN DEBUG] usuario encontrado:", u ? { email: u.email, senha_len: u.senha?.length, senha_preview: u.senha?.substring(0, 30) } : null);
+      if (!u) throw new Error("Credenciais inválidas - usuario nao encontrado");
+      const senhaOk = await verificarSenha(u.senha, senha);
+      console.log("[LOGIN DEBUG] verificarSenha resultado:", senhaOk, "| armazenada:", u.senha?.substring(0, 20), "| informada:", senha);
+      // Senha vazia/ausente nunca aceita; hash Argon2 é verificado com hash-wasm
+      if (!senhaOk) throw new Error("Credenciais inválidas - senha invalida");
       return u;
     }),
-    create: (u: Omit<Usuario, "id">) => apiCall<Usuario>("create_usuario", u, () => {
+    create: (u: Omit<Usuario, "id">) => writeCall<Usuario>("create_usuario", u, () => {
       const novo: Usuario = { ...u, id: nextId(store.getUsuarios()) };
       return store.addUsuario(novo);
     }).then((usr) => {
@@ -355,12 +461,12 @@ export const api = {
       if (!existente) store.addUsuario({ ...usr });
       return usr;
     }),
-    update: (id: number, u: Partial<Usuario>) => apiCall<Usuario>("update_usuario", { id, ...u }, () => {
+    update: (id: number, u: Partial<Usuario>) => writeCall<Usuario>("update_usuario", { id, ...u }, () => {
       const existing = store.getUsuarios().find(x => x.id === id);
       if (!existing) throw new Error("Usuário não encontrado");
       return store.updateUsuario({ ...existing, ...u, id });
     }),
-    delete: (id: number) => apiCall<void>("delete_usuario", { id }, () => {
+    delete: (id: number) => writeCall<void>("delete_usuario", { id }, () => {
       store.removeUsuario(id);
     }).then(() => {
       store.removeUsuario(id);
@@ -374,21 +480,47 @@ export const api = {
       store.movimentacoes = dados;
       return dados;
     }).then((dados) => { store.movimentacoes = dados; return dados; }),
-    create: (m: Omit<Movimentacao, "id" | "data_movimento"> & { data_movimento?: string }) => apiCall<Movimentacao>("create_movimentacao", m, () => {
-      const novo: Movimentacao = { ...m, id: nextId(store.getMovimentacoes()), data_movimento: m.data_movimento || todayISO() };
-      return store.addMovimentacao(novo);
-    }).then((mov) => {
-      // Garante que o registro também fique no localStorage
-      const existente = store.getMovimentacoes().find(x => x.id === mov.id);
-      if (!existente) {
-        store.addMovimentacao({ ...mov });
-      }
-      return mov;
-    }),
-    update: (id: number, m: Partial<Movimentacao>) => apiCall<Movimentacao>("update_movimentacao", { id, ...m }, () => {
-      return store.updateMovimentacao(id, m) as Movimentacao;
-    }),
-    delete: (id: number) => apiCall<void>("delete_movimentacao", { id }, () => {
+    create: (m: Omit<Movimentacao, "id" | "data_movimento"> & { data_movimento?: string }) => {
+      // Envia apenas os campos que o comando Rust espera (evita erro de desserialização)
+      const args = {
+        tipo: m.tipo,
+        produto_id: m.produto_id,
+        produto_nome: m.produto_nome ?? null,
+        quantidade: m.quantidade,
+        loja_origem_id: m.loja_origem_id ?? null,
+        loja_origem_nome: m.loja_origem_nome ?? null,
+        loja_destino_id: m.loja_destino_id ?? null,
+        loja_destino_nome: m.loja_destino_nome ?? null,
+        usuario_id: m.usuario_id ?? null,
+        observacao: m.observacao ?? null,
+        preco_compra: m.preco_compra ?? null,
+        unidade: m.unidade ?? null,
+        data_movimento: m.data_movimento ?? null,
+      };
+      console.log("[DEBUG create_movimentacao] args:", JSON.stringify(args, null, 2));
+      return writeCall<Movimentacao>("create_movimentacao", args, () => {
+        const novo: Movimentacao = { ...m, id: nextId(store.getMovimentacoes()), data_movimento: m.data_movimento || todayISO() };
+        return store.addMovimentacao(novo);
+      }).then((mov) => {
+        // Garante que o registro também fique no localStorage
+        const existente = store.getMovimentacoes().find(x => x.id === mov.id);
+        if (!existente) {
+          store.addMovimentacao({ ...mov });
+        }
+        return mov;
+      });
+    },
+    update: (id: number, m: Partial<Movimentacao>) => {
+      const args: Record<string, unknown> = { id };
+      if (m.quantidade !== undefined) args.quantidade = m.quantidade;
+      if (m.preco_compra !== undefined) args.preco_compra = m.preco_compra;
+      if (m.unidade !== undefined) args.unidade = m.unidade;
+      if (m.observacao !== undefined) args.observacao = m.observacao;
+      return writeCall<Movimentacao>("update_movimentacao", args, () => {
+        return store.updateMovimentacao(id, m) as Movimentacao;
+      });
+    },
+    delete: (id: number) => writeCall<void>("delete_movimentacao", { id }, () => {
       store.removeMovimentacao(id);
     }).then(() => {
       store.removeMovimentacao(id);
@@ -398,15 +530,15 @@ export const api = {
   // ---- Solicitacoes ----
   solicitacoes: {
     list: () => apiCall<Solicitacao[]>("list_solicitacoes", {}, () => store.getSolicitacoes()),
-    create: (s: Omit<Solicitacao, "id" | "data_solicitacao" | "status">) => apiCall<Solicitacao>("create_solicitacao", s, () => {
+    create: (s: Omit<Solicitacao, "id" | "data_solicitacao" | "status">) => writeCall<Solicitacao>("create_solicitacao", s, () => {
       const novo: Solicitacao = { ...s, id: nextId(store.getSolicitacoes()), status: "pendente", data_solicitacao: todayISO() };
       return store.addSolicitacao(novo);
     }),
-    updateStatus: (id: number, status: string) => apiCall<void>("update_solicitacao_status", { id, status }, () => {
+    updateStatus: (id: number, status: string) => writeCall<void>("update_solicitacao_status", { id, status }, () => {
       const arr = store.getSolicitacoes().map(x => x.id === id ? { ...x, status } : x);
       store.setSolicitacoes(arr);
     }),
-    updateObservacao: (id: number, observacao: string) => apiCall<void>("update_solicitacao_observacao", { id, observacao }, () => {
+    updateObservacao: (id: number, observacao: string) => writeCall<void>("update_solicitacao_observacao", { id, observacao }, () => {
       const arr = store.getSolicitacoes().map(x => x.id === id ? { ...x, observacao } : x);
       store.setSolicitacoes(arr);
     }),
@@ -414,7 +546,7 @@ export const api = {
       "list_solicitacao_itens", { solicitacao_id }, () => store.getItens(solicitacao_id)
     ),
     addItem: (solicitacao_id: number, produto_id: number, quantidade: number) =>
-      apiCall<SolicitacaoItem>(
+      writeCall<SolicitacaoItem>(
         "add_solicitacao_item", { solicitacao_id, produto_id, quantidade },
         () => {
           const prod = store.getProdutos().find(p => p.id === produto_id);
@@ -435,7 +567,7 @@ export const api = {
           return novo;
         }
       ),
-    removeItem: (id: number, solicitacao_id: number) => apiCall<void>(
+    removeItem: (id: number, solicitacao_id: number) => writeCall<void>(
       "remove_solicitacao_item", { id }, () => {
         store.removeItem(solicitacao_id, id);
         const arr = store.getSolicitacoes().map(x => x.id === solicitacao_id
@@ -443,7 +575,7 @@ export const api = {
         store.setSolicitacoes(arr);
       }
     ),
-    delete: (id: number) => apiCall<void>("delete_solicitacao", { id }, () => {
+    delete: (id: number) => writeCall<void>("delete_solicitacao", { id }, () => {
       const arr = store.getSolicitacoes().filter(x => x.id !== id);
       store.setSolicitacoes(arr);
     }),
@@ -473,19 +605,25 @@ export const api = {
             }
           }
         }
-        // Último recurso: itens do SQLite (pedido_itens)
-        if (!(p as any).itens || (p as any).itens.length === 0) {
-          try {
-            const { invoke } = await import("@tauri-apps/api/core");
-            const sqlItens: any[] = await invoke("list_pedido_itens", { pedidoId: p.id });
-            if (sqlItens && sqlItens.length > 0) (p as any).itens = sqlItens;
-          } catch {}
-        }
+      }
+      // Último recurso: itens do SQLite (pedido_itens) — import fora do loop,
+      // buscas em paralelo para evitar N+1 serial
+      const faltando = dados.filter(p => !(p as any).itens || (p as any).itens.length === 0);
+      if (faltando.length > 0) {
+        try {
+          const { invoke } = await import("@tauri-apps/api/core");
+          await Promise.all(faltando.map(async (p) => {
+            try {
+              const sqlItens: any[] = await invoke("list_pedido_itens", { pedidoId: p.id });
+              if (sqlItens && sqlItens.length > 0) (p as any).itens = sqlItens;
+            } catch {}
+          }));
+        } catch {}
       }
       store.pedidos = dados;
       return dados;
     }),
-    create: (p: Omit<Pedido, "id" | "status">) => apiCall<Pedido>("create_pedido", {
+    create: (p: Omit<Pedido, "id" | "status">) => writeCall<Pedido>("create_pedido", {
       numero: p.numero,
       loja_id: p.loja_id,
       solicitante: p.solicitante,
@@ -506,12 +644,12 @@ export const api = {
       return pedido;
     }),
     delete: async (id: number) => {
-      await apiCall<void>("delete_pedido", { id }, () => {
+      await writeCall<void>("delete_pedido", { id }, () => {
         store.setPedidos(store.getPedidos().filter(p => p.id !== id));
         store.removePedidoItens(id);
       });
     },
-    update: (id: number, dados: Partial<Pedido>) => apiCall<Pedido | undefined>("update_pedido", { id, status: dados.status }, () => {
+    update: (id: number, dados: Partial<Pedido>) => writeCall<Pedido | undefined>("update_pedido", { id, status: dados.status }, () => {
       const p = store.getPedidos().find(pp => pp.id === id);
       if (p) { Object.assign(p, dados); persist("almox_pedidos", store.getPedidos()); }
       return p;
@@ -534,15 +672,16 @@ export const api = {
         const itens = (p as any)?.itens || store.getPedidoItens(p.id);
         if (itens?.length) todos[p.id] = itens;
       }
-      // Complementa com itens do SQLite
+      // Complementa com itens do SQLite — import fora do loop, buscas em paralelo
       try {
         const { invoke } = await import("@tauri-apps/api/core");
-        for (const p of store.getPedidos()) {
-          if (!todos[p.id]) {
+        const faltando = store.getPedidos().filter((p) => !todos[p.id]);
+        await Promise.all(faltando.map(async (p) => {
+          try {
             const sqlItens: any[] = await invoke("list_pedido_itens", { pedidoId: p.id });
             if (sqlItens && sqlItens.length > 0) todos[p.id] = sqlItens;
-          }
-        }
+          } catch {}
+        }));
       } catch {}
       return todos;
     },
@@ -553,12 +692,20 @@ export const api = {
         persist("almox_pedidos", store.getPedidos());
       }
       store.setPedidoItens(pedido_id, itens);
-      // Salva no SQLite
-      try {
-        import("@tauri-apps/api/core").then(({ invoke }) => {
-          invoke("set_pedido_itens", { pedidoId: pedido_id, itens: itens.map(i => ({ produto_id: i.produto_id || 0, produto_nome: i.produto_nome, unidade: i.unidade || null, quantidade: i.quantidade })) }).catch(() => {});
-        });
-      } catch {}
+      // Salva no SQLite (Desktop) ou na nuvem (Web)
+      if (getCloudConfig()) {
+        remoteCall("set_pedido_itens", {
+          pedidoId: pedido_id,
+          itens: itens.map(i => ({ produto_id: i.produto_id || 0, produto_nome: i.produto_nome, unidade: i.unidade || null, quantidade: i.quantidade })),
+        }).catch(() => {});
+      } else {
+        try {
+          import("@tauri-apps/api/core").then(({ invoke }) => {
+            invoke("set_pedido_itens", { pedidoId: pedido_id, itens: itens.map(i => ({ produto_id: i.produto_id || 0, produto_nome: i.produto_nome, unidade: i.unidade || null, quantidade: i.quantidade })) }).catch(() => {});
+          });
+        } catch {}
+      }
+      triggerAutoSync();
       return Promise.resolve();
     },
   },
@@ -566,9 +713,44 @@ export const api = {
   // ---- Alertas ----
   alertas: {
     list: () => apiCall<Alerta[]>("list_alertas", {}, () => store.getAlertas()),
-    markLido: (id: number) => apiCall<void>("mark_alerta_lido", { id }, () => {
+    markLido: (id: number) => writeCall<void>("mark_alerta_lido", { id }, () => {
       store.markAlertaLido(id);
     }),
+  },
+
+  // ---- Etiquetas ----
+  etiquetas: {
+    /**
+     * Imprime etiqueta(s) de um produto.
+     * Desktop: chama print_product_label (gera HTML + abre no navegador).
+     * Browser: monta o HTML localmente e usa printHtml (fallback).
+     */
+    print: async (produtoId: number, qtd: number, empresa: string, tamanho: TamanhoEtiqueta = "pequena") => {
+      const invoke = await getInvoke();
+      if (invoke) {
+        try {
+          await invoke("print_product_label", {
+            produto_id: produtoId,
+            quantidade: Math.max(1, qtd),
+            empresa,
+            tamanho,
+          });
+          return;
+        } catch (e) {
+          console.warn("[etiquetas] Tauri falhou, usando fallback browser:", e);
+        }
+      }
+      // Fallback browser
+      const p = store.getProdutos().find(x => x.id === produtoId);
+      if (!p) throw new Error("Produto não encontrado");
+      const html = montarHtmlEtiquetas({
+        produtos: [p],
+        quantidades: { [p.id]: Math.max(1, qtd) },
+        empresa,
+        tamanho,
+      });
+      await printHtml(html, `Etiquetas ${p.nome}`);
+    },
   },
 
   // ---- Sync (Export / Import) ----
@@ -581,48 +763,85 @@ export const api = {
         const dados = await invoke("export_all_data");
         return JSON.stringify(dados, null, 2);
       }
-      // Browser: exporta do localStorage
-      const chaves = [
-        "almox_lojas", "almox_categorias", "almox_fornecedores",
-        "almox_produtos", "almox_usuarios", "almox_movimentacoes",
-        "almox_solicitacoes", "almox_solicitacao_itens", "almox_pedidos",
-        "almox_pedido_itens", "almox_alertas",
+      // Browser: exporta do localStorage (chaves sem prefixo almox_ para compatibilidade com Rust)
+      const pares: [string, string][] = [
+        ["lojas", "almox_lojas"],
+        ["categorias", "almox_categorias"],
+        ["fornecedores", "almox_fornecedores"],
+        ["produtos", "almox_produtos"],
+        ["usuarios", "almox_usuarios"],
+        ["movimentacoes", "almox_movimentacoes"],
+        ["solicitacoes", "almox_solicitacoes"],
+        ["solicitacao_itens", "almox_solicitacao_itens"],
+        ["pedidos", "almox_pedidos"],
+        ["pedido_itens", "almox_pedido_itens"],
+        ["alertas", "almox_alertas"],
       ];
       const dados: Record<string, any> = { versao: "1.0", data_exportacao: new Date().toISOString() };
-      for (const chave of chaves) {
-        const raw = localStorage.getItem(chave);
-        if (raw) dados[chave] = JSON.parse(raw);
+      for (const [outKey, lsKey] of pares) {
+        const raw = localStorage.getItem(lsKey);
+        if (raw) dados[outKey] = JSON.parse(raw);
       }
       return JSON.stringify(dados, null, 2);
     },
 
     /** Importa dados de um JSON (Desktop: Tauri, Browser: localStorage) */
     importData: async (json: string): Promise<string> => {
-      const dados = JSON.parse(json);
+      const CHAVES_VALIDAS = new Set<string>([
+        "lojas", "categorias", "fornecedores", "produtos", "usuarios",
+        "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos",
+        "pedido_itens", "alertas",
+        // variantes com prefixo almox_
+        ...["lojas", "categorias", "fornecedores", "produtos", "usuarios",
+          "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos",
+          "pedido_itens", "alertas"].map(k => `almox_${k}`),
+      ]);
+      let dados: any;
+      try {
+        dados = JSON.parse(json);
+      } catch {
+        throw new Error("Arquivo inválido: o conteúdo não é um JSON válido.");
+      }
+      if (!dados || typeof dados !== "object" || Array.isArray(dados)) {
+        throw new Error("Arquivo inválido: o JSON deve ser um objeto de dados (ex.: { lojas: [...], produtos: [...] }).");
+      }
+      for (const chave of Object.keys(dados)) {
+        if (!CHAVES_VALIDAS.has(chave) && chave !== "versao" && chave !== "data_exportacao") {
+          throw new Error(`Arquivo rejeitado: chave desconhecida "${chave}". Só são aceitos arquivos de exportação deste sistema.`);
+        }
+        const valor = dados[chave];
+        if ((chave === "versao" || chave === "data_exportacao") && typeof valor !== "string") {
+          throw new Error(`Arquivo inválido: campo "${chave}" deve ser texto.`);
+        } else if (CHAVES_VALIDAS.has(chave) && !Array.isArray(valor)) {
+          throw new Error(`Arquivo inválido: campo "${chave}" deve ser uma lista de registros.`);
+        }
+      }
       const invoke = await getInvoke();
       if (invoke) {
         // Desktop: importa para SQLite
         return await invoke("import_all_data", { dados });
       }
       // Browser: importa para localStorage
+      // Aceita ambos os formatos: "categorias" (Rust) e "almox_categorias" (Web)
       let total = 0;
-      const mapa: Record<string, string> = {
-        "almox_lojas": "almox_lojas",
-        "almox_categorias": "almox_categorias",
-        "almox_fornecedores": "almox_fornecedores",
-        "almox_produtos": "almox_produtos",
-        "almox_usuarios": "almox_usuarios",
-        "almox_movimentacoes": "almox_movimentacoes",
-        "almox_solicitacoes": "almox_solicitacoes",
-        "almox_solicitacao_itens": "almox_solicitacao_itens",
-        "almox_pedidos": "almox_pedidos",
-        "almox_pedido_itens": "almox_pedido_itens",
-        "almox_alertas": "almox_alertas",
-      };
-      for (const [key, lsKey] of Object.entries(mapa)) {
-        if (dados[key]) {
-          localStorage.setItem(lsKey, JSON.stringify(dados[key]));
-          total += Array.isArray(dados[key]) ? dados[key].length : 1;
+      const pares: [string, string][] = [
+        ["lojas", "almox_lojas"],
+        ["categorias", "almox_categorias"],
+        ["fornecedores", "almox_fornecedores"],
+        ["produtos", "almox_produtos"],
+        ["usuarios", "almox_usuarios"],
+        ["movimentacoes", "almox_movimentacoes"],
+        ["solicitacoes", "almox_solicitacoes"],
+        ["solicitacao_itens", "almox_solicitacao_itens"],
+        ["pedidos", "almox_pedidos"],
+        ["pedido_itens", "almox_pedido_itens"],
+        ["alertas", "almox_alertas"],
+      ];
+      for (const [srcKey, lsKey] of pares) {
+        const dadosArr = dados[srcKey] || dados[lsKey];
+        if (dadosArr) {
+          localStorage.setItem(lsKey, JSON.stringify(dadosArr));
+          total += Array.isArray(dadosArr) ? dadosArr.length : 1;
         }
       }
       return `Importacao concluida! ${total} registros importados.`;
@@ -651,18 +870,53 @@ export const api = {
 
     // ---- Sync automatica via GitHub ----
 
+    /** Config de sync do GitHub vinda do cofre (criptografado), se disponível. */
+    getConfigDoCofre: (): { owner: string; repo: string; path: string; token: string } | null => {
+      if (!vault.isUnlocked()) return null;
+      const s = vault.getVaultSecrets();
+      if (!s?.sync_github_owner || !s?.sync_github_repo || !s?.sync_github_token) return null;
+      return { owner: s.sync_github_owner, repo: s.sync_github_repo, path: s.sync_github_path || "sync_data.json", token: s.sync_github_token };
+    },
+
+    /** Migra (uma única vez) a config legada em plaintext para o cofre. */
+    migrarGithubParaCofre: (owner: string, repo: string, path: string, token: string) => {
+      const pw = vault.getVaultPassword();
+      if (!pw) return;
+      vault.createOrUpdateVault({ sync_github_owner: owner, sync_github_repo: repo, sync_github_path: path || "sync_data.json", sync_github_token: token }, pw)
+        .then(() => {
+          // Apaga as chaves antigas em texto puro
+          localStorage.removeItem("sync_github_token");
+          localStorage.removeItem("sync_github_owner");
+          localStorage.removeItem("sync_github_repo");
+          localStorage.removeItem("sync_github_path");
+        })
+        .catch((e) => console.warn("[sync] migração da config GitHub para o cofre falhou:", e));
+    },
+
     /** Retorna configuracao de sync do GitHub */
     getGithubConfig: (): { owner: string; repo: string; path: string; token: string } | null => {
+      // 1. Cofre criptografado (prioridade)
+      const doCofre = api.sync.getConfigDoCofre();
+      if (doCofre) return doCofre;
+      // 2. Legado em texto puro — migra para o cofre se ele estiver desbloqueado
       const owner = localStorage.getItem("sync_github_owner");
       const repo = localStorage.getItem("sync_github_repo");
       const path = localStorage.getItem("sync_github_path");
       const token = localStorage.getItem("sync_github_token");
       if (!owner || !repo || !path || !token) return null;
+      api.sync.migrarGithubParaCofre(owner, repo, path, token);
       return { owner, repo, path, token };
     },
 
     /** Salva configuracao de sync do GitHub */
     setGithubConfig: (owner: string, repo: string, path: string, token: string) => {
+      // Com cofre desbloqueado: grava criptografado (nunca plaintext)
+      const pw = vault.getVaultPassword();
+      if (pw) {
+        vault.createOrUpdateVault({ sync_github_owner: owner, sync_github_repo: repo, sync_github_path: path || "sync_data.json", sync_github_token: token }, pw)
+          .catch((e) => console.warn("[sync] falha ao gravar config GitHub no cofre:", e));
+        return;
+      }
       localStorage.setItem("sync_github_owner", owner);
       localStorage.setItem("sync_github_repo", repo);
       localStorage.setItem("sync_github_path", path);
@@ -679,52 +933,89 @@ export const api = {
       localStorage.setItem("sync_auto_enabled", String(enabled));
     },
 
+    /** Hash simples djb2 para comparar conteudo */
+    hashContent: (s: string): string => {
+      let h = 5381;
+      for (let i = 0; i < s.length; i++) h = ((h << 5) + h) ^ s.charCodeAt(i);
+      return (h >>> 0).toString(36);
+    },
+
     /** Push dos dados locais para o GitHub */
     pushToGithub: async (): Promise<{ ok: boolean; message: string }> => {
       const config = api.sync.getGithubConfig();
       if (!config) return { ok: false, message: "Configuracao do GitHub nao encontrada" };
 
-      const json = await api.sync.exportData();
-      const base64 = btoa(unescape(encodeURIComponent(json)));
-
-      // Buscar SHA existente (para atualizar, nao criar duplicata)
-      let sha: string | null = null;
-      try {
-        const getRes = await fetch(
-          `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
-          { headers: { Authorization: `token ${config.token}`, Accept: "application/vnd.github.v3+json" } }
-        );
-        if (getRes.ok) {
-          const fileData = await getRes.json();
-          sha = fileData.sha;
+      // Desktop: usa Rust (sem CORS)
+      const invoke = await getInvoke();
+      if (invoke) {
+        try {
+          const msg = await invoke("push_to_github");
+          localStorage.setItem("sync_last_push", new Date().toISOString());
+          return { ok: true, message: String(msg) };
+        } catch (e: any) {
+          return { ok: false, message: `Erro: ${e.message || e}` };
         }
-      } catch {}
-
-      const body: any = {
-        message: `sync: atualizacao automatica ${new Date().toISOString().slice(0, 19)}`,
-        content: base64,
-      };
-      if (sha) body.sha = sha;
-
-      const res = await fetch(
-        `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `token ${config.token}`,
-            Accept: "application/vnd.github.v3+json",
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        }
-      );
-
-      if (res.ok) {
-        localStorage.setItem("sync_last_push", new Date().toISOString());
-        return { ok: true, message: "Dados enviados ao GitHub com sucesso" };
       }
-      const err = await res.text();
-      return { ok: false, message: `Erro ao enviar: ${err}` };
+
+      // Web: usa fetch — cache inteligente: so envia se conteudo mudou
+      const json = await api.sync.exportData();
+      const currHash = api.sync.hashContent(json);
+      const lastHash = localStorage.getItem("sync_last_push_hash");
+      if (lastHash && currHash === lastHash) {
+        return { ok: true, message: "Sem alteracoes locais para enviar" };
+      }
+      // UTF-8 -> base64 via TextEncoder (equivalente ao antigo btoa(unescape(encodeURIComponent(...))))
+      const bytesJson = new TextEncoder().encode(json);
+      let binario = "";
+      bytesJson.forEach((b) => (binario += String.fromCharCode(b)));
+      const base64 = btoa(binario);
+
+      // Retry com SHA atualizado em caso de 409
+      for (let tentativa = 0; tentativa < 3; tentativa++) {
+        let sha: string | null = null;
+        try {
+          const getRes = await fetch(
+            `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+            { headers: { Authorization: `token ${config.token}`, Accept: "application/vnd.github.v3+json" } }
+          );
+          if (getRes.ok) {
+            const fileData = await getRes.json();
+            sha = fileData.sha;
+          }
+        } catch {}
+
+        const body: any = {
+          message: `sync: atualizacao web ${new Date().toISOString().slice(0, 19)}`,
+          content: base64,
+        };
+        if (sha) body.sha = sha;
+
+        const res = await fetch(
+          `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `token ${config.token}`,
+              Accept: "application/vnd.github.v3+json",
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+          }
+        );
+
+        if (res.ok) {
+          localStorage.setItem("sync_last_push", new Date().toISOString());
+          localStorage.setItem("sync_last_push_hash", currHash);
+          const jd = await res.json().catch(() => null);
+          if (jd?.content?.sha) localStorage.setItem("sync_last_github_sha", jd.content.sha);
+          return { ok: true, message: "Dados enviados ao GitHub com sucesso" };
+        }
+        // 409 = conflito de SHA, retry
+        if (res.status === 409) continue;
+        const err = await res.text();
+        return { ok: false, message: `Erro ao enviar: ${err}` };
+      }
+      return { ok: false, message: "Erro: conflito persistente no GitHub (409)" };
     },
 
     /** Pull dos dados do GitHub para o local */
@@ -732,6 +1023,43 @@ export const api = {
       const config = api.sync.getGithubConfig();
       if (!config) return { ok: false, message: "Configuracao do GitHub nao encontrada", changed: false };
 
+      // Desktop: usa Rust (sem CORS) — verifica SHA antes para evitar import desnecessario
+      const invoke = await getInvoke();
+      if (invoke) {
+        try {
+          // tenta verificar SHA remoto primeiro (cache)
+          try {
+            const headRes = await fetch(
+              `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
+              { headers: { Authorization: `token ${config.token}`, Accept: "application/vnd.github.v3+json" }, method: "GET" }
+            );
+            if (headRes.ok) {
+              const fd: any = await headRes.clone().json().catch(() => null);
+              const remoteSha = fd?.sha;
+              const lastSha = localStorage.getItem("sync_last_github_sha");
+              if (remoteSha && lastSha && remoteSha === lastSha) {
+                return { ok: true, message: "Dados ja estao atualizados", changed: false };
+              }
+            }
+          } catch {}
+          const msg = await invoke("pull_from_github");
+          const msgStr = String(msg);
+          const isEmpty = msgStr.includes("Nenhum dado") || msgStr.includes("vazios");
+          const noChange = msgStr.includes("ja estao");
+          const changed = !isEmpty && !noChange;
+          if (changed) localStorage.setItem("sync_last_sync", new Date().toISOString());
+          // tenta atualizar SHA cache apos sucesso
+          try {
+            const r2 = await fetch(`https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`, { headers: { Authorization: `token ${config.token}`, Accept: "application/vnd.github.v3+json" } });
+            if (r2.ok) { const j: any = await r2.json(); if (j?.sha) localStorage.setItem("sync_last_github_sha", j.sha); }
+          } catch {}
+          return { ok: true, message: msgStr, changed };
+        } catch (e: any) {
+          return { ok: false, message: `Erro: ${e.message || e}`, changed: false };
+        }
+      }
+
+      // Web: usa fetch — cache por SHA
       try {
         const res = await fetch(
           `https://api.github.com/repos/${config.owner}/${config.repo}/contents/${config.path}`,
@@ -744,18 +1072,18 @@ export const api = {
         }
 
         const fileData = await res.json();
-        const json = decodeURIComponent(escape(atob(fileData.content)));
-        const dadosRemotos = JSON.parse(json);
-
-        // Verificar se mudou comparando com o local
-        const lastPull = localStorage.getItem("sync_last_pull");
-        if (fileData.commit.committer.date === lastPull) {
+        const remoteSha: string = fileData.sha;
+        const lastSha = localStorage.getItem("sync_last_github_sha");
+        if (lastSha && remoteSha === lastSha) {
           return { ok: true, message: "Dados ja estao atualizados", changed: false };
         }
+        // base64 -> UTF-8 via TextDecoder (equivalente ao antigo decodeURIComponent(escape(atob(...))))
+        const binario = atob(fileData.content);
+        const bytes = Uint8Array.from(binario, (c) => c.charCodeAt(0));
+        const json = new TextDecoder().decode(bytes);
 
-        // Importar dados do GitHub
         await api.sync.importData(json);
-        localStorage.setItem("sync_last_pull", fileData.commit.committer.date);
+        localStorage.setItem("sync_last_github_sha", remoteSha);
         localStorage.setItem("sync_last_sync", new Date().toISOString());
 
         return { ok: true, message: "Dados sincronizados do GitHub", changed: true };
@@ -771,22 +1099,50 @@ export const api = {
 // ============================================================================
 export async function syncAllFromBackend() {
   const invoke = await getInvoke();
-  if (!invoke) return false;
   // Se o sistema foi resetado, não recarregar dados do SQLite
   if (localStorage.getItem("almox_reset_done") === "1") {
     localStorage.removeItem("almox_reset_done");
     return false;
   }
+
+  // ---- Web: banco compartilhado na nuvem ----
+  if (!invoke && getCloudConfig()) {
+    try {
+      const { cloudPullAll } = await import("./cloudDb");
+      await cloudPullAll();
+      store.lojas = loadFromLS<Loja[]>("almox_lojas", []);
+      store.categorias = loadFromLS<Categoria[]>("almox_categorias", []);
+      store.produtos = loadFromLS<Produto[]>("almox_produtos", []);
+      store.usuarios = loadFromLS<Usuario[]>("almox_usuarios", []);
+      store.movimentacoes = loadFromLS<Movimentacao[]>("almox_movimentacoes", []);
+      store.solicitacoes = loadFromLS<Solicitacao[]>("almox_solicitacoes", []);
+      store.pedidos = loadFromLS<Pedido[]>("almox_pedidos", []);
+      store.alertas = loadFromLS<Alerta[]>("almox_alertas", []);
+      store.pedidoItens = loadFromLS("almox_pedido_itens", {});
+      return true;
+    } catch (e) {
+      console.warn("[syncAllFromBackend] nuvem indisponivel:", e);
+      return false;
+    }
+  }
+
+  if (!invoke) return false;
   // Busca cada tabela individualmente — falha de uma não quebra as outras
   const tabelas = [
-    { key: "lojas", cmd: "list_lojas", set: (d: any) => { if (!localStorage.getItem("almox_lojas") || JSON.parse(localStorage.getItem("almox_lojas") || "[]").length === 0) store.setLojas(d); } },
+    { key: "lojas", cmd: "list_lojas", set: (d: any) => { persist("almox_lojas", d); store.setLojas(d); } },
     { key: "categorias", cmd: "list_categorias", set: (d: any) => store.setCategorias(d) },
     { key: "produtos", cmd: "list_produtos", set: (d: any) => { persist("almox_produtos", d); store.setProdutos(d); } },
     { key: "usuarios", cmd: "list_usuarios", set: (d: any) => store.setUsuarios(d) },
-    { key: "movimentacoes", cmd: "list_movimentacoes", set: (d: any) => store.setMovimentacoes(d) },
+    { key: "movimentacoes", cmd: "list_movimentacoes", set: (d: any) => {
+      const anteriores = store.movimentacoes.length;
+      if (anteriores > 0 && Array.isArray(d) && d.length < anteriores) {
+        console.warn(`[syncAllFromBackend] movimentacoes: backend retornou ${d.length} mas localStorage tinha ${anteriores} — dados podem ter sido perdidos se invoke de create falhou`);
+      }
+      store.setMovimentacoes(d);
+    } },
     { key: "solicitacoes", cmd: "list_solicitacoes", set: (d: any) => store.setSolicitacoes(d) },
     { key: "pedidos", cmd: "list_pedidos", set: (d: any) => store.setPedidos(d) },
-    { key: "alertas", cmd: "list_alertas", set: (d: any) => { if (!localStorage.getItem("almox_alertas")) store.setAlertas(d); } },
+    { key: "alertas", cmd: "list_alertas", set: (d: any) => store.setAlertas(d) },
   ];
   let ok = 0;
   for (const t of tabelas) {
@@ -800,3 +1156,5 @@ export async function syncAllFromBackend() {
   }
   return ok > 0;
 }
+
+
