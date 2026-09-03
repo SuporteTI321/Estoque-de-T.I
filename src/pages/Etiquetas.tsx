@@ -312,12 +312,13 @@ export default function Etiquetas() {
   }
 
   // ---- Print ----
+  // Réplica 1:1 do Preview — mesmo DOM, mesmas medidas, mesma ordem
   const handlePrint = () => {
     if (listaEtq.length === 0) return
     const pageSize = papel === 'rollo' ? `${cfg.largura}mm ${cfg.altura}mm` : papel === 'letter' ? 'letter portrait' : 'A4 portrait'
-    const bordaPrint = borda.ativa ? `${borda.largura}mm ${borda.estilo} ${borda.cor}` : '0.5px solid #e2e8f0'
+    const bordaPrint = borda.ativa ? `${borda.largura}mm ${borda.estilo} ${borda.cor}` : '1px solid transparent'
 
-    // Gera todas as páginas
+    // Gera todas as páginas usando exatamente o mesmo template do Preview
     const todasPaginasPrint: string[] = []
     for (let i = 0; i < totalPaginas; i++) {
       const pagEtq = listaEtq.slice(i * etqPorPagina, (i + 1) * etqPorPagina)
@@ -329,39 +330,31 @@ export default function Etiquetas() {
         const tModelo = etqConfig.tamanhoModelo ?? tamanhoModelo
         const pos = etqConfig.posicoes ?? posicoes
         const neg = etqConfig.negritos ?? negritos
-        return `<div class="etq-item">
-          ${mostrarBarra ? `<div style="position:absolute;top:${pos.barra?.top}mm;left:${pos.barra?.left}mm;right:1mm;height:${alturaBarra}mm;overflow:hidden;display:flex;align-items:center;z-index:0;background:#FFFFFF">${getBarcodeSvg(etq.codigo)}</div>` : ''}
-          ${campos.includes('codigo') ? `<p style="position:absolute;top:${pos.codigo?.top}mm;left:${pos.codigo?.left}mm;font-size:${tCod}mm;font-weight:${neg.codigo ? 'bold' : 'normal'};z-index:2;background:transparent">${escHtml(etq.codigo)}</p>` : ''}
-          ${campos.includes('produto') ? `<p style="position:absolute;top:${pos.produto?.top}mm;left:${pos.produto?.left}mm;font-size:${tProd}mm;font-weight:${neg.produto ? 'bold' : 'normal'};z-index:2;background:transparent">${escHtml(etq.nome || '')}</p>` : ''}
-          ${campos.includes('marca') ? `<p style="position:absolute;top:${pos.marca?.top}mm;left:${pos.marca?.left}mm;font-size:${tMarca}mm;font-weight:${neg.marca ? 'bold' : 'normal'};z-index:2;background:transparent">${escHtml(etq.marca || '—')}</p>` : ''}
-          ${campos.includes('modelo') ? `<p style="position:absolute;top:${pos.modelo?.top}mm;left:${pos.modelo?.left}mm;font-size:${tModelo}mm;font-weight:${neg.modelo ? 'bold' : 'normal'};z-index:2;background:transparent">${escHtml(etq.modelo || '—')}</p>` : ''}
+        return `<div class="etq-item" style="width:${cfg.largura}mm;height:${cfg.altura}mm;position:relative;background:#fff;border:${bordaPrint};box-sizing:border-box;overflow:hidden;">
+          ${mostrarBarra ? `<div style="position:absolute;top:${pos.barra?.top}mm;left:${pos.barra?.left}mm;right:1mm;height:${alturaBarra}mm;overflow:hidden;display:flex;align-items:center;z-index:0;background:#FFFFFF;">${getBarcodeSvg(etq.codigo)}</div>` : ''}
+          ${campos.includes('codigo') ? `<p style="position:absolute;top:${pos.codigo?.top}mm;left:${pos.codigo?.left}mm;font-size:${tCod}mm;font-weight:${neg.codigo ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.codigo)}</p>` : ''}
+          ${campos.includes('produto') ? `<p style="position:absolute;top:${pos.produto?.top}mm;left:${pos.produto?.left}mm;font-size:${tProd}mm;font-weight:${neg.produto ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.nome || '')}</p>` : ''}
+          ${campos.includes('marca') ? `<p style="position:absolute;top:${pos.marca?.top}mm;left:${pos.marca?.left}mm;font-size:${tMarca}mm;font-weight:${neg.marca ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.marca || '—')}</p>` : ''}
+          ${campos.includes('modelo') ? `<p style="position:absolute;top:${pos.modelo?.top}mm;left:${pos.modelo?.left}mm;font-size:${tModelo}mm;font-weight:${neg.modelo ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.modelo || '—')}</p>` : ''}
         </div>`
       }).join('')
 
       todasPaginasPrint.push(
-        `<div class="folha"><div class="etq-grid">${etiquetasHtml}</div></div>`
+        `<div class="folha"><div class="etq-grid" style="display:grid;grid-template-columns:repeat(${colunas},${cfg.largura}mm);gap:${espacoV}mm ${espacoH}mm;padding:${papel === 'rollo' ? '0' : `${margemSup}mm ${margemDir}mm ${margemInf}mm ${margemEsq}mm`};box-sizing:border-box;width:${cfg.papelLargura}mm;height:${cfg.papelAltura}mm;margin:0 auto;justify-content:${alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start'};justify-items:${alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start'};align-content:${alinhamentoV === 'center' ? 'center' : alinhamentoV === 'end' ? 'end' : 'start'};align-items:start;">${etiquetasHtml}</div></div>`
       )
     }
 
     const css = `
       @page{margin:0;size:${pageSize}}
-      *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
+      *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;box-sizing:border-box}
+      html,body{margin:0;padding:0;background:#fff;font-family:sans-serif}
       svg{background:#FFFFFF !important;shape-rendering:crispEdges;image-rendering:crisp-edges;image-rendering:-webkit-optimize-contrast}
       svg rect[fill=\"#FFFFFF\"], svg rect[fill=\"white\"]{fill:#FFFFFF !important}
       svg rect[fill=\"#000000\"], svg rect[fill=\"#000\"], svg g rect{fill:#000000 !important;stroke:none !important}
       svg path{stroke:#000000 !important}
-      body{margin:0;padding:0}
-      .folha{page-break-after:${folhaUnica ? 'always' : 'auto'};position:relative;background:#fff}
+      .folha{page-break-after:${folhaUnica ? 'always' : 'auto'};position:relative;background:#fff;overflow:hidden}
       .folha:last-child{page-break-after:auto}
-      .etq-grid{display:grid;grid-template-columns:repeat(${colunas},${cfg.largura}mm);gap:${espacoV}mm ${espacoH}mm;
-        padding:${papel === 'rollo' ? '0' : `${margemSup}mm ${margemDir}mm ${margemInf}mm ${margemEsq}mm`};
-        box-sizing:border-box;width:${cfg.papelLargura}mm;height:${cfg.papelAltura}mm;margin:0 auto;
-        justify-content:${alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start'};
-        align-content:${alinhamentoV === 'center' ? 'center' : alinhamentoV === 'end' ? 'end' : 'start'}}
-      .etq-item{width:${cfg.largura}mm;height:${cfg.altura}mm;position:relative;background:#fff;border:${bordaPrint};box-sizing:border-box;overflow:hidden}
-      .etq-item p{margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:absolute;z-index:2}
       .etq-item svg{display:block;width:100%;height:100%;background:#FFFFFF !important}
-      .etq-item > div[style*="z-index:0"]{z-index:0 !important}
     `
     const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${todasPaginasPrint.join('\n')}</body></html>`
     const iframe = document.createElement('iframe')
@@ -598,9 +591,11 @@ export default function Etiquetas() {
                     <div className="absolute inset-0 border border-slate-200 pointer-events-none" />
                     <div style={{
                       display: 'grid', gridTemplateColumns: `repeat(${colunas}, ${cfg.largura}mm)`,
-                      gap: `${espacoV}mm ${espacoH}mm`, alignContent: 'start',
+                      gap: `${espacoV}mm ${espacoH}mm`,
+                      justifyContent: alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start',
                       justifyItems: alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start',
-                      justifyContent: 'start'
+                      alignContent: alinhamentoV === 'center' ? 'center' : alinhamentoV === 'end' ? 'end' : 'start',
+                      alignItems: 'start'
                     }}>
                       {etiquetasPagina.map(etq => {
                         const etqConfig = etiquetasIndividuais[etq.uid] || {}
@@ -610,7 +605,7 @@ export default function Etiquetas() {
                         const tModelo = etqConfig.tamanhoModelo ?? tamanhoModelo
                         const pos = etqConfig.posicoes ?? posicoes
                         const neg = etqConfig.negritos ?? negritos
-                        const bordaPrint = borda.ativa ? `${borda.largura}mm ${borda.estilo} ${borda.cor}` : '0.5px solid #e2e8f0'
+                        const bordaPrint = borda.ativa ? `${borda.largura}mm ${borda.estilo} ${borda.cor}` : '1px solid transparent'
 
                         return (
                           <div key={etq.uid} style={{ width: cfg.largura + 'mm', height: cfg.altura + 'mm', position: 'relative', background: '#fff', border: bordaPrint, boxSizing: 'border-box', overflow: 'hidden' }}>
