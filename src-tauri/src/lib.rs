@@ -2145,6 +2145,12 @@ fn print_product_label(
         "grande" => ("150mm", "70mm", "12px"),
         _ => ("70mm", "35mm", "8px"), // pequena (padrao)
     };
+    // Largura ótima auto-ajustada (nunca muito junto)
+    let largura_num: f64 = match tamanho.as_str() { "media" => 100.0, "grande" => 150.0, _ => 70.0 };
+    let modulos = codigo.len() as f64 * 11.0 + 35.0;
+    let disponivel = (largura_num - 6.0).max(12.0);
+    let raw_w = (disponivel * 3.78 - 12.0) / modulos;
+    let barcode_w = raw_w.clamp(1.4, 2.6);
 
     // Gera N etiquetas (uma por unidade)
     let mut etiquetas = String::new();
@@ -2196,7 +2202,7 @@ fn print_product_label(
           try {{
             JsBarcode(el, el.getAttribute('data-val'), {{
               format: 'CODE128', displayValue: true,
-              fontSize: {fs_num}, height: 44, width: 1.6, background: '#FFFFFF', lineColor: '#000000', margin: 0, flat: true
+              fontSize: {fs_num}, height: 48, width: {barcode_w}, background: '#FFFFFF', lineColor: '#000000', margin: 6, flat: true
             }});
             el.style.background = '#FFFFFF';
             el.style.shapeRendering = 'crispEdges';
@@ -2213,6 +2219,7 @@ fn print_product_label(
         fs = fs,
         fs_num = if tamanho == "grande" { "14" } else if tamanho == "media" { "11" } else { "9" },
         etiquetas = etiquetas,
+        barcode_w = barcode_w,
     );
 
     save_and_open_html(html, format!("etiqueta_{}", nome))

@@ -42,11 +42,22 @@ function escHtml(s: string): string {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function getBarcodeSvg(value: string, width: number = 1.6): string {
+// Calcula largura ótima do CODE128 para caber na etiqueta sem apertar nem esticar
+function calcBarcodeWidth(value: string, larguraMm: number, barraLeftMm: number): number {
+  const margin = 6
+  const disponivelMm = Math.max(12, larguraMm - (barraLeftMm ?? 1) - 2) // -2 margem direita + folga
+  const disponivelPx = disponivelMm * 3.78 // 96dpi / 25.4 = 3.78 px/mm
+  const modulos = value.length * 11 + 35 // start + dados + checksum + stop
+  const raw = (disponivelPx - 2 * margin) / modulos
+  return Math.max(1.4, Math.min(2.6, raw))
+}
+
+function getBarcodeSvg(value: string, width?: number): string {
+  const w = width ?? 2.0
   try {
     const svgNs = 'http://www.w3.org/2000/svg'
     const el = document.createElementNS(svgNs, 'svg')
-    JsBarcode(el, value, { format: 'CODE128', width, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 0, flat: true, textMargin: 0 })
+    JsBarcode(el, value, { format: 'CODE128', width: w, height: 48, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 6, flat: true, textMargin: 0 })
     el.setAttribute('style', 'display:block;width:auto;max-width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0 auto')
     el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
     el.style.backgroundColor = '#FFFFFF'
@@ -60,15 +71,16 @@ function getBarcodeSvg(value: string, width: number = 1.6): string {
 //  SUB-COMPONENTS
 // ============================================================
 
-/** Componente seguro para barcode SVG — preto 100% + fundo branco 100% para leitura */
-function BarcodeSvg({ value }: { value: string }) {
+/** Componente seguro para barcode SVG — largura auto-ajustada por tamanho da etiqueta */
+function BarcodeSvg({ value, largura, barraLeft }: { value: string; largura?: number; barraLeft?: number }) {
   const ref = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
     node.innerHTML = '';
     try {
       const svgNs = 'http://www.w3.org/2000/svg'
       const el = document.createElementNS(svgNs, 'svg')
-      JsBarcode(el, value, { format: 'CODE128', width: 1.6, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 0, flat: true, textMargin: 0 })
+      const w = calcBarcodeWidth(value, largura ?? 70, barraLeft ?? 1)
+      JsBarcode(el, value, { format: 'CODE128', width: w, height: 48, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 6, flat: true, textMargin: 0 })
       el.setAttribute('style', 'display:block;width:auto;max-width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0 auto')
       el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
       el.style.backgroundColor = '#FFFFFF'
@@ -80,7 +92,7 @@ function BarcodeSvg({ value }: { value: string }) {
       span.textContent = value
       node.appendChild(span)
     }
-  }, [value])
+  }, [value, largura, barraLeft])
   return <div ref={ref} style={{ width: '100%', height: '100%', backgroundColor: '#FFFFFF', display: 'flex', justifyContent: 'center', alignItems: 'center' }} />
 }
 
@@ -346,7 +358,7 @@ export default function Etiquetas() {
         const pos = etqConfig.posicoes ?? posicoes
         const neg = etqConfig.negritos ?? negritos
         return `<div class="etq-item" style="width:${cfg.largura}mm;height:${cfg.altura}mm;position:relative;background:#fff;border:${bordaPrint};box-sizing:border-box;overflow:hidden;">
-          ${mostrarBarra ? `<div style="position:absolute;top:${pos.barra?.top}mm;left:${pos.barra?.left}mm;right:1mm;height:${alturaBarra}mm;overflow:hidden;display:flex;align-items:center;justify-content:center;z-index:0;background:#FFFFFF;">${getBarcodeSvg(etq.codigo)}</div>` : ''}
+          ${mostrarBarra ? `<div style="position:absolute;top:${pos.barra?.top}mm;left:${pos.barra?.left}mm;right:1mm;height:${alturaBarra}mm;overflow:hidden;display:flex;align-items:center;justify-content:center;z-index:0;background:#FFFFFF;">${getBarcodeSvg(etq.codigo, calcBarcodeWidth(etq.codigo, cfg.largura, pos.barra?.left))}</div>` : ''}
           ${campos.includes('codigo') ? `<p style="position:absolute;top:${pos.codigo?.top}mm;left:${pos.codigo?.left}mm;font-size:${tCod}mm;font-weight:${neg.codigo ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.codigo)}</p>` : ''}
           ${campos.includes('produto') ? `<p style="position:absolute;top:${pos.produto?.top}mm;left:${pos.produto?.left}mm;font-size:${tProd}mm;font-weight:${neg.produto ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.nome || '')}</p>` : ''}
           ${campos.includes('marca') ? `<p style="position:absolute;top:${pos.marca?.top}mm;left:${pos.marca?.left}mm;font-size:${tMarca}mm;font-weight:${neg.marca ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.marca || '—')}</p>` : ''}
@@ -626,7 +638,7 @@ export default function Etiquetas() {
                           <div key={etq.uid} style={{ width: cfg.largura + 'mm', height: cfg.altura + 'mm', position: 'relative', background: '#fff', border: bordaPrint, boxSizing: 'border-box', overflow: 'hidden' }}>
                             {mostrarBarra && (
                               <div style={{ position: 'absolute', top: pos.barra?.top + 'mm', left: pos.barra?.left + 'mm', right: '1mm', height: alturaBarra + 'mm', overflow: 'hidden', display: 'flex', alignItems: 'center', zIndex: 0, background: '#FFFFFF' }}>
-                                <BarcodeSvg value={etq.codigo} />
+                                <BarcodeSvg value={etq.codigo} largura={cfg.largura} barraLeft={pos.barra?.left} />
                               </div>
                             )}
                             {campos.includes('codigo') && (
