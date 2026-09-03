@@ -187,6 +187,37 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
             valor TEXT NOT NULL
         );
 
+        -- SEGURANÇA: Tabela de rate limiting (persistente)
+        CREATE TABLE IF NOT EXISTS rate_limit (
+            chave TEXT PRIMARY KEY,
+            tentativas INTEGER NOT NULL DEFAULT 1,
+            primeiro_attempt INTEGER NOT NULL,
+            bloqueado_ate INTEGER
+        );
+
+        -- SEGURANÇA: Tabela de audit log
+        CREATE TABLE IF NOT EXISTS audit_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            usuario_id INTEGER,
+            usuario_email TEXT,
+            acao TEXT NOT NULL,
+            tabela TEXT,
+            registro_id INTEGER,
+            detalhes TEXT,
+            ip TEXT,
+            data_hora TEXT NOT NULL
+        );
+
+        -- SEGURANÇA: Tabela de sessões ativas
+        CREATE TABLE IF NOT EXISTS sessoes (
+            id TEXT PRIMARY KEY,
+            usuario_id INTEGER NOT NULL,
+            criada_em INTEGER NOT NULL,
+            expira_em INTEGER NOT NULL,
+            ativa INTEGER NOT NULL DEFAULT 1,
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        );
+
         "#,
     )?;
     // Migration: adiciona coluna custo_total se não existir

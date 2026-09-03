@@ -41,9 +41,10 @@ export default function Entradas() {
       .then(([m, p, l]) => {
         const r = renumerar(p);
         const mapa = new Map(r.map(pp => [pp.id, pp.codigo]));
-        setMovs(m.filter(x => x.tipo === "entrada").map(x => ({ ...x, produto_codigo: mapa.get(x.produto_id) || "" })).sort((a,b)=> a.quantidade - b.quantidade || Math.random()-0.5));
-        setProdutos(r);
-        setLojas(l);
+                  setProdutos(r);
+          setLojas(l);
+          setMovs(m.filter(x => x.tipo === "entrada").map(x => ({ ...x, produto_codigo: mapa.get(x.produto_id) || "" 
+})).sort((a,b) => new Date(b.data_movimento).getTime() - new Date(a.data_movimento).getTime()));
         setErro(null);
       })
       .catch((e) => { console.error("[Entradas] falha ao carregar dados:", e); setErro("Nao foi possivel carregar as entradas."); });

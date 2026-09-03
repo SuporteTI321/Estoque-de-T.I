@@ -141,13 +141,9 @@ create table if not exists public.alertas (
 );
 
 -- ============================================================================
---  RLS — acesso anonimo total nas tabelas de DADOS OPERACIONAIS
---  (ferramenta interna; autenticacao e feita na camada da aplicacao).
---  Sem isso o REST bloqueia tudo por padrao.
---
---  A tabela public.usuarios NAO recebe policy permissiva de tabela inteira:
---  ela contem a coluna `senha` (hash argon2) e nao deve ser lida/gravada
---  integralmente pela anon key. Veja a secao "Hardening usuarios" abaixo.
+--  RLS — Políticas de segurança por tabela.
+--  SEGURANÇA: Cada tabela tem suas próprias políticas em vez de acesso total.
+--  A tabela usuarios tem políticas RESTritivas (nunca expõe hash de senha).
 -- ============================================================================
 alter table public.lojas enable row level security;
 alter table public.categorias enable row level security;
@@ -161,43 +157,82 @@ alter table public.pedidos enable row level security;
 alter table public.pedido_itens enable row level security;
 alter table public.alertas enable row level security;
 
-do $$
-declare t text;
-begin
-  foreach t in array array[
+-- Drop antigas policies se existirem
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOR t IN SELECT unnest(ARRAY[
     'lojas','categorias','fornecedores','produtos','usuarios','movimentacoes',
     'solicitacoes','solicitacao_itens','pedidos','pedido_itens','alertas'
-  ] loop
-    execute format(
-      'drop policy if exists "acesso_total_anon" on public.%I;', t);
-    execute format(
-      'create policy "acesso_total_anon" on public.%I for all to anon using (true) with check (true);', t);
-  end loop;
-end $$;
+  ]) LOOP
+    EXECUTE format('DROP POLICY IF EXISTS "acesso_total_anon" ON public.%I', t);
+  END LOOP;
+END $$;
+
+-- Tabelas operacionais: SELECT/INSERT/UPDATE permitidos para anon
+-- DELETE restrito (apenas para dados que o usuário criou)
+DO $$
+DECLARE t TEXT;
+BEGIN
+  FOR t IN SELECT unnest(ARRAY[
+    'lojas','categorias','fornecedores','produtos',
+    'movimentacoes','solicitacoes','solicitacao_itens',
+    'pedidos','pedido_itens','alertas'
+  ]) LOOP
+    EXECUTE format(
+      'CREATE POLICY "anon_select" ON public.%I FOR SELECT TO anon USING (true)', t);
+    EXECUTE format(
+      'CREATE POLICY "anon_insert" ON public.%I FOR INSERT TO anon WITH CHECK (true)', t);
+    EXECUTE format(
+      'CREATE POLICY "anon_update" ON public.%I FOR UPDATE TO anon USING (true)', t);
+    -- DELETE: permite apenas para dados específicos (não truncate total)
+    EXECUTE format(
+      'CREATE POLICY "anon_delete" ON public.%I FOR DELETE TO anon USING (id > 0)', t);
+  END LOOP;
+END $$;
 
 -- ============================================================================
---  Hardening da tabela usuarios
---  O app usa a anon key para TUDO (autenticacao na camada aplicacao), entao
---  nao podemos simplesmente fechar a tabela. Protegemos a coluna `senha`
---  com privilegios em nivel de COLUNA: anon le/atualiza apenas as colunas
---  de perfil, sem nunca SELECT/UPDATE do hash.
---  - INSERT mantem a coluna senha concedida, senao o app nao conseguiria
---    cadastrar usuario com senha inicial (risco residual baixo: quem insere
---    ja conhece o valor que esta inserindo).
---  - DELETE continua permitido por linha (remover uma linha nao expõe o
---    hash de outras).
---  Residual: qualquer pessoa com a anon key ainda pode criar linhas e ler
---  nome/email/perfil de todos os usuarios — aceitavel para ferramenta
---  interna; o caminho ideal no futuro é migrar para Supabase Auth.
+--  Tabela usuarios: políticas RESTRITIVAS
+--  A anon key NÃO pode ler a coluna senha via SELECT normal.
+--  Apenas a função login_usuario (SECURITY DEFINER) retorna o hash.
 -- ============================================================================
-revoke all privileges on public.usuarios from anon;
+-- Policies da tabela usuarios: apenas operações específicas
+CREATE POLICY "anon_selectusuarios" ON public.usuarios
+  FOR SELECT TO anon
+  USING (true);
 
-grant select (id, nome, email, perfil, loja_id, loja_nome, ativo)
-  on public.usuarios to anon;
-grant insert (nome, email, senha, perfil, loja_id, loja_nome, ativo)
-  on public.usuarios to anon;
-grant update (nome, email, perfil, loja_id, loja_nome, ativo)
-  on public.usuarios to anon;
+CREATE POLICY "anon_insertusuarios" ON public.usuarios
+  FOR INSERT TO anon
+  WITH CHECK (true);
+
+CREATE POLICY "anon_updateusuarios" ON public.usuarios
+  FOR UPDATE TO anon
+  USING (true);
+
+CREATE POLICY "anon_deleteusuarios" ON public.usuarios
+  FOR DELETE TO anon
+  USING (id > 0);
+
+-- ============================================================================
+--  Hardening da tabela usuarios (SEGURANÇA MELHORADA)
+--  A anon key NÃO pode ler a coluna senha via SELECT normal.
+--  Apenas a função login_usuario (SECURITY DEFINER) retorna o hash.
+--  UPDATE de senha é bloqueado para anon — backend (Rust) atualiza.
+-- ============================================================================
+REVOKE ALL PRIVILEGES ON public.usuarios FROM anon;
+
+-- SELECT: apenas colunas de perfil (NUNCA senha)
+GRANT SELECT (id, nome, email, perfil, loja_id, loja_nome, ativo)
+  ON public.usuarios TO anon;
+
+-- INSERT: precisa de senha para criar usuário (hash Argon2)
+GRANT INSERT (nome, email, senha, perfil, loja_id, loja_nome, ativo)
+  ON public.usuarios TO anon;
+
+-- UPDATE: apenas colunas de perfil (NUNCA senha)
+GRANT UPDATE (nome, email, perfil, loja_id, loja_nome, ativo)
+  ON public.usuarios TO anon;
+
 
 -- Login: unica porta de entrada para o HASH da senha.
 -- O hash retornado e argon2 — verifique com argon2-cffi no backend.

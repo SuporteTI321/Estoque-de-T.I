@@ -9,8 +9,179 @@ use argon2::{
 };
 
 // ============================================================================
-//  PASSWORD HASHING (Argon2id — OWASP 2024 recommendation)
+//  SEGURANÇA: Rate Limiting Backend (persistente em SQLite)
 // ============================================================================
+
+const RATE_LIMIT_MAX_ATTEMPTS: i64 = 5;
+const RATE_LIMIT_LOCKOUT_MS: i64 = 15 * 60 * 1000; // 15 minutos
+
+fn rate_limit_check(conn: &rusqlite::Connection, chave: &str) -> Result<(bool, i64), String> {
+    let now = chrono::Utc::now().timestamp_millis();
+    let row: Option<(i64, i64, Option<i64>)> = conn
+        .query_row(
+            "SELECT tentativas, primeiro_attempt, bloqueado_ate FROM rate_limit WHERE chave=?1",
+            params![chave],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        )
+        .ok();
+
+    if let Some((tentativas, _primeiro, bloqueado_ate)) = row {
+        if let Some(bloqueado) = bloqueado_ate {
+            if now < bloqueado {
+                let remaining = (bloqueado - now) / 1000;
+                return Err(format!(
+                    "Conta bloqueada. Tente novamente em {} segundos.",
+                    remaining
+                ));
+            }
+            // Lockout expirou — resetar
+            conn.execute(
+                "DELETE FROM rate_limit WHERE chave=?1",
+                params![chave],
+            )
+            .map_err(|e| e.to_string())?;
+            return Ok((false, 0));
+        }
+    }
+    Ok((false, 0))
+}
+
+fn rate_limit_record_failure(conn: &rusqlite::Connection, chave: &str) -> Result<bool, String> {
+    let now = chrono::Utc::now().timestamp_millis();
+    let row: Option<(i64, i64)> = conn
+        .query_row(
+            "SELECT tentativas, primeiro_attempt FROM rate_limit WHERE chave=?1",
+            params![chave],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .ok();
+
+    let (tentativas, primeiro) = row.unwrap_or((0, now));
+    let novas_tentativas = tentativas + 1;
+
+    if novas_tentativas >= RATE_LIMIT_MAX_ATTEMPTS {
+        let bloqueado_ate = now + RATE_LIMIT_LOCKOUT_MS;
+        conn.execute(
+            "INSERT OR REPLACE INTO rate_limit (chave, tentativas, primeiro_attempt, bloqueado_ate) VALUES (?1, ?2, ?3, ?4)",
+            params![chave, novas_tentativas, primeiro, bloqueado_ate],
+        )
+        .map_err(|e| e.to_string())?;
+        return Ok(true); // bloqueou
+    }
+
+    conn.execute(
+        "INSERT OR REPLACE INTO rate_limit (chave, tentativas, primeiro_attempt, bloqueado_ate) VALUES (?1, ?2, ?3, NULL)",
+        params![chave, novas_tentativas, primeiro],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(false)
+}
+
+fn rate_limit_clear(conn: &rusqlite::Connection, chave: &str) -> Result<(), String> {
+    conn.execute("DELETE FROM rate_limit WHERE chave=?1", params![chave])
+        .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ============================================================================
+//  SEGURANÇA: Audit Log
+// ============================================================================
+
+fn audit_log(
+    conn: &rusqlite::Connection,
+    usuario_id: Option<i64>,
+    usuario_email: &str,
+    acao: &str,
+    tabela: Option<&str>,
+    registro_id: Option<i64>,
+    detalhes: Option<&str>,
+) {
+    let now = chrono::Utc::now().format("%Y-%m-%dT%H:%M:%SZ").to_string();
+    let _ = conn.execute(
+        "INSERT INTO audit_log (usuario_id, usuario_email, acao, tabela, registro_id, detalhes, data_hora) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+        params![usuario_id, usuario_email, acao, tabela, registro_id, detalhes, now],
+    );
+}
+
+// ============================================================================
+//  SEGURANÇA: Validação de Senha Forte
+// ============================================================================
+
+fn validate_password_strength(senha: &str) -> Result<(), String> {
+    if senha.len() < 8 {
+        return Err("Senha deve ter no mínimo 8 caracteres".to_string());
+    }
+    if senha.len() > 128 {
+        return Err("Senha deve ter no máximo 128 caracteres".to_string());
+    }
+    let has_upper = senha.chars().any(|c| c.is_uppercase());
+    let has_lower = senha.chars().any(|c| c.is_lowercase());
+    let has_digit = senha.chars().any(|c| c.is_ascii_digit());
+    let has_special = senha.chars().any(|c| !c.is_alphanumeric());
+
+    if !has_upper {
+        return Err("Senha deve conter pelo menos 1 letra maiúscula".to_string());
+    }
+    if !has_lower {
+        return Err("Senha deve conter pelo menos 1 letra minúscula".to_string());
+    }
+    if !has_digit {
+        return Err("Senha deve conter pelo menos 1 número".to_string());
+    }
+    if !has_special {
+        return Err("Senha deve conter pelo menos 1 caractere especial".to_string());
+    }
+    Ok(())
+}
+
+// ============================================================================
+//  SEGURANÇA: Session Management
+// ============================================================================
+
+const SESSION_TIMEOUT_MS: i64 = 8 * 60 * 60 * 1000; // 8 horas
+
+fn create_session(conn: &rusqlite::Connection, usuario_id: i64) -> Result<String, String> {
+    let now = chrono::Utc::now().timestamp_millis();
+    let expires = now + SESSION_TIMEOUT_MS;
+    let session_id = format!("{}-{}", now, usuario_id);
+    conn.execute(
+        "INSERT INTO sessoes (id, usuario_id, criada_em, expira_em) VALUES (?1, ?2, ?3, ?4)",
+        params![session_id, usuario_id, now, expires],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(session_id)
+}
+
+fn validate_session(conn: &rusqlite::Connection, session_id: &str) -> Result<bool, String> {
+    let now = chrono::Utc::now().timestamp_millis();
+    let row: Option<(i64, i64)> = conn
+        .query_row(
+            "SELECT expira_em, ativa FROM sessoes WHERE id=?1",
+            params![session_id],
+            |r| Ok((r.get(0)?, r.get(1)?)),
+        )
+        .ok();
+
+    if let Some((expira_em, ativa)) = row {
+        if ativa == 1 && now < expira_em {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+fn invalidate_session(conn: &rusqlite::Connection, session_id: &str) -> Result<(), String> {
+    conn.execute(
+        "UPDATE sessoes SET ativa=0 WHERE id=?1",
+        params![session_id],
+    )
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+// ============================================================================
+//  PASSWORD HASHING (Argon2id — OWASP 2024 recommendation)
+// ====================================================================
 
 fn hash_password(password: &str) -> String {
     let salt = SaltString::generate(&mut OsRng);
@@ -952,6 +1123,14 @@ fn list_usuarios() -> Result<Vec<Usuario>, String> {
 #[tauri::command(rename_all = "snake_case")]
 fn login(email: String, senha: String) -> Result<Usuario, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let chave_rate = format!("login:{}", email.to_lowercase());
+
+    // SEGURANÇA: Verificar rate limiting (persistente em SQLite)
+    let (bloqueado, _) = rate_limit_check(&conn, &chave_rate)?;
+    if bloqueado {
+        return Err("Conta bloqueada por muitas tentativas. Aguarde 15 minutos.".to_string());
+    }
+
     // Busca usuario APENAS por email (senha verificada via Argon2), case-insensitive
     let mut stmt = conn
         .prepare(
@@ -968,15 +1147,28 @@ fn login(email: String, senha: String) -> Result<Usuario, String> {
         let stored_hash: String = row.get(3).map_err(|e| e.to_string())?;
         // Verifica senha com Argon2 (ou fallback para texto plano)
         if !check_password_hash(&senha, &stored_hash) {
+            // SEGURANÇA: Registrar falha no rate limiting
+            let bloqueou = rate_limit_record_failure(&conn, &chave_rate)?;
+            audit_log(&conn, None, &email, "login_falha", Some("usuarios"), None, Some("Senha inválida"));
+            if bloqueou {
+                return Err("Conta bloqueada por muitas tentativas. Aguarde 15 minutos.".to_string());
+            }
             return Err("Credenciais inválidas".to_string());
         }
+        // SEGURANÇA: Login bem-sucedido — limpar rate limiting
+        rate_limit_clear(&conn, &chave_rate)?;
+        audit_log(&conn, Some(row.get(0)?), &email, "login_sucesso", Some("usuarios"), Some(row.get(0)?), None);
+
+        // Criar sessão
+        let usuario_id: i64 = row.get(0)?;
+        let _session_id = create_session(&conn, usuario_id)?;
+
         // Migra senha de texto plano para Argon2 (lazy migration)
         if let Some(new_hash) = maybe_migrate_password(&senha, &stored_hash) {
-            let uid: i64 = row.get(0).map_err(|e| e.to_string())?;
-            let _ = conn.execute("UPDATE usuarios SET senha=?1 WHERE id=?2", params![new_hash, uid]);
+            let _ = conn.execute("UPDATE usuarios SET senha=?1 WHERE id=?2", params![new_hash, usuario_id]);
         }
         Ok(Usuario {
-            id: row.get(0).map_err(|e| e.to_string())?,
+            id: usuario_id,
             nome: row.get(1).map_err(|e| e.to_string())?,
             email: row.get(2).map_err(|e| e.to_string())?,
             senha: String::new(), // Nunca retornar hash ao frontend
@@ -986,6 +1178,9 @@ fn login(email: String, senha: String) -> Result<Usuario, String> {
             ativo: row.get::<_, i64>(7).map_err(|e| e.to_string())? != 0,
         })
     } else {
+        // SEGURANÇA: Registrar falha
+        rate_limit_record_failure(&conn, &chave_rate)?;
+        audit_log(&conn, None, &email, "login_falha", Some("usuarios"), None, Some("Usuário não encontrado"));
         Err("Credenciais inválidas".to_string())
     }
 }
@@ -999,9 +1194,12 @@ fn create_usuario(
     loja_id: Option<i64>,
 ) -> Result<Usuario, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
+    // SEGURANÇA: Validar força da senha
+    validate_password_strength(&senha)?;
     // Normaliza email para minúsculas (login é case-insensitive, evita duplicados)
     let email = email.to_lowercase();
     let senha_hash = hash_password(&senha);
+    audit_log(&conn, None, &email, "create_usuario", Some("usuarios"), None, Some(&format!("Email: {}", email)));
     conn.execute(
         "INSERT INTO usuarios (nome, email, senha, perfil, loja_id) VALUES (?1, ?2, ?3, ?4, ?5)",
         params![nome, email, senha_hash, perfil, loja_id],
@@ -1037,8 +1235,11 @@ fn update_usuario(
         conn.query_row("SELECT senha FROM usuarios WHERE id=?1", params![id], |r| r.get(0))
             .map_err(|_| "Usuário não encontrado".to_string())?
     } else {
+        // SEGURANÇA: Validar força da senha quando alterada
+        validate_password_strength(&senha)?;
         hash_password(&senha)
     };
+    audit_log(&conn, Some(id), &email, "update_usuario", Some("usuarios"), Some(id), None);
     conn.execute(
         "UPDATE usuarios SET nome=?1, email=?2, senha=?3, perfil=?4, loja_id=?5 WHERE id=?6",
         params![nome, email, senha_hash, perfil, loja_id, id],
@@ -1126,7 +1327,7 @@ fn create_movimentacao(
     unidade: Option<i64>,
     data_movimento: Option<String>,
 ) -> Result<Movimentacao, String> {
-    eprintln!("[create_movimentacao] tipo={}, produto_id={}, quantidade={}, preco={:?}, unidade={:?}, data={:?}", tipo, produto_id, quantidade, preco_compra, unidade, data_movimento);
+    // DEBUG LOG removido por segurança — não logar dados de movimentação em produção
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     let now = chrono::Local::now().to_rfc3339();
     let dt = data_movimento.unwrap_or_else(|| now.clone());
@@ -1173,8 +1374,8 @@ fn create_movimentacao(
         )
         .map_err(|e| e.to_string())?;
         let id = tx.last_insert_rowid();
-        tx.commit().map_err(|e| { eprintln!("[create_movimentacao] ERRO no commit: {}", e); e.to_string() })?;
-        eprintln!("[create_movimentacao] Sucesso! id={}", id);
+        tx.commit().map_err(|e| { e.to_string() })?;
+        // Sucesso — log removido por segurança
         Ok(Movimentacao {
             id,
             tipo,
@@ -2071,10 +2272,12 @@ fn export_all_data() -> Result<ExportData, String> {
         estoque_minimo: r.get(14)?, custo_total: r.get(15)?, ativo: r.get::<_, i64>(16)? != 0,
     })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
-    let mut stmt_usu = conn.prepare("SELECT u.id, u.nome, u.email, u.senha, u.perfil, u.loja_id, l.nome, u.ativo FROM usuarios u LEFT JOIN lojas l ON u.loja_id = l.id").map_err(|e| e.to_string())?;
+    // SEGURANÇA: Senha (hash Argon2) NUNCA é exportada no JSON de sync.
+    // O campo `senha` é preenchido vazio — senhas só existem no banco local.
+    let mut stmt_usu = conn.prepare("SELECT u.id, u.nome, u.email, u.perfil, u.loja_id, l.nome, u.ativo FROM usuarios u LEFT JOIN lojas l ON u.loja_id = l.id").map_err(|e| e.to_string())?;
     let usuarios: Vec<Usuario> = stmt_usu.query_map([], |r| Ok(Usuario {
-        id: r.get(0)?, nome: r.get(1)?, email: r.get(2)?, senha: r.get(3)?, perfil: r.get(4)?,
-        loja_id: r.get(5)?, loja_nome: r.get(6)?, ativo: r.get::<_, i64>(7)? != 0,
+        id: r.get(0)?, nome: r.get(1)?, email: r.get(2)?, senha: String::new(), perfil: r.get(3)?,
+        loja_id: r.get(4)?, loja_nome: r.get(5)?, ativo: r.get::<_, i64>(6)? != 0,
     })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
     let mut stmt_mov = conn.prepare("SELECT id, tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, data_movimento, preco_compra, unidade FROM movimentacoes").map_err(|e| e.to_string())?;
@@ -2178,13 +2381,14 @@ fn import_all_data(dados: ExportData) -> Result<String, String> {
         *stats.entry("produtos".to_string()).or_insert(0) += 1;
     }
 
-    // Usuarios — preservar a senha local quando o export vier sem senha
+    // Usuarios — NUNCA sobrescrever senha local com dado importado.
+    // O export não contém senhas (proteção de credenciais), então preservamos
+    // sempre a senha local. Se o usuário não existe localmente, cria sem senha
+    // (o admin precisará redefinir a senha manualmente).
     for item in &dados.usuarios {
-        let mut senha_final = item.senha.clone();
-        if senha_final.is_empty() {
-            senha_final = tx.query_row("SELECT senha FROM usuarios WHERE id=?1", params![item.id], |r| r.get(0))
-                .unwrap_or_default();
-        }
+        let senha_local: String = tx.query_row("SELECT COALESCE(senha, '') FROM usuarios WHERE id=?1", params![item.id], |r| r.get(0))
+            .unwrap_or_default();
+        let senha_final = if senha_local.is_empty() { String::new() } else { senha_local };
         tx.execute("INSERT OR REPLACE INTO usuarios (id, nome, email, senha, perfil, loja_id, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![item.id, item.nome, item.email, senha_final, item.perfil, item.loja_id, item.ativo as i64]).map_err(|e| e.to_string())?;
         *stats.entry("usuarios".to_string()).or_insert(0) += 1;
@@ -2235,7 +2439,13 @@ fn import_all_data(dados: ExportData) -> Result<String, String> {
     }
 
     // Resetar sequences para evitar conflitos de ID futuro
-    for tabela in &["lojas", "categorias", "fornecedores", "produtos", "usuarios", "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos", "pedido_itens", "alertas"] {
+    // SEGURANÇA: Usa allowlist de tabelas conhecidas em vez de format! direto
+    const TABELAS_VALIDAS: &[&str] = &["lojas", "categorias", "fornecedores", "produtos", "usuarios", "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos", "pedido_itens", "alertas"];
+    for tabela in TABELAS_VALIDAS {
+        // Validação extra: só aceita nomes alfanuméricos + underscore
+        if !tabela.chars().all(|c| c.is_alphanumeric() || c == '_') {
+            continue;
+        }
         let max_id: i64 = tx.query_row(&format!("SELECT COALESCE(MAX(id), 0) FROM {}", tabela), [], |r| r.get(0)).unwrap_or(0);
         if max_id > 0 {
             let _ = tx.execute(&format!("INSERT OR REPLACE INTO sqlite_sequence (name, seq) VALUES ('{}', {})", tabela, max_id), []);

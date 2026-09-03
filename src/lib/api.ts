@@ -9,7 +9,8 @@ import type {
 import { getCloudConfig, verificarSenha } from "./cloudDb";
 import { remoteCall } from "./remoteApi";
 import * as vault from "./vault";
-import { printHtml, montarHtmlEtiquetas, type TamanhoEtiqueta } from "./printHtml";
+import { printHtml, type TamanhoEtiqueta } from "./printHtml";
+import { getLoginAttemptInfo, recordLoginFailure, clearLoginAttempts, attemptsLocked } from "./security";
 
 function loadFromLS<T>(key: string, fallback: T): T {
   try {
@@ -231,8 +232,7 @@ function isEscrita(command: string): boolean {
 
 async function apiCall<T>(command: string, args: any, fallback: () => T | Promise<T>): Promise<T> {
   const invoke = await getInvoke();
-  const cloudCfg = getCloudConfig();
-  console.log(`[apiCall-v2] ${command} | invoke=${!!invoke} | cloudConfig=${!!cloudCfg}`);
+  // Log de debug removido por segurança
   if (invoke) {
     try {
       const result = await invoke(command, args);
@@ -252,7 +252,7 @@ async function apiCall<T>(command: string, args: any, fallback: () => T | Promis
   if (getCloudConfig()) {
     try {
       const remoto = await remoteCall<T>(command, args);
-      console.log(`[apiCall] ${command} | remoteCall retornou:`, remoto !== undefined ? "definido" : "undefined");
+      // Log de debug removido por segurança
       if (remoto !== undefined) return remoto;
       // Escritas sem retorno (update/delete): executa o fallback tambem para
       // manter o cache local (store/localStorage) coerente com a nuvem
@@ -265,7 +265,7 @@ async function apiCall<T>(command: string, args: any, fallback: () => T | Promis
       if (isEscrita(command)) notifyApiError(command, "Nuvem", e);
     }
   }
-  console.log(`[apiCall] ${command} | chamando fallback final`);
+  // Log de debug removido por segurança
   return fallback();
 }
 
@@ -408,12 +408,14 @@ export const api = {
     list: () => apiCall<Usuario[]>("list_usuarios", {}, () => {
       let dados = loadFromLS<Usuario[]>("almox_usuarios", []);
       // Seed automatico: se nao houver usuarios, criar admin padrao
+      // NOTA: senha sera hasheada no backend (Rust/Argon2). No frontend, armazenamos
+      // apenas para o fluxo de login que verifica contra o backend.
       if (dados.length === 0) {
         const admin: Usuario = {
           id: 1,
           nome: "Administrador",
           email: "admin@empresa.com",
-          senha: "admin123",  // Texto puro legado — verificarSenha aceita comparação direta
+          senha: "",  // NUNCA plaintext no frontend — backend cria com Argon2
           perfil: "admin",
           loja_id: null,
           loja_nome: null,
@@ -426,15 +428,21 @@ export const api = {
       return dados;
     }).then((dados) => { store.usuarios = dados; return dados; }),
     login: (email: string, senha: string) => apiCall<Usuario>("login", { email, senha }, async () => {
+      // Rate limiting: verifica se está bloqueado
+      const attemptInfo = getLoginAttemptInfo();
+      if (attemptsLocked(attemptInfo)) {
+        const remaining = Math.ceil((attemptInfo.lockedUntil! - Date.now()) / 1000);
+        throw new Error(`Conta temporariamente bloqueada. Tente novamente em ${remaining} segundos.`);
+      }
+
       let dados = loadFromLS<Usuario[]>("almox_usuarios", []);
-      console.log("[LOGIN DEBUG] dados do localStorage:", dados.map(u => ({ email: u.email, senha_len: u.senha?.length, senha_preview: u.senha?.substring(0, 20) })));
-      // Seed automatico: se nao houver usuarios, criar admin padrao
+      // Seed: admin padrão (senha vazia — backend cria com Argon2)
       if (dados.length === 0) {
         const admin: Usuario = {
           id: 1,
           nome: "Administrador",
           email: "admin@empresa.com",
-          senha: "admin123",  // Texto puro legado — verificarSenha aceita comparação direta
+          senha: "",  // NUNCA plaintext — backend cria com Argon2
           perfil: "admin",
           loja_id: null,
           loja_nome: null,
@@ -442,15 +450,20 @@ export const api = {
         };
         dados = [admin];
         persist("almox_usuarios", dados);
-        console.log("[LOGIN DEBUG] seed criado com senha:", admin.senha);
       }
       const u = dados.find(x => x.email === email);
-      console.log("[LOGIN DEBUG] usuario encontrado:", u ? { email: u.email, senha_len: u.senha?.length, senha_preview: u.senha?.substring(0, 30) } : null);
-      if (!u) throw new Error("Credenciais inválidas - usuario nao encontrado");
+      if (!u) {
+        recordLoginFailure();
+        throw new Error("Credenciais inválidas");
+      }
       const senhaOk = await verificarSenha(u.senha, senha);
-      console.log("[LOGIN DEBUG] verificarSenha resultado:", senhaOk, "| armazenada:", u.senha?.substring(0, 20), "| informada:", senha);
-      // Senha vazia/ausente nunca aceita; hash Argon2 é verificado com hash-wasm
-      if (!senhaOk) throw new Error("Credenciais inválidas - senha invalida");
+      if (!senhaOk) {
+        const locked = recordLoginFailure();
+        if (locked) throw new Error("Conta bloqueada por muitas tentativas. Aguarde 15 minutos.");
+        throw new Error("Credenciais inválidas");
+      }
+      // Login bem-sucedido: limpa tentativas
+      clearLoginAttempts();
       return u;
     }),
     create: (u: Omit<Usuario, "id">) => writeCall<Usuario>("create_usuario", u, () => {
@@ -497,7 +510,7 @@ export const api = {
         unidade: m.unidade ?? null,
         data_movimento: m.data_movimento ?? null,
       };
-      console.log("[DEBUG create_movimentacao] args:", JSON.stringify(args, null, 2));
+      // Log de debug removido por segurança
       return writeCall<Movimentacao>("create_movimentacao", args, () => {
         const novo: Movimentacao = { ...m, id: nextId(store.getMovimentacoes()), data_movimento: m.data_movimento || todayISO() };
         return store.addMovimentacao(novo);
@@ -718,38 +731,26 @@ export const api = {
     }),
   },
 
-  // ---- Etiquetas ----
+  // ---- Etiquetas (print legado via Rust) ----
   etiquetas: {
-    /**
-     * Imprime etiqueta(s) de um produto.
-     * Desktop: chama print_product_label (gera HTML + abre no navegador).
-     * Browser: monta o HTML localmente e usa printHtml (fallback).
-     */
-    print: async (produtoId: number, qtd: number, empresa: string, tamanho: TamanhoEtiqueta = "pequena") => {
+    print: async (produtoId: number, qtd: number, _empresa: string = "", tamanho?: TamanhoEtiqueta) => {
+      const p = store.getProdutos().find(x => x.id === produtoId);
+      if (!p) throw new Error("Produto não encontrado");
       const invoke = await getInvoke();
       if (invoke) {
         try {
-          await invoke("print_product_label", {
-            produto_id: produtoId,
-            quantidade: Math.max(1, qtd),
-            empresa,
-            tamanho,
-          });
+          await invoke("print_product_label", { produto_id: p.id, quantidade: Math.max(1, qtd), empresa: "", tamanho: tamanho ?? "pequena" });
           return;
-        } catch (e) {
-          console.warn("[etiquetas] Tauri falhou, usando fallback browser:", e);
-        }
+        } catch (e) { console.warn("[etiquetas] print_product_label falhou:", e); }
       }
-      // Fallback browser
-      const p = store.getProdutos().find(x => x.id === produtoId);
-      if (!p) throw new Error("Produto não encontrado");
-      const html = montarHtmlEtiquetas({
-        produtos: [p],
-        quantidades: { [p.id]: Math.max(1, qtd) },
-        empresa,
-        tamanho,
-      });
-      await printHtml(html, `Etiquetas ${p.nome}`);
+      // Fallback: HTML simples
+      const html = `<!DOCTYPE html><html><head><meta charset='utf-8'><title>${p.nome}</title><style>@page{size:70mm 35mm;margin:0}body{font-family:sans-serif;font-size:2.8mm;margin:0;padding:2mm;display:flex;flex-direction:column;gap:1mm}b{font-weight:bold}</style></head><body><div><b>${p.codigo}</b></div><div style='font-weight:bold'>${p.nome}</div><div>${p.marca||''} ${p.modelo||''}</div></body></html>`;
+      await printHtml(html, `etiqueta_${p.codigo}`);
+    },
+    printBatch: async (produtos: {id:number;nome:string;codigo:string;marca?:string|null;modelo?:string|null}[], quantidades: Record<number,number>, tamanho?: TamanhoEtiqueta) => {
+      for (const p of produtos) {
+        await api.etiquetas.print(p.id, quantidades[p.id] ?? 1, "", tamanho);
+      }
     },
   },
 
@@ -757,6 +758,7 @@ export const api = {
   sync: {
     /** Exporta todos os dados como JSON (Desktop: Tauri, Browser: localStorage) */
     exportData: async (): Promise<string> => {
+      // NOTA: Senhas NUNCA são exportadas (proteção de credenciais)
       const invoke = await getInvoke();
       if (invoke) {
         // Desktop: exporta do SQLite
@@ -910,17 +912,13 @@ export const api = {
 
     /** Salva configuracao de sync do GitHub */
     setGithubConfig: (owner: string, repo: string, path: string, token: string) => {
-      // Com cofre desbloqueado: grava criptografado (nunca plaintext)
+      // SEGURANÇA: Token JAMAIS é salvo em plaintext — exige vault desbloqueado
       const pw = vault.getVaultPassword();
-      if (pw) {
-        vault.createOrUpdateVault({ sync_github_owner: owner, sync_github_repo: repo, sync_github_path: path || "sync_data.json", sync_github_token: token }, pw)
-          .catch((e) => console.warn("[sync] falha ao gravar config GitHub no cofre:", e));
-        return;
+      if (!pw) {
+        throw new Error("Cofre não está desbloqueado. Desbloqueie o cofre para salvar credenciais de sync.");
       }
-      localStorage.setItem("sync_github_owner", owner);
-      localStorage.setItem("sync_github_repo", repo);
-      localStorage.setItem("sync_github_path", path);
-      localStorage.setItem("sync_github_token", token);
+      vault.createOrUpdateVault({ sync_github_owner: owner, sync_github_repo: repo, sync_github_path: path || "sync_data.json", sync_github_token: token }, pw)
+        .catch((e) => { throw new Error(`Falha ao salvar no cofre: ${e.message}`); });
     },
 
     /** Verifica se sync automatica esta habilitada */

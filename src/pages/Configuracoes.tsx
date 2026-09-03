@@ -10,13 +10,9 @@ import { api } from "../lib/api";
 import { CATS_PADRAO, normCat } from "../lib/constants";
 import { useAuth } from "../lib/useAuth";
 import { csvSafe } from "./shared";
+import { isImportKeyAllowed, isImportValueSafe } from "../lib/security";
 
-/** Chaves almox_* de dados permitidas em imports (nunca permitir chaves sensíveis como estoque_ti_user). */
-const CHAVES_IMPORT_PERMITIDAS = [
-  "almox_lojas", "almox_categorias", "almox_fornecedores", "almox_produtos",
-  "almox_usuarios", "almox_movimentacoes", "almox_solicitacoes", "almox_solicitacao_itens",
-  "almox_pedidos", "almox_pedido_itens", "almox_alertas",
-];
+// Validação de import centralizada em security.ts (isImportKeyAllowed / isImportValueSafe)
 
 type Tab = "categorias" | "usuarios" | "perfil" | "geral";
 
@@ -144,9 +140,9 @@ export default function Configuracoes() {
         const text = await file.text();
         const map = JSON.parse(text);
         for (const key of Object.keys(map)) {
-          // Whitelist: só chaves almox_* de dados e apenas listas — nunca credenciais/configs sensíveis
-          if (!CHAVES_IMPORT_PERMITIDAS.includes(key)) continue;
-          if (!Array.isArray(map[key])) continue;
+          // Whitelist + validação de segurança: só chaves permitidas e valores array
+          if (!isImportKeyAllowed(key)) continue;
+          if (!isImportValueSafe(map[key])) continue;
           localStorage.setItem(key, JSON.stringify(map[key]));
         }
         setMsg({ ok: true, text: "Dados importados! Recarregando..." });
@@ -234,9 +230,9 @@ export default function Configuracoes() {
           } catch {}
         }
         for (const key of Object.keys(map)) {
-          // Whitelist: só chaves almox_* de dados e apenas listas — nunca credenciais/configs sensíveis
-          if (!CHAVES_IMPORT_PERMITIDAS.includes(key)) continue;
-          if (!Array.isArray(map[key])) continue;
+          // Whitelist + validação de segurança: só chaves permitidas e valores array
+          if (!isImportKeyAllowed(key)) continue;
+          if (!isImportValueSafe(map[key])) continue;
           localStorage.setItem(key, JSON.stringify(map[key]));
         }
         setMsg({ ok: true, text: `Importados dados de ${Object.keys(map).length} tabela(s)! Recarregando...` });

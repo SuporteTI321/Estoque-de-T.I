@@ -39,8 +39,9 @@ export function setCloudConfig(url: string, key: string) {
     vault.createOrUpdateVault({ cloud_url: url.trim().replace(/\/+$/, ""), cloud_key: key.trim() }, pw).catch(() => {});
     return;
   }
-  localStorage.setItem(URL_KEY, url.trim().replace(/\/+$/, ""));
-  localStorage.setItem(KEY_KEY, key.trim());
+  // SEGURANÇA: Se não há cofre desbloqueado, NÃO salva em plaintext.
+  // O usuário DEVE criar/desbloquear o cofre primeiro.
+  console.warn("[cloudDb] Cofre não desbloqueado — configuração não salva. Desbloqueie o cofre primeiro.");
 }
 
 export async function clearCloudConfig(): Promise<void> {
@@ -159,8 +160,9 @@ export function del(table: string, match: Record<string, any>): Promise<void> {
  * Senha vazia/ausente nunca é aceita.
  */
 export async function verificarSenha(senhaArmazenada: string | null | undefined, senhaInformada: string): Promise<boolean> {
-  console.log("[verificarSenha] armazenada:", senhaArmazenada ? `${senhaArmazenada.substring(0, 15)}... (${senhaArmazenada.length} chars)` : "VAZIO/null", "| informada:", senhaInformada ? `${senhaInformada.substring(0, 10)}...` : "VAZIO");
+  // SEGURANÇA: NUNCA logar hashes ou senhas — dados sensíveis
   if (!senhaArmazenada) return false;
+  if (senhaInformada.length === 0) return false;
   if (/^\$argon2(id|i|d)\$/.test(senhaArmazenada)) {
     try {
       const { argon2Verify } = await import("hash-wasm");
@@ -169,6 +171,7 @@ export async function verificarSenha(senhaArmazenada: string | null | undefined,
       return false;
     }
   }
+  // Fallback: comparação direta (legado — migrar para Argon2)
   return senhaArmazenada === senhaInformada;
 }
 

@@ -58,7 +58,7 @@ export default function SaidaRegistro() {
       quantidade: m.quantidade,
       preco_compra: (m as any).preco_compra ?? 0,
       unidade: (m as any).unidade ?? 1,
-      solicitante: m.observacao?.match(/por (.+) - [^-]*$/)?.[1] || "",
+      solicitante: m.observacao?.match(/por ([^-]+) - /)?.[1]?.trim() || "",
       data: String(m.data_movimento).slice(0, 10) || hojeInput(),
       cod_produto: codManual,
     });
@@ -80,18 +80,19 @@ export default function SaidaRegistro() {
       .then(([m, p, l, u]) => {
         const r = renumerar(p);
         const mapa = new Map(r.map(pp => [pp.id, pp.codigo]));
-        setMovs(m.filter(x => x.tipo === "saida" && x.observacao?.startsWith("Saida manual")).map(x => ({ ...x, produto_codigo: mapa.get(x.produto_id) || "" })));
-        setEntradasCod(m.filter(x => x.tipo === "entrada" && !!x.observacao?.match(/cod_produto:(.+)/)));
-        const saidas = m.filter(x => x.tipo === "saida");
-        const codsComSaida = new Set<string>();
-        for (const s of saidas) {
-          const match = s.observacao?.match(/cod_produto:(.+)/);
-          if (match) codsComSaida.add(match[1].trim());
-        }
-        setCodProdutosComSaida(codsComSaida);
-        setProdutos(r);
-        setLojas(l);
-        setUsuarios(u);
+                  setProdutos(r);
+          setLojas(l);
+          setUsuarios(u);
+          setEntradasCod(m.filter(x => x.tipo === "entrada" && !!x.observacao?.match(/cod_produto:(.+)/)));
+          const saidas = m.filter(x => x.tipo === "saida");
+          const codsComSaida = new Set<string>();
+          for (const s of saidas) {
+            const match = s.observacao?.match(/cod_produto:(.+)/);
+            if (match) codsComSaida.add(match[1].trim());
+          }
+          setCodProdutosComSaida(codsComSaida);
+          setMovs(m.filter(x => x.tipo === "saida" && x.observacao?.startsWith("Saida manual")).map(x => ({ ...x, 
+produto_codigo: mapa.get(x.produto_id) || "" })));
         setErro(null);
       })
       .catch((e) => { console.error("[SaidaRegistro] falha ao carregar dados:", e); setErro("Nao foi possivel carregar as saidas."); });
@@ -319,8 +320,8 @@ export default function SaidaRegistro() {
     }},
     { key: "quantidade", label: "Quantidade", width: "100px", align: "center" },
     { key: "observacao", label: "Solicitante", width: "140px", align: "center", render: (r) => {
-      const match = r.observacao?.match(/por (.+) - [^-]*$/);
-      return match?.[1] || "—";
+      const match = r.observacao?.match(/por ([^-]+) - /);
+      return match?.[1]?.trim() || "—";
     } },
     { key: "data_movimento", label: "Data Saida", width: "100px", align: "center", render: (r) => new Date(r.data_movimento).toLocaleDateString("pt-BR") },
     { key: "acoes", label: "Acao", align: "center", width: "100px", render: (r) => (
@@ -577,20 +578,19 @@ export default function SaidaRegistro() {
                 <div className="divide-y divide-gray-100">
                   {arr.map(({ codigo, produto, mov }) => {
                     const temSaida = mov && codProdutosComSaida.has(codigo);
-                    return (
-                      <button key={`${produto.id}-${codigo}`} type="button" onClick={() => {
-                        if (adicionalIdx !== null) selecionarCod({ codigo, produto }, null, adicionalIdx);
-                        else if (codLoteIdx !== null) selecionarCod({ codigo, produto }, codLoteIdx);
-                        else selecionarCod({ codigo, produto });
-                      }}
-                        disabled={!!temSaida}
-                        className={`flex w-full items-center gap-3 px-3 py-2 text-left transition ${temSaida ? "bg-red-50/50 cursor-not-allowed opacity-60" : "hover:bg-blue-50"}`}>
-                        <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-mono ${temSaida ? "bg-red-100 text-red-700" : "bg-gray-100 text-gray-700"}`}>{codigo}</span>
-                        <span className="flex-1 truncate text-sm text-gray-900">{produto.nome}</span>
-                        <span className="hidden sm:inline text-xs text-gray-500">{produto.marca} / {produto.modelo}</span>
-                        {temSaida && <span className="text-[10px] font-medium text-red-600 bg-red-100 rounded px-1.5 py-0.5">JA SAIU</span>}
-                      </button>
-                    );
+                      return (
+                        <button key={`${produto.id}-${codigo}`} type="button" onClick={() => {
+                          if (adicionalIdx !== null) selecionarCod({ codigo, produto }, null, adicionalIdx);
+                          else if (codLoteIdx !== null) selecionarCod({ codigo, produto }, codLoteIdx);
+                          else selecionarCod({ codigo, produto });
+                        }}
+                          className={`flex w-full items-center gap-3 px-3 py-2 text-left transition ${temSaida ? "bg-amber-50 hover:bg-amber-100" : "hover:bg-blue-50"}`}>
+                          <span className={`shrink-0 rounded px-2 py-0.5 text-xs font-mono ${temSaida ? "bg-amber-100 text-amber-700" : "bg-gray-100 text-gray-700"}`}>{codigo}</span>
+                          <span className="flex-1 truncate text-sm text-gray-900">{produto.nome}</span>
+                          <span className="hidden sm:inline text-xs text-gray-500">{produto.marca} / {produto.modelo}</span>
+                          {temSaida && <span className="text-[10px] font-medium text-amber-600 bg-amber-100 rounded px-1.5 py-0.5">JA SAIU</span>}
+                        </button>
+                      );
                   })}
                 </div>
               </div>

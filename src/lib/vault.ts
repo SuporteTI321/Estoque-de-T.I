@@ -6,8 +6,8 @@
 // ============================================================================
 
 const VAULT_KEY = "vault_enc";
-const SESSION_PW = "vault_pw_session"; // sessionStorage (aba), não persiste entre sessões
-
+// SEGURANÇA: Senha fica APENAS em memória (variável JS). Nunca em storage.
+// Antes: sessionStorage (acessível via XSS). Agora: só em RAM.
 let cachedPassword: string | null = null;
 let cachedSecrets: Record<string, string> | null = null;
 
@@ -70,7 +70,8 @@ export async function unlockVault(password: string): Promise<boolean> {
     const secrets = await decryptVault(blob, password);
     cachedPassword = password;
     cachedSecrets = secrets;
-    sessionStorage.setItem(SESSION_PW, password);
+    // SEGURANÇA: Senha NÃO é persistida em sessionStorage.
+    // Fica apenas em memória — ao fechar a aba, perde-se a sessão.
     return true;
   } catch {
     return false;
@@ -80,14 +81,14 @@ export async function unlockVault(password: string): Promise<boolean> {
 export function lockVault(): void {
   cachedPassword = null;
   cachedSecrets = null;
-  sessionStorage.removeItem(SESSION_PW);
+  // Senha só estava em memória — nada para limpar de storage
 }
 
 /** Tenta restaurar sessão anterior (mesma aba). */
 export async function tryRestoreSession(): Promise<boolean> {
-  const pw = sessionStorage.getItem(SESSION_PW);
-  if (!pw || !hasVault()) return false;
-  return unlockVault(pw);
+  // SEGURANÇA: Senha não está mais em sessionStorage.
+  // Sessão só pode ser restaurada se o usuário digitar a senha novamente.
+  return false;
 }
 
 async function saveVault(secrets: Record<string, string>, password: string): Promise<void> {
@@ -95,7 +96,7 @@ async function saveVault(secrets: Record<string, string>, password: string): Pro
   localStorage.setItem(VAULT_KEY, newBlob);
   cachedPassword = password;
   cachedSecrets = secrets;
-  sessionStorage.setItem(SESSION_PW, password);
+  // SEGURANÇA: Senha persistida APENAS em memória
 }
 
 export async function createOrUpdateVault(patch: Record<string, string>, password: string): Promise<void> {

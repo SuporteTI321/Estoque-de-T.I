@@ -70,7 +70,7 @@ export default function Produtos() {
     if (!u) return "";
     if (u.includes(" / ")) return u;
     const nomes: Record<string, string> = {
-      un: "UNIDADE", cx: "CAIXA", pct: "PACOTE", rl: "ROLO", kg: "QUILORGRAMA",
+      un: "UNIDADE", cx: "CAIXA", pct: "PACOTE", rl: "ROLO", kg: "QUILOGRAMA",
       lt: "LITRO", mt: "METRO", dz: "DÚZIA", resma: "RESMA", par: "PAR",
       pc: "PEÇA", jogo: "JOGO", ct: "CARTUCHO",
     };
@@ -290,7 +290,7 @@ export default function Produtos() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Unidade Padrão</label>
-              {["UNIDADE / 1","CAIXA / 12","PACOTE / 100","ROLO / 50","QUILORGRAMA / 1","LITRO / 1","METRO / 1","DÚZIA / 12","RESMA / 500","PAR / 2","PEÇA / 1","JOGO / 1"].includes(unidadeLabel(form.unidade || "")) ? (
+{["UNIDADE / 1","CAIXA / 12","PACOTE / 100","ROLO / 50","QUILORGRAMA / 1","LITRO / 1","METRO / 1","D�sZIA / 12","RESMA / 500","PAR / 2","PE��A / 1","JOGO / 1"].includes(unidadeLabel(form.unidade || "")) ? (
               <select value={unidadeLabel(form.unidade || "") || "UNIDADE / 1"} onChange={(e) => {
                 if (e.target.value === "new") { setShowNewUnid(true); }
                 else setForm({ ...form, unidade: e.target.value });
@@ -299,7 +299,7 @@ export default function Produtos() {
                 <option value="CAIXA / 12">CAIXA / 12</option>
                 <option value="PACOTE / 100">PACOTE / 100</option>
                 <option value="ROLO / 50">ROLO / 50</option>
-                <option value="QUILOGRAMA / 1">QUILORGRAMA / 1</option>
+                <option value="QUILOGRAMA / 1">QUILOGRAMA / 1</option>
                 <option value="LITRO / 1">LITRO / 1</option>
                 <option value="METRO / 1">METRO / 1</option>
                 <option value="DÚZIA / 12">DÚZIA / 12</option>
@@ -347,8 +347,7 @@ export default function Produtos() {
             <Button onClick={async () => {
               if (!novaCat.trim()) return;
               const c = await api.categorias.create({ nome: novaCat.trim().toUpperCase(), descricao: null, ativa: true });
-              if (c) { cats.push(c); setCats([...cats]); }
-              setForm({ ...form, categoria_id: c?.id ?? null });
+              if (c) { setCats(prev => [...prev, c]); setForm({ ...form, categoria_id: c?.id ?? null }); }
               setShowNewCat(false); setNovaCat("");
             }} disabled={!novaCat.trim()}>Salvar</Button>
           </div>

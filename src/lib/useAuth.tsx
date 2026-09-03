@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import type { Usuario } from "./types";
 import { api } from "./api";
 import { clearAuthToken } from "./cloudDb";
+import { sanitizeUserForStorage } from "./security";
 
 interface AuthContextType {
   user: Usuario | null;
@@ -28,8 +29,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function login(email: string, senha: string): Promise<Usuario> {
     const u = await api.usuarios.login(email, senha);
-    // Remove senha antes de persistir — defense in depth
-    const { senha: _, ...safe } = u as any;
+    // Remove senha antes de persistir — defense in depth (sanitização centralizada)
+    const safe = sanitizeUserForStorage(u);
     setUser(safe);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(safe));
     return safe;

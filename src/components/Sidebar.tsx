@@ -28,7 +28,6 @@ const NAV: NavItem[] = [
   { to: "/inventario", label: "Inventário", icon: BarChart3 },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
   { to: "/etiquetas", label: "Etiquetas", icon: Tag },
-
   { to: "/configuracoes", label: "Configurações", icon: Settings, adminOnly: true },
   { to: "/sincronizacao", label: "Sincronizar", icon: RefreshCw, adminOnly: true },
 ];
@@ -45,7 +44,7 @@ export default function Sidebar({ user, open = false, onClose }: SidebarProps) {
 
       {/* Brand */}
       <div className="flex items-center gap-3 border-b border-gray-200 px-5 py-4">
-        {(() => { const logo = localStorage.getItem("almox_logo"); return logo ? <img src={logo} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" /> : <img src={"./icons/icon.png"} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" />; })()}
+        {(() => { const logo = localStorage.getItem("almox_logo"); return logo ? <img src={logo} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" /> : <img src={"/icons/icon.png"} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" />; })()}
         <div>
           <div className="text-sm font-bold text-gray-900">Controle de Estoque</div>
           <div className="text-[11px] text-gray-500">Sistema de Gestão</div>

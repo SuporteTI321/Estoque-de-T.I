@@ -14,29 +14,14 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  const carregarMovs = async (): Promise<Movimentacao[]> => {
-    try {
-      const { invoke } = await import("@tauri-apps/api/core");
-      const dados = await invoke<Movimentacao[]>("list_movimentacoes", {});
-      if (Array.isArray(dados)) return dados;
-    } catch (e) { console.warn("[Dashboard] carregarMovs fallback:", e); }
-    return [];
-  };
-
   // mostrarLoading só no mount inicial; no intervalo/focus atualiza sem flicker.
   const carregarDados = useCallback(async (mostrarLoading: boolean = false) => {
     if (mostrarLoading) setLoading(true);
     try {
-      const [s, , movs, prods] = await Promise.all([api.dashboardStats(), api.alertas.list(), carregarMovs(), api.produtos.list()]);
+      const [s, movs, prods] = await Promise.all([api.dashboardStats(), api.movimentacoes.list(), api.produtos.list()]);
       setStats(s);
       setMovimentacoes(movs);
       setProdutos(prods);
-      // Persistência centralizada (uma única escrita por ciclo)
-      if (movs.length === 0) {
-        localStorage.removeItem("almox_movimentacoes");
-      } else {
-        localStorage.setItem("almox_movimentacoes", JSON.stringify(movs));
-      }
       setErro(null);
     } catch (e) {
       console.error("[Dashboard] falha ao carregar dados:", e);

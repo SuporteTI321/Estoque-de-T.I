@@ -1,3 +1,5 @@
+
+
 /**
  * Salva HTML em arquivo temporario e abre no navegador para impressao.
  * Funciona tanto no Tauri (desktop) quanto no browser (web).
@@ -55,6 +57,7 @@ export async function printHtml(html: string, titulo: string = "Impressao") {
 
 /** Escapa caracteres especiais para interpolação segura em HTML */
 function esc(s: string): string {
+  // Reutiliza a função de security.ts para consistência
   return String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -65,70 +68,20 @@ function esc(s: string): string {
 
 export type TamanhoEtiqueta = "pequena" | "media" | "grande";
 
-const ETIQUETA_DIMS: Record<TamanhoEtiqueta, { largura: string; altura: string; fs: string; fs_num: string }> = {
-  pequena: { largura: "70mm", altura: "35mm", fs: "8px", fs_num: "9" },
-  media: { largura: "100mm", altura: "50mm", fs: "10px", fs_num: "11" },
-  grande: { largura: "150mm", altura: "70mm", fs: "12px", fs_num: "14" },
-};
 
-/** Monta HTML A4 de etiquetas (JsBarcode CODE128 via CDN) — usado no preview/impressao browser. */
+/**
+ * [LEGADO] Monta HTML de etiquetas (simples, sem barcode).
+ */
 export function montarHtmlEtiquetas(opts: {
   produtos: { id: number; nome: string; codigo: string; marca?: string | null; modelo?: string | null; categoria_nome?: string | null }[];
   quantidades: Record<number, number>;
   empresa: string;
   tamanho: TamanhoEtiqueta;
 }): string {
-  const { largura, altura, fs, fs_num } = ETIQUETA_DIMS[opts.tamanho] ?? ETIQUETA_DIMS.pequena;
-  const etiquetas: string[] = [];
-
-  opts.produtos.forEach((p, idx) => {
-    const qtd = Math.max(1, opts.quantidades[p.id] ?? opts.quantidades[idx] ?? 1);
-    for (let i = 0; i < qtd; i++) {
-      etiquetas.push(`<div class="etiq">
-  <div class="emp"><b>${esc(opts.empresa)}</b></div>
-  <div class="nome"><b>${esc(p.nome)}</b></div>
-  <div class="linha"><b>Código:</b> ${esc(p.codigo)}</div>
-  <div class="linha"><b>Marca:</b> ${esc(p.marca || "—")}</div>
-  <div class="linha"><b>Modelo:</b> ${esc(p.modelo || "—")}</div>
-  <div class="linha"><b>Categoria:</b> ${esc(p.categoria_nome || "—")}</div>
-  <svg class="bc" data-val="${esc(p.codigo)}"></svg>
-</div>`);
-    }
-  });
-
-  return `<!doctype html>
-<html><head><meta charset="utf-8"><title>Etiquetas</title>
-<script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
-<style>
-  @page { size: A4; margin: 10mm; }
-  body { font-family: monospace; margin: 0; padding: 3mm; color: #000;
-         -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .grid { display: flex; flex-wrap: wrap; gap: 3mm; }
-  .etiq { width: ${largura}; height: ${altura}; border: 1px solid #333; padding: 3mm;
-          box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column; }
-  .emp { text-align: center; font-size: ${fs}; }
-  .nome { text-align: center; font-size: ${fs}; font-weight: bold; }
-  .linha { font-size: ${fs}; }
-  .bc { margin-top: auto; max-width: 100%; }
-  @media print { .etiq { page-break-inside: avoid; } }
-</style></head>
-<body>
-  <div class="grid">${etiquetas.join(String.fromCharCode(10))}</div>
-  <script>
-    window.onload = function () {
-      setTimeout(function () {
-        document.querySelectorAll('.bc').forEach(function (el) {
-          try {
-            JsBarcode(el, el.getAttribute('data-val'), {
-              format: 'CODE128', displayValue: true,
-              fontSize: ${fs_num}, height: 30
-            });
-          } catch (e) {}
-        });
-      }, 100);
-    };
-  </script>
-</body></html>`;
+  const dims: Record<string, {w:number;h:number}> = { pequena:{w:50,h:25}, media:{w:70,h:35}, grande:{w:100,h:50} }
+  const d = dims[opts.tamanho] ?? dims.media
+  const etiquetas = opts.produtos.map(p=> `<div style="width:${d.w}mm;height:${d.h}mm;border:1px solid #333;padding:2mm;margin:1mm;box-sizing:border-box;font-family:sans-serif;display:inline-block;vertical-align:top;overflow:hidden"><div style="font-weight:bold;font-size:2.1mm">${esc(p.codigo)}</div><div style="font-weight:bold;font-size:2.8mm">${esc(p.nome)}</div><div style="font-size:1.8mm">${esc(p.marca||'')} ${esc(p.modelo||'')}</div></div>`).join('')
+  return `<!doctype html><html><head><meta charset="utf-8"><title>Etiquetas ${esc(opts.empresa)}</title><style>@page{size:A4 portrait;margin:5mm}body{margin:0;font-family:sans-serif}</style></head><body>${etiquetas}</body></html>`
 }
 
 /**

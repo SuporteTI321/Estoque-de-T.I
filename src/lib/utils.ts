@@ -6,21 +6,24 @@ import type { Produto } from "./types";
  * Retorna a lista com o campo `codigo` atualizado.
  */
 export function renumerar(lista: Produto[]): Produto[] {
-  return [...lista]
-    .sort((a, b) => a.id - b.id)
-    .map((p, i) => {
-      // Preserva o codigo real vindo do banco; só gera código para produtos SEM código.
-      if (p.codigo) return p;
-      const cat = (p.categoria_nome || "PROD")
-        .toUpperCase()
-        .replace(/\s+/g, "");
-      const sigla = cat.substring(0, 4);
-      return {
-        ...p,
-        codigo: `${String(i + 1).padStart(5, "0")}-${sigla}`,
-      };
-    });
-}
+    // Gera codigo sequencial: XXXXX-SIGLA
+    // SIGLA = primeiras 4 letras da categoria (sem espacos, uppercase)
+    // Apenas preenche produtos SEM codigo (preserva codigos existentes)
+    return [...lista]
+      .sort((a, b) => a.id - b.id)
+      .map((p, i) => {
+        // Preserva o codigo real vindo do banco
+        if (p.codigo) return p;
+        const cat = (p.categoria_nome || "PROD")
+          .toUpperCase()
+          .replace(/[^A-Z]/g, "")
+          .substring(0, 4);
+        return {
+          ...p,
+          codigo: `${String(i + 1).padStart(5, "0")}-${cat}`,
+        };
+      });
+  }
 
 /**
  * Monta um Map<produto_id, codigo> a partir de uma lista de produtos.
