@@ -363,10 +363,7 @@ export default function Etiquetas() {
       @page{margin:0;size:${pageSize}}
       *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;box-sizing:border-box}
       html,body{margin:0;padding:0;background:#fff;font-family:sans-serif}
-      svg{background:#FFFFFF !important;shape-rendering:crispEdges;image-rendering:crisp-edges;image-rendering:-webkit-optimize-contrast}
-      svg rect[fill=\"#FFFFFF\"], svg rect[fill=\"white\"]{fill:#FFFFFF !important}
-      svg rect[fill=\"#000000\"], svg rect[fill=\"#000\"], svg g rect{fill:#000000 !important;stroke:none !important}
-      svg path{stroke:#000000 !important}
+      svg{background:#FFFFFF !important;shape-rendering:crispEdges;image-rendering:crisp-edges}
       .folha{page-break-after:${folhaUnica ? 'always' : 'auto'};position:relative;background:#fff;overflow:hidden}
       .folha:last-child{page-break-after:auto}
       .etq-item svg{display:block;width:auto;max-width:100%;height:100%;margin:0 auto;background:#FFFFFF !important}
