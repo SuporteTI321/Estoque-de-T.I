@@ -25,10 +25,11 @@ function generateBarcodeSvg(value: string, width: number, fontSize: number): str
       displayValue: false,
       background: "#FFFFFF",
       lineColor: "#000000",
-      margin: 10,
+      margin: 0,
       flat: true,
     })
     el.style.backgroundColor = "#FFFFFF"
+    el.style.padding = "0"
     el.style.shapeRendering = "crispEdges" as any
     const html = el.outerHTML
     barcodeCache.set(key, html)
@@ -52,7 +53,7 @@ const Barcode = memo(function Barcode({ value, width = 1.5, fontSize = 10 }: Bar
           displayValue: false,
           background: "#FFFFFF",
           lineColor: "#000000",
-          margin: 10,
+          margin: 0,
           flat: true,
         });
         svgRef.current.style.backgroundColor = "#FFFFFF";

@@ -46,8 +46,8 @@ function getBarcodeSvg(value: string, width: number = 2.0): string {
   try {
     const svgNs = 'http://www.w3.org/2000/svg'
     const el = document.createElementNS(svgNs, 'svg')
-    JsBarcode(el, value, { format: 'CODE128', width, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 10, flat: true, textMargin: 0 })
-    el.setAttribute('style', 'display:block;width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges')
+    JsBarcode(el, value, { format: 'CODE128', width, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 0, flat: true, textMargin: 0 })
+    el.setAttribute('style', 'display:block;width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0')
     el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
     // força fundo branco em todos os rects
     el.style.backgroundColor = '#FFFFFF'
@@ -69,8 +69,8 @@ function BarcodeSvg({ value }: { value: string }) {
     try {
       const svgNs = 'http://www.w3.org/2000/svg'
       const el = document.createElementNS(svgNs, 'svg')
-      JsBarcode(el, value, { format: 'CODE128', width: 2.0, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 10, flat: true, textMargin: 0 })
-      el.setAttribute('style', 'display:block;width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges')
+      JsBarcode(el, value, { format: 'CODE128', width: 2.0, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 0, flat: true, textMargin: 0 })
+      el.setAttribute('style', 'display:block;width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0')
       el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
       el.style.backgroundColor = '#FFFFFF'
       node.appendChild(el)
