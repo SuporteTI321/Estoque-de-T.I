@@ -261,6 +261,9 @@ export default function Etiquetas() {
     tamanhoProd, tamanhoCod, tamanhoMarca, tamanhoModelo, alturaBarra, larguraBarra,
     posicoes, negritos, alinhamentoH, alinhamentoV, folhaUnica, carregando, etiquetasIndividuais])
 
+  // Força apenas A4 (outros formatos removidos)
+  useEffect(() => { if (papel !== 'a4') setPapel('a4') }, [])
+
   // ---- Load data ----
   useEffect(() => {
     api.produtos.list().then(p => { setProdutos(p); setCarregando(false) }).catch(() => setCarregando(false))
@@ -320,7 +323,7 @@ export default function Etiquetas() {
 
   // ---- Preset ----
   const aplicarPreset = (preset: typeof PRESETS[number]) => {
-    setFormato(preset.formato); setPapel(preset.papel); setColunas(preset.colunas)
+    setFormato(preset.formato); setPapel('a4'); setColunas(preset.colunas)
     if ((preset as any).largura) setLargura((preset as any).largura)
     if ((preset as any).altura) setAltura((preset as any).altura)
     setMargemSup(preset.margemSup); setMargemEsq(preset.margemEsq); setMargemDir(preset.margemDir); setMargemInf(preset.margemInf)
@@ -477,21 +480,11 @@ export default function Etiquetas() {
                   </div>
                 </Sec>
 
-                {/* Papel e Formato */}
+                {/* Papel e Formato — apenas A4 */}
                 <Sec title="Papel e Formato" open={secoesAbertas.papelFormato} onToggle={() => toggleSecao('papelFormato')}>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {Object.entries(TAMANHO_PAPEL).map(([k, v]) => (
-                      <button key={k} onClick={() => setPapel(k)} className={`rounded-lg border px-2 py-1.5 text-[10px] font-medium ${papel === k ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                        {v.nome} <span className="text-[8px] text-slate-400 block">{v.largura}x{v.altura}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    {Object.entries(TAMANHO_ETIQUETA).filter(([k]) => k !== 'custom').map(([k, v]) => (
-                      <button key={k} onClick={() => { setFormato(k); setLargura(v.largura); setAltura(v.altura) }} className={`rounded-lg border px-2 py-1.5 text-[10px] font-medium ${formato === k ? 'border-blue-600 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`}>
-                        {k} <span className="text-[8px] text-slate-400 block">{v.largura}x{v.altura}mm</span>
-                      </button>
-                    ))}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-2.5 text-center">
+                    <div className="text-[11px] font-bold text-blue-700">📄 Folha A4</div>
+                    <div className="text-[9px] text-blue-600">210 × 297 mm — único formato</div>
                   </div>
                   <div className="grid grid-cols-2 gap-1.5">
                     <Field label="Largura" value={largura} onChange={v => { setFormato('custom'); setLargura(Number(v)) }} unit="mm" />
