@@ -25,7 +25,7 @@ fn rate_limit_check(conn: &rusqlite::Connection, chave: &str) -> Result<(bool, i
         )
         .ok();
 
-    if let Some((tentativas, _primeiro, bloqueado_ate)) = row {
+    if let Some((_tentativas, _primeiro, bloqueado_ate)) = row {
         if let Some(bloqueado) = bloqueado_ate {
             if now < bloqueado {
                 let remaining = (bloqueado - now) / 1000;
@@ -1157,10 +1157,10 @@ fn login(email: String, senha: String) -> Result<Usuario, String> {
         }
         // SEGURANÇA: Login bem-sucedido — limpar rate limiting
         rate_limit_clear(&conn, &chave_rate)?;
-        audit_log(&conn, Some(row.get(0)?), &email, "login_sucesso", Some("usuarios"), Some(row.get(0)?), None);
+        let usuario_id: i64 = row.get(0).map_err(|e| e.to_string())?;
+        audit_log(&conn, Some(usuario_id), &email, "login_sucesso", Some("usuarios"), Some(usuario_id), None);
 
         // Criar sessão
-        let usuario_id: i64 = row.get(0)?;
         let _session_id = create_session(&conn, usuario_id)?;
 
         // Migra senha de texto plano para Argon2 (lazy migration)
