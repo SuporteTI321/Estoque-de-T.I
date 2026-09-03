@@ -18,6 +18,12 @@
     <div class="flex-1 flex overflow-hidden">
       <!-- Sidebar Config -->
       <div class="w-80 border-r border-slate-200 bg-white flex flex-col overflow-hidden">
+        <!-- Selecionar Produtos (topo) -->
+        <div class="px-3 py-3 border-b border-slate-100 bg-slate-50/50">
+          <div class="text-[10px] text-slate-500 mb-1">{{ selecionados.length }} produto(s) selecionados</div>
+          <button @click="mostrarModal=true" class="w-full rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-[11px] font-medium text-blue-700 hover:bg-blue-100">📋 Selecionar Produtos</button>
+        </div>
+
         <div class="flex-1 overflow-y-auto">
           <!-- Presets -->
           <div class="border-b border-slate-100">
@@ -75,12 +81,7 @@
             </div>
           </div>
 
-          <!-- Produtos -->
-          <div class="px-3 py-3">
-            <div class="text-[10px] text-slate-500 mb-1">{{ selecionados.length }} selecionados</div>
-            <button @click="mostrarModal=true" class="w-full rounded-lg border border-blue-300 bg-blue-50 px-3 py-2 text-[11px] font-medium text-blue-700 hover:bg-blue-100">Selecionar Produtos</button>
-            <div class="mt-2 text-[9px] text-slate-400">Convertido de React (Next.js) para Vue 3 • Composition API • &lt;script setup&gt;</div>
-          </div>
+
         </div>
       </div>
 

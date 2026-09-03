@@ -149,6 +149,7 @@ function AppRoutes() {
       <Route path="/categorias" element={<ProtectedRoute><Categorias /></ProtectedRoute>} />
       <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
+      <Route path="/etiquetas" element={<ProtectedRoute><EtiquetaVueWrapper /></ProtectedRoute>} />
       <Route path="/etiqueta-vue" element={<ProtectedRoute><EtiquetaVueWrapper /></ProtectedRoute>} />
 
       <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />

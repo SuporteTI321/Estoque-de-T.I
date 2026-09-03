@@ -22,7 +22,7 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { to: "/etiqueta-vue", label: "Etiqueta Vue", icon: Tag },
+  { to: "/etiquetas", label: "Etiquetas", icon: Tag },
   { to: "/produtos", label: "Produtos", icon: Package },
   { to: "/entradas", label: "Entradas", icon: ArrowDownToLine },
   { to: "/saida-registro", label: "Saída", icon: ArrowUpFromLine },
