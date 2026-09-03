@@ -42,14 +42,13 @@ function escHtml(s: string): string {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function getBarcodeSvg(value: string, width: number = 2.0): string {
+function getBarcodeSvg(value: string, width: number = 1.6): string {
   try {
     const svgNs = 'http://www.w3.org/2000/svg'
     const el = document.createElementNS(svgNs, 'svg')
     JsBarcode(el, value, { format: 'CODE128', width, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 0, flat: true, textMargin: 0 })
-    el.setAttribute('style', 'display:block;width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0')
+    el.setAttribute('style', 'display:block;width:auto;max-width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0 auto')
     el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
-    // força fundo branco em todos os rects
     el.style.backgroundColor = '#FFFFFF'
     return el.outerHTML
   } catch {
@@ -69,8 +68,8 @@ function BarcodeSvg({ value }: { value: string }) {
     try {
       const svgNs = 'http://www.w3.org/2000/svg'
       const el = document.createElementNS(svgNs, 'svg')
-      JsBarcode(el, value, { format: 'CODE128', width: 2.0, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 0, flat: true, textMargin: 0 })
-      el.setAttribute('style', 'display:block;width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0')
+      JsBarcode(el, value, { format: 'CODE128', width: 1.6, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 0, flat: true, textMargin: 0 })
+      el.setAttribute('style', 'display:block;width:auto;max-width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0 auto')
       el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
       el.style.backgroundColor = '#FFFFFF'
       node.appendChild(el)
@@ -82,7 +81,7 @@ function BarcodeSvg({ value }: { value: string }) {
       node.appendChild(span)
     }
   }, [value])
-  return <div ref={ref} style={{ width: '100%', height: '100%', backgroundColor: '#FFFFFF' }} />
+  return <div ref={ref} style={{ width: '100%', height: '100%', backgroundColor: '#FFFFFF', display: 'flex', justifyContent: 'center', alignItems: 'center' }} />
 }
 
 function Sec({ title, open, onToggle, children }: { title: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
@@ -270,21 +269,35 @@ export default function Etiquetas() {
     return lista
   }, [selecionados, produtos, quantidades])
 
-  const etqPorPagina = useMemo(() => {
-    if (papel === 'rollo') return 1
+  // ——— Correção coluna Início: calcula capacidade real por página com offset de células vazias ———
+  const { capTotal, capPrimeira, skipCells } = useMemo(() => {
+    if (papel === 'rollo') return { capTotal: 1, capPrimeira: 1, skipCells: 0 }
     const areaUtil = cfg.papelAltura - margemSup - margemInf
-    const linhas = Math.floor(areaUtil / (cfg.altura + espacoV))
-    return Math.max(1, linhas * colunas - (inicioLinha - 1) * colunas)
+    const linhas = Math.max(1, Math.floor(areaUtil / (cfg.altura + espacoV)))
+    const total = linhas * colunas
+    const skip = Math.max(0, Math.min(total - 1, (inicioLinha - 1) * colunas))
+    return { capTotal: total, capPrimeira: Math.max(1, total - skip), skipCells: skip }
   }, [papel, cfg, margemSup, margemInf, espacoV, colunas, inicioLinha])
 
-  const totalPaginas = Math.max(1, Math.ceil(listaEtq.length / etqPorPagina))
+  const etqPorPagina = capTotal // alias para compatibilidade do header
+
+  const totalPaginas = useMemo(() => {
+    if (listaEtq.length === 0) return 1
+    if (listaEtq.length <= capPrimeira) return 1
+    return 1 + Math.ceil((listaEtq.length - capPrimeira) / capTotal)
+  }, [listaEtq.length, capPrimeira, capTotal])
 
   const etiquetasPagina = useMemo(() => {
-    const slice = listaEtq.slice((pagina - 1) * etqPorPagina, pagina * etqPorPagina)
+    let slice: typeof listaEtq
+    if (pagina === 1) slice = listaEtq.slice(0, capPrimeira)
+    else {
+      const offset = capPrimeira + (pagina - 2) * capTotal
+      slice = listaEtq.slice(offset, offset + capTotal)
+    }
     if (!buscaPreview.trim()) return slice
     const q = buscaPreview.toLowerCase()
     return slice.filter(p => (p.nome?.toLowerCase() || '').includes(q) || (p.codigo?.toLowerCase() || '').includes(q))
-  }, [listaEtq, pagina, etqPorPagina, buscaPreview])
+  }, [listaEtq, pagina, capPrimeira, capTotal, buscaPreview])
 
   const toggleCampo = (c: string) => setCampos(p => p.includes(c) ? p.filter(x => x !== c) : [...p, c])
 
@@ -318,10 +331,12 @@ export default function Etiquetas() {
     const pageSize = papel === 'rollo' ? `${cfg.largura}mm ${cfg.altura}mm` : papel === 'letter' ? 'letter portrait' : 'A4 portrait'
     const bordaPrint = borda.ativa ? `${borda.largura}mm ${borda.estilo} ${borda.cor}` : '1px solid transparent'
 
-    // Gera todas as páginas usando exatamente o mesmo template do Preview
+    // Gera todas as páginas com offset de Início (células vazias na 1ª página)
     const todasPaginasPrint: string[] = []
     for (let i = 0; i < totalPaginas; i++) {
-      const pagEtq = listaEtq.slice(i * etqPorPagina, (i + 1) * etqPorPagina)
+      const pageNum = i + 1
+      const pagEtq = pageNum === 1 ? listaEtq.slice(0, capPrimeira) : listaEtq.slice(capPrimeira + (pageNum - 2) * capTotal, capPrimeira + (pageNum - 2) * capTotal + capTotal)
+      const vazias = pageNum === 1 ? Array.from({ length: skipCells }, () => `<div class="etq-item etq-vazia" style="width:${cfg.largura}mm;height:${cfg.altura}mm;box-sizing:border-box;border:1px solid transparent;background:transparent;"></div>`).join('') : ''
       const etiquetasHtml = pagEtq.map(etq => {
         const etqConfig = etiquetasIndividuais[etq.uid] || {}
         const tProd = etqConfig.tamanhoProd ?? tamanhoProd
@@ -331,7 +346,7 @@ export default function Etiquetas() {
         const pos = etqConfig.posicoes ?? posicoes
         const neg = etqConfig.negritos ?? negritos
         return `<div class="etq-item" style="width:${cfg.largura}mm;height:${cfg.altura}mm;position:relative;background:#fff;border:${bordaPrint};box-sizing:border-box;overflow:hidden;">
-          ${mostrarBarra ? `<div style="position:absolute;top:${pos.barra?.top}mm;left:${pos.barra?.left}mm;right:1mm;height:${alturaBarra}mm;overflow:hidden;display:flex;align-items:center;z-index:0;background:#FFFFFF;">${getBarcodeSvg(etq.codigo)}</div>` : ''}
+          ${mostrarBarra ? `<div style="position:absolute;top:${pos.barra?.top}mm;left:${pos.barra?.left}mm;right:1mm;height:${alturaBarra}mm;overflow:hidden;display:flex;align-items:center;justify-content:center;z-index:0;background:#FFFFFF;">${getBarcodeSvg(etq.codigo)}</div>` : ''}
           ${campos.includes('codigo') ? `<p style="position:absolute;top:${pos.codigo?.top}mm;left:${pos.codigo?.left}mm;font-size:${tCod}mm;font-weight:${neg.codigo ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.codigo)}</p>` : ''}
           ${campos.includes('produto') ? `<p style="position:absolute;top:${pos.produto?.top}mm;left:${pos.produto?.left}mm;font-size:${tProd}mm;font-weight:${neg.produto ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.nome || '')}</p>` : ''}
           ${campos.includes('marca') ? `<p style="position:absolute;top:${pos.marca?.top}mm;left:${pos.marca?.left}mm;font-size:${tMarca}mm;font-weight:${neg.marca ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.marca || '—')}</p>` : ''}
@@ -340,7 +355,7 @@ export default function Etiquetas() {
       }).join('')
 
       todasPaginasPrint.push(
-        `<div class="folha"><div class="etq-grid" style="display:grid;grid-template-columns:repeat(${colunas},${cfg.largura}mm);gap:${espacoV}mm ${espacoH}mm;padding:${papel === 'rollo' ? '0' : `${margemSup}mm ${margemDir}mm ${margemInf}mm ${margemEsq}mm`};box-sizing:border-box;width:${cfg.papelLargura}mm;height:${cfg.papelAltura}mm;margin:0 auto;justify-content:${alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start'};justify-items:${alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start'};align-content:${alinhamentoV === 'center' ? 'center' : alinhamentoV === 'end' ? 'end' : 'start'};align-items:start;">${etiquetasHtml}</div></div>`
+        `<div class="folha"><div class="etq-grid" style="display:grid;grid-template-columns:repeat(${colunas},${cfg.largura}mm);gap:${espacoV}mm ${espacoH}mm;padding:${papel === 'rollo' ? '0' : `${margemSup}mm ${margemDir}mm ${margemInf}mm ${margemEsq}mm`};box-sizing:border-box;width:${cfg.papelLargura}mm;height:${cfg.papelAltura}mm;margin:0 auto;justify-content:${alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start'};justify-items:${alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start'};align-content:${alinhamentoV === 'center' ? 'center' : alinhamentoV === 'end' ? 'end' : 'start'};align-items:start;">${vazias}${etiquetasHtml}</div></div>`
       )
     }
 
@@ -354,7 +369,7 @@ export default function Etiquetas() {
       svg path{stroke:#000000 !important}
       .folha{page-break-after:${folhaUnica ? 'always' : 'auto'};position:relative;background:#fff;overflow:hidden}
       .folha:last-child{page-break-after:auto}
-      .etq-item svg{display:block;width:100%;height:100%;background:#FFFFFF !important}
+      .etq-item svg{display:block;width:auto;max-width:100%;height:100%;margin:0 auto;background:#FFFFFF !important}
     `
     const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${todasPaginasPrint.join('\n')}</body></html>`
     const iframe = document.createElement('iframe')
@@ -597,6 +612,9 @@ export default function Etiquetas() {
                       alignContent: alinhamentoV === 'center' ? 'center' : alinhamentoV === 'end' ? 'end' : 'start',
                       alignItems: 'start'
                     }}>
+                      {pagina === 1 && Array.from({ length: skipCells }).map((_, i) => (
+                        <div key={`vazia-${i}`} style={{ width: cfg.largura + 'mm', height: cfg.altura + 'mm', boxSizing: 'border-box', border: '1px dashed #e2e8f0', background: 'repeating-linear-gradient(45deg, #f8fafc, #f8fafc 4px, #f1f5f9 4px, #f1f5f9 8px)', opacity: 0.6 }} title={`Vazia (Início=${inicioLinha})`} />
+                      ))}
                       {etiquetasPagina.map(etq => {
                         const etqConfig = etiquetasIndividuais[etq.uid] || {}
                         const tProd = etqConfig.tamanhoProd ?? tamanhoProd

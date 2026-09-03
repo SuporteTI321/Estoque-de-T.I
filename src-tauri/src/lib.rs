@@ -2182,7 +2182,7 @@ fn print_product_label(
   .emp {{ text-align: center; font-size: {fs}; }}
   .nome {{ text-align: center; font-size: {fs}; font-weight: bold; }}
   .linha {{ font-size: {fs}; }}
-  .bc {{ margin-top: auto; max-width: 100%; background: #FFFFFF !important; shape-rendering: crispEdges; image-rendering: crisp-edges; }}
+  .bc {{ margin-top: auto; max-width: 100%; width: auto; margin-left: auto; margin-right: auto; background: #FFFFFF !important; shape-rendering: crispEdges; image-rendering: crisp-edges; display: block; }}
   svg rect {{ shape-rendering: crispEdges; }}
   @media print {{ .etiq {{ page-break-inside: avoid; }} svg{{ background: #fff !important; }} }}
 
@@ -2196,7 +2196,7 @@ fn print_product_label(
           try {{
             JsBarcode(el, el.getAttribute('data-val'), {{
               format: 'CODE128', displayValue: true,
-              fontSize: {fs_num}, height: 44, width: 2, background: '#FFFFFF', lineColor: '#000000', margin: 0, flat: true
+              fontSize: {fs_num}, height: 44, width: 1.6, background: '#FFFFFF', lineColor: '#000000', margin: 0, flat: true
             }});
             el.style.background = '#FFFFFF';
             el.style.shapeRendering = 'crispEdges';

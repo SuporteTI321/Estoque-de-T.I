@@ -19,7 +19,7 @@ function generateBarcodeSvg(value: string, width: number, fontSize: number): str
   try {
     JsBarcode(el, value, {
       format: "CODE128",
-      width,
+      width: Math.min(width, 1.6),
       height: 50,
       fontSize,
       displayValue: false,
@@ -47,7 +47,7 @@ const Barcode = memo(function Barcode({ value, width = 1.5, fontSize = 10 }: Bar
       try {
         JsBarcode(svgRef.current, value, {
           format: "CODE128",
-          width,
+          width: Math.min(width, 1.6),
           height: 50,
           fontSize,
           displayValue: false,
@@ -64,7 +64,7 @@ const Barcode = memo(function Barcode({ value, width = 1.5, fontSize = 10 }: Bar
     }
   }, [value, width, fontSize]);
 
-  return <svg ref={svgRef} style={{ display: "block", width: "100%", height: "auto", backgroundColor: "#FFFFFF", shapeRendering: "crispEdges" as any }} />;
+  return <svg ref={svgRef} style={{ display: "block", width: "auto", maxWidth: "100%", height: "auto", backgroundColor: "#FFFFFF", shapeRendering: "crispEdges" as any, margin: "0 auto" }} />;
 });
 
 export { generateBarcodeSvg }
