@@ -331,7 +331,22 @@ export default function Etiquetas() {
     setCopiadoPreset(preset.nome); setTimeout(() => setCopiadoPreset(null), 1500)
   }
 
-  // ---- Limpar ----
+  // ---- Reset total do modelo (fábrica) ----
+  const resetarModelo = () => {
+    if (!confirm('Resetar TODO o modelo de etiqueta para padrão de fábrica?')) return
+    localStorage.removeItem('etq_autosave')
+    setSelecionados([]); setQuantidades({})
+    setFormato('medio'); setLargura(70); setAltura(35); setMargemSup(5); setMargemEsq(5); setMargemDir(5); setMargemInf(5)
+    setColunas(3); setEspacoH(0); setEspacoV(0); setInicioLinha(1); setCampos(['codigo', 'produto', 'marca', 'modelo'])
+    setMostrarBarra(false); setBorda({ ativa: false, estilo: 'dashed' as const, largura: 0.2, cor: '#ccc' })
+    setTamanhoProd(2.8); setTamanhoCod(2.1); setTamanhoMarca(1.8); setTamanhoModelo(1.4); setAlturaBarra(10); setLarguraBarra(0)
+    setPosicoes({ codigo: { top: 2, left: 1 }, produto: { top: 6, left: 1 }, marca: { top: 14, left: 1 }, modelo: { top: 18, left: 1 }, barra: { top: 60, left: 1 } })
+    setNegritos({ codigo: false, produto: true, marca: false, modelo: false })
+    setAlinhamentoH('center'); setAlinhamentoV('start'); setEtiquetasIndividuais({})
+    setPagina(1); setFolhaUnica(true)
+    setTimeout(() => window.location.reload(), 300)
+  }
+
   const limpar = () => {
     setSelecionados([]); setQuantidades({})
     setFormato('medio'); setLargura(70); setAltura(35); setMargemSup(5); setMargemEsq(5); setMargemDir(5); setMargemInf(5)
@@ -578,7 +593,10 @@ export default function Etiquetas() {
                 </Sec>
               </div>
               <div className="border-t border-slate-200 px-3 py-1 flex items-center justify-between">
-                <button onClick={limpar} className="text-[9px] text-slate-400 hover:text-slate-600">Limpar tudo</button>
+                <div className="flex gap-2">
+                  <button onClick={limpar} className="text-[9px] text-slate-400 hover:text-slate-600">Limpar tudo</button>
+                  <button onClick={resetarModelo} className="text-[9px] text-red-500 hover:text-red-700 font-bold" title="Resetar para fábrica">⟲ Resetar modelo</button>
+                </div>
                 <button onClick={() => setMostrarConfig(false)} className="text-[9px] text-slate-400 hover:text-slate-600">Ocultar</button>
               </div>
             </div>
