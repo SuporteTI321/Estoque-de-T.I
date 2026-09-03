@@ -2202,7 +2202,7 @@ fn print_product_label(
           try {{
             JsBarcode(el, el.getAttribute('data-val'), {{
               format: 'CODE128', displayValue: true,
-              fontSize: {fs_num}, height: 48, width: {barcode_w}, background: '#FFFFFF', lineColor: '#000000', margin: 6, flat: true
+              fontSize: {fs_num}, height: 48, width: {barcode_w}, background: '#FFFFFF', lineColor: '#222222', margin: 6, flat: true
             }});
             el.style.background = '#FFFFFF';
             el.style.shapeRendering = 'crispEdges';
