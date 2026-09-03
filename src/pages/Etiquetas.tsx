@@ -71,20 +71,13 @@ function getBarcodeSvg(value: string, width?: number): string {
 //  SUB-COMPONENTS
 // ============================================================
 
-/** Componente seguro para barcode SVG — largura auto-ajustada por tamanho da etiqueta */
+/** Componente seguro para barcode SVG — reutiliza getBarcodeSvg para garantir 100% igual ao Print */
 function BarcodeSvg({ value, largura, barraLeft }: { value: string; largura?: number; barraLeft?: number }) {
   const ref = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
-    node.innerHTML = '';
     try {
-      const svgNs = 'http://www.w3.org/2000/svg'
-      const el = document.createElementNS(svgNs, 'svg')
       const w = calcBarcodeWidth(value, largura ?? 70, barraLeft ?? 1)
-      JsBarcode(el, value, { format: 'CODE128', width: w, height: 48, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 6, flat: true, textMargin: 0 })
-      el.setAttribute('style', 'display:block;width:auto;max-width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0 auto')
-      el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
-      el.style.backgroundColor = '#FFFFFF'
-      node.appendChild(el)
+      node.innerHTML = getBarcodeSvg(value, w)
     } catch {
       const span = document.createElement('span')
       span.style.fontFamily = 'monospace'
