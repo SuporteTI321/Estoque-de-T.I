@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
-  BarChart3, FileBarChart, Tag,
+  BarChart3, FileBarChart,
   Settings, RefreshCw,
 } from "lucide-react";
 import type { Usuario } from "../lib/types";
@@ -27,8 +27,7 @@ const NAV: NavItem[] = [
   { to: "/saida-registro", label: "Saída", icon: ArrowUpFromLine },
   { to: "/inventario", label: "Inventário", icon: BarChart3 },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
-  { to: "/etiquetas", label: "Etiquetas", icon: Tag },
-  { to: "/etiquetas-nova", label: "Etiquetas Nova", icon: Tag },
+
   { to: "/configuracoes", label: "Configurações", icon: Settings, adminOnly: true },
   { to: "/sincronizacao", label: "Sincronizar", icon: RefreshCw, adminOnly: true },
 ];
