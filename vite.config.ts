@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import vue from "@vitejs/plugin-vue";
 import * as fs from "fs";
 import * as path from "path";
 
@@ -10,6 +11,7 @@ export default defineConfig({
   base: isGH ? "/Estoque-de-T.I/" : "/",
   plugins: [
     react(),
+    vue(),
     {
       name: "backup-api",
       configureServer(server) {
