@@ -330,11 +330,11 @@ export default function Etiquetas() {
         const pos = etqConfig.posicoes ?? posicoes
         const neg = etqConfig.negritos ?? negritos
         return `<div class="etq-item">
-          ${campos.includes('codigo') ? `<p style="position:absolute;top:${pos.codigo?.top}mm;left:${pos.codigo?.left}mm;font-size:${tCod}mm;font-weight:${neg.codigo ? 'bold' : 'normal'}">${escHtml(etq.codigo)}</p>` : ''}
-          ${campos.includes('produto') ? `<p style="position:absolute;top:${pos.produto?.top}mm;left:${pos.produto?.left}mm;font-size:${tProd}mm;font-weight:${neg.produto ? 'bold' : 'normal'}">${escHtml(etq.nome || '')}</p>` : ''}
-          ${campos.includes('marca') ? `<p style="position:absolute;top:${pos.marca?.top}mm;left:${pos.marca?.left}mm;font-size:${tMarca}mm;font-weight:${neg.marca ? 'bold' : 'normal'}">${escHtml(etq.marca || '—')}</p>` : ''}
-          ${campos.includes('modelo') ? `<p style="position:absolute;top:${pos.modelo?.top}mm;left:${pos.modelo?.left}mm;font-size:${tModelo}mm;font-weight:${neg.modelo ? 'bold' : 'normal'}">${escHtml(etq.modelo || '—')}</p>` : ''}
-          ${mostrarBarra ? `<div style="position:absolute;top:${pos.barra?.top}mm;left:${pos.barra?.left}mm;right:1mm;height:${alturaBarra}mm;overflow:hidden;display:flex;align-items:center">${getBarcodeSvg(etq.codigo)}</div>` : ''}
+          ${mostrarBarra ? `<div style="position:absolute;top:${pos.barra?.top}mm;left:${pos.barra?.left}mm;right:1mm;height:${alturaBarra}mm;overflow:hidden;display:flex;align-items:center;z-index:0;background:#FFFFFF">${getBarcodeSvg(etq.codigo)}</div>` : ''}
+          ${campos.includes('codigo') ? `<p style="position:absolute;top:${pos.codigo?.top}mm;left:${pos.codigo?.left}mm;font-size:${tCod}mm;font-weight:${neg.codigo ? 'bold' : 'normal'};z-index:2;background:transparent">${escHtml(etq.codigo)}</p>` : ''}
+          ${campos.includes('produto') ? `<p style="position:absolute;top:${pos.produto?.top}mm;left:${pos.produto?.left}mm;font-size:${tProd}mm;font-weight:${neg.produto ? 'bold' : 'normal'};z-index:2;background:transparent">${escHtml(etq.nome || '')}</p>` : ''}
+          ${campos.includes('marca') ? `<p style="position:absolute;top:${pos.marca?.top}mm;left:${pos.marca?.left}mm;font-size:${tMarca}mm;font-weight:${neg.marca ? 'bold' : 'normal'};z-index:2;background:transparent">${escHtml(etq.marca || '—')}</p>` : ''}
+          ${campos.includes('modelo') ? `<p style="position:absolute;top:${pos.modelo?.top}mm;left:${pos.modelo?.left}mm;font-size:${tModelo}mm;font-weight:${neg.modelo ? 'bold' : 'normal'};z-index:2;background:transparent">${escHtml(etq.modelo || '—')}</p>` : ''}
         </div>`
       }).join('')
 
@@ -359,8 +359,9 @@ export default function Etiquetas() {
         justify-content:${alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start'};
         align-content:${alinhamentoV === 'center' ? 'center' : alinhamentoV === 'end' ? 'end' : 'start'}}
       .etq-item{width:${cfg.largura}mm;height:${cfg.altura}mm;position:relative;background:#fff;border:${bordaPrint};box-sizing:border-box;overflow:hidden}
-      .etq-item p{margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+      .etq-item p{margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:absolute;z-index:2}
       .etq-item svg{display:block;width:100%;height:100%;background:#FFFFFF !important}
+      .etq-item > div[style*="z-index:0"]{z-index:0 !important}
     `
     const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${todasPaginasPrint.join('\n')}</body></html>`
     const iframe = document.createElement('iframe')
@@ -613,22 +614,22 @@ export default function Etiquetas() {
 
                         return (
                           <div key={etq.uid} style={{ width: cfg.largura + 'mm', height: cfg.altura + 'mm', position: 'relative', background: '#fff', border: bordaPrint, boxSizing: 'border-box', overflow: 'hidden' }}>
-                            {campos.includes('codigo') && (
-                              <p style={{ position: 'absolute', top: pos.codigo?.top + 'mm', left: pos.codigo?.left + 'mm', fontSize: tCod + 'mm', fontWeight: neg.codigo ? 'bold' : 'normal' }}>{escHtml(etq.codigo)}</p>
-                            )}
-                            {campos.includes('produto') && (
-                              <p style={{ position: 'absolute', top: pos.produto?.top + 'mm', left: pos.produto?.left + 'mm', fontSize: tProd + 'mm', fontWeight: neg.produto ? 'bold' : 'normal' }}>{escHtml(etq.nome || '')}</p>
-                            )}
-                            {campos.includes('marca') && (
-                              <p style={{ position: 'absolute', top: pos.marca?.top + 'mm', left: pos.marca?.left + 'mm', fontSize: tMarca + 'mm', fontWeight: neg.marca ? 'bold' : 'normal' }}>{escHtml(etq.marca || '—')}</p>
-                            )}
-                            {campos.includes('modelo') && (
-                              <p style={{ position: 'absolute', top: pos.modelo?.top + 'mm', left: pos.modelo?.left + 'mm', fontSize: tModelo + 'mm', fontWeight: neg.modelo ? 'bold' : 'normal' }}>{escHtml(etq.modelo || '—')}</p>
-                            )}
                             {mostrarBarra && (
-                              <div style={{ position: 'absolute', top: pos.barra?.top + 'mm', left: pos.barra?.left + 'mm', right: '1mm', height: alturaBarra + 'mm', overflow: 'hidden', display: 'flex', alignItems: 'center' }}>
+                              <div style={{ position: 'absolute', top: pos.barra?.top + 'mm', left: pos.barra?.left + 'mm', right: '1mm', height: alturaBarra + 'mm', overflow: 'hidden', display: 'flex', alignItems: 'center', zIndex: 0, background: '#FFFFFF' }}>
                                 <BarcodeSvg value={etq.codigo} />
                               </div>
+                            )}
+                            {campos.includes('codigo') && (
+                              <p style={{ position: 'absolute', top: pos.codigo?.top + 'mm', left: pos.codigo?.left + 'mm', fontSize: tCod + 'mm', fontWeight: neg.codigo ? 'bold' : 'normal', zIndex: 2 }}>{escHtml(etq.codigo)}</p>
+                            )}
+                            {campos.includes('produto') && (
+                              <p style={{ position: 'absolute', top: pos.produto?.top + 'mm', left: pos.produto?.left + 'mm', fontSize: tProd + 'mm', fontWeight: neg.produto ? 'bold' : 'normal', zIndex: 2 }}>{escHtml(etq.nome || '')}</p>
+                            )}
+                            {campos.includes('marca') && (
+                              <p style={{ position: 'absolute', top: pos.marca?.top + 'mm', left: pos.marca?.left + 'mm', fontSize: tMarca + 'mm', fontWeight: neg.marca ? 'bold' : 'normal', zIndex: 2 }}>{escHtml(etq.marca || '—')}</p>
+                            )}
+                            {campos.includes('modelo') && (
+                              <p style={{ position: 'absolute', top: pos.modelo?.top + 'mm', left: pos.modelo?.left + 'mm', fontSize: tModelo + 'mm', fontWeight: neg.modelo ? 'bold' : 'normal', zIndex: 2 }}>{escHtml(etq.modelo || '—')}</p>
                             )}
                             <div className="absolute top-0 right-0 bg-blue-600 text-white text-[7px] px-1 py-0.5 rounded-bl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">#{etq.uid + 1}</div>
                           </div>
