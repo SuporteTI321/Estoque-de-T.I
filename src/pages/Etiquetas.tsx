@@ -644,16 +644,16 @@ export default function Etiquetas() {
                               </div>
                             )}
                             {campos.includes('codigo') && (
-                              <p style={{ position: 'absolute', top: pos.codigo?.top + 'mm', left: pos.codigo?.left + 'mm', fontSize: tCod + 'mm', fontWeight: neg.codigo ? 'bold' : 'normal', zIndex: 2 }}>{escHtml(etq.codigo)}</p>
+                              <p style={{ position: 'absolute', top: pos.codigo?.top + 'mm', left: pos.codigo?.left + 'mm', fontSize: tCod + 'mm', fontWeight: neg.codigo ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.codigo)}</p>
                             )}
                             {campos.includes('produto') && (
-                              <p style={{ position: 'absolute', top: pos.produto?.top + 'mm', left: pos.produto?.left + 'mm', fontSize: tProd + 'mm', fontWeight: neg.produto ? 'bold' : 'normal', zIndex: 2 }}>{escHtml(etq.nome || '')}</p>
+                              <p style={{ position: 'absolute', top: pos.produto?.top + 'mm', left: pos.produto?.left + 'mm', fontSize: tProd + 'mm', fontWeight: neg.produto ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.nome || '')}</p>
                             )}
                             {campos.includes('marca') && (
-                              <p style={{ position: 'absolute', top: pos.marca?.top + 'mm', left: pos.marca?.left + 'mm', fontSize: tMarca + 'mm', fontWeight: neg.marca ? 'bold' : 'normal', zIndex: 2 }}>{escHtml(etq.marca || '—')}</p>
+                              <p style={{ position: 'absolute', top: pos.marca?.top + 'mm', left: pos.marca?.left + 'mm', fontSize: tMarca + 'mm', fontWeight: neg.marca ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.marca || '—')}</p>
                             )}
                             {campos.includes('modelo') && (
-                              <p style={{ position: 'absolute', top: pos.modelo?.top + 'mm', left: pos.modelo?.left + 'mm', fontSize: tModelo + 'mm', fontWeight: neg.modelo ? 'bold' : 'normal', zIndex: 2 }}>{escHtml(etq.modelo || '—')}</p>
+                              <p style={{ position: 'absolute', top: pos.modelo?.top + 'mm', left: pos.modelo?.left + 'mm', fontSize: tModelo + 'mm', fontWeight: neg.modelo ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.modelo || '—')}</p>
                             )}
                             <div className="absolute top-0 right-0 bg-blue-600 text-white text-[7px] px-1 py-0.5 rounded-bl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">#{etq.uid + 1}</div>
                           </div>
