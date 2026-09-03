@@ -10,6 +10,7 @@ import Inventario from "./pages/Inventario";
 import Categorias from "./pages/Categorias";
 import Produtos from "./pages/Produtos";
 import Relatorios from "./pages/Relatorios";
+import Etiquetas from "./pages/Etiquetas";
 
 
 import Configuracoes from "./pages/Configuracoes";
@@ -149,6 +150,7 @@ function AppRoutes() {
       <Route path="/categorias" element={<ProtectedRoute><Categorias /></ProtectedRoute>} />
       <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
+      <Route path="/etiquetas" element={<ProtectedRoute><Etiquetas /></ProtectedRoute>} />
 
 
       <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />

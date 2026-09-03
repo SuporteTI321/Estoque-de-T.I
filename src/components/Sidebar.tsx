@@ -1,7 +1,7 @@
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Package, ArrowDownToLine, ArrowUpFromLine,
-  BarChart3, FileBarChart,
+  BarChart3, FileBarChart, Tag,
   Settings, RefreshCw,
 } from "lucide-react";
 import type { Usuario } from "../lib/types";
@@ -22,12 +22,12 @@ interface NavItem {
 
 const NAV: NavItem[] = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-
   { to: "/produtos", label: "Produtos", icon: Package },
   { to: "/entradas", label: "Entradas", icon: ArrowDownToLine },
   { to: "/saida-registro", label: "Saída", icon: ArrowUpFromLine },
   { to: "/inventario", label: "Inventário", icon: BarChart3 },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
+  { to: "/etiquetas", label: "Etiquetas", icon: Tag },
 
   { to: "/configuracoes", label: "Configurações", icon: Settings, adminOnly: true },
   { to: "/sincronizacao", label: "Sincronizar", icon: RefreshCw, adminOnly: true },
