@@ -35,7 +35,7 @@ function generateBarcodeSvg(value: string, width: number, fontSize: number): str
       fontSize,
       displayValue: false,
       background: "#FFFFFF",
-      lineColor: "#222222",
+      lineColor: "#000000",
       margin: 6,
       flat: true,
     })
@@ -64,7 +64,7 @@ const Barcode = memo(function Barcode({ value, width, fontSize = 10 }: BarcodePr
           fontSize,
           displayValue: false,
           background: "#FFFFFF",
-          lineColor: "#222222",
+          lineColor: "#000000",
           margin: 6,
           flat: true,
         });

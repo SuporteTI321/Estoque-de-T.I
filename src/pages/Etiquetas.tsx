@@ -59,7 +59,7 @@ function getBarcodeSvg(value: string, width?: number, height?: number): string {
   try {
     const svgNs = 'http://www.w3.org/2000/svg'
     const el = document.createElementNS(svgNs, 'svg')
-    JsBarcode(el, value, { format: 'CODE128', width: w, height: h, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#222222', margin: 6, flat: true, textMargin: 0 })
+    JsBarcode(el, value, { format: 'CODE128', width: w, height: h, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 6, flat: true, textMargin: 0 })
     el.setAttribute('style', 'display:block;width:auto;max-width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0 auto')
     el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
     el.style.backgroundColor = '#FFFFFF'
