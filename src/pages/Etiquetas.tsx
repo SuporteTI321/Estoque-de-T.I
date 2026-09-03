@@ -356,7 +356,18 @@ export default function Etiquetas() {
       const pageNum = i + 1
       const pagEtq = pageNum === 1 ? listaEtq.slice(0, capPrimeira) : listaEtq.slice(capPrimeira + (pageNum - 2) * capTotal, capPrimeira + (pageNum - 2) * capTotal + capTotal)
       const vazias = pageNum === 1 ? Array.from({ length: skipCells }, () => `<div class="etq-item etq-vazia" style="width:${cfg.largura}mm;height:${cfg.altura}mm;box-sizing:border-box;border:1px solid transparent;background:transparent;"></div>`).join('') : ''
+      const isBase = cfg.largura === 25 && cfg.altura === 10
       const etiquetasHtml = pagEtq.map(etq => {
+        if (isBase) {
+          const w = larguraBarra || calcBarcodeWidth(etq.codigo, 25, 1)
+          return `<div class="etiqueta" style="width:25mm;height:10mm;background:#ffffff;border:0.3mm solid #cccccc;border-radius:0.5mm;padding:0.5mm;display:flex;flex-direction:column;align-items:center;justify-content:center;box-sizing:border-box;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,0.12);">
+            <div style="font-size:1.8mm;color:#8B0000;font-weight:bold;text-align:center;line-height:1.2;letter-spacing:0.1mm;width:100%;">
+              <div style="font-size:2mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.nome || 'CÂMERA DOME HD')}</div>
+              <div style="font-size:1.7mm;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(`${etq.marca || 'INTELBRAS'} ${etq.modelo || 'VHL 1120 D'}`.trim())}</div>
+            </div>
+            ${mostrarBarra ? `<div style="margin-top:0.3mm;display:flex;align-items:flex-end;height:4mm;gap:0.1mm;justify-content:center;width:100%;background:#fff;">${getBarcodeSvg(etq.codigo, w, 19)}</div>` : ''}
+          </div>`
+        }
         const etqConfig = etiquetasIndividuais[etq.uid] || {}
         const tProd = etqConfig.tamanhoProd ?? tamanhoProd
         const tCod = etqConfig.tamanhoCod ?? tamanhoCod
@@ -638,27 +649,43 @@ export default function Etiquetas() {
                         const neg = etqConfig.negritos ?? negritos
                         const bordaPrint = borda.ativa ? `${borda.largura}mm ${borda.estilo} ${borda.cor}` : '1px solid transparent'
 
+                        const isBase25x10 = cfg.largura === 25 && cfg.altura === 10
                         return (
-                          <div key={etq.uid} style={{ width: cfg.largura + 'mm', height: cfg.altura + 'mm', position: 'relative', background: '#fff', border: bordaPrint, boxSizing: 'border-box', overflow: 'hidden' }}>
-                            {mostrarBarra && (
-                              <div style={{ position: 'absolute', top: pos.barra?.top + 'mm', left: pos.barra?.left + 'mm', right: '1mm', height: alturaBarra + 'mm', overflow: 'hidden', display: 'flex', alignItems: 'center', zIndex: 0, background: '#FFFFFF' }}>
-                                <BarcodeSvg value={etq.codigo} largura={cfg.largura} barraLeft={pos.barra?.left} manualWidth={larguraBarra || undefined} altura={alturaBarra} />
-                              </div>
-                            )}
-                            {campos.includes('codigo') && (
-                              <p style={{ position: 'absolute', top: pos.codigo?.top + 'mm', left: pos.codigo?.left + 'mm', fontSize: tCod + 'mm', fontWeight: neg.codigo ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.codigo)}</p>
-                            )}
-                            {campos.includes('produto') && (
-                              <p style={{ position: 'absolute', top: pos.produto?.top + 'mm', left: pos.produto?.left + 'mm', fontSize: tProd + 'mm', fontWeight: neg.produto ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.nome || '')}</p>
-                            )}
-                            {campos.includes('marca') && (
-                              <p style={{ position: 'absolute', top: pos.marca?.top + 'mm', left: pos.marca?.left + 'mm', fontSize: tMarca + 'mm', fontWeight: neg.marca ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.marca || '—')}</p>
-                            )}
-                            {campos.includes('modelo') && (
-                              <p style={{ position: 'absolute', top: pos.modelo?.top + 'mm', left: pos.modelo?.left + 'mm', fontSize: tModelo + 'mm', fontWeight: neg.modelo ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.modelo || '—')}</p>
-                            )}
-                            {cfg.largura <= 30 && etq.codigo.length > 7 && mostrarBarra && (
-                              <div style={{ position: 'absolute', bottom: '0.5mm', left: '1mm', right: '1mm', textAlign: 'center', fontSize: '1.6mm', color: '#dc2626', background: '#fef2f2', border: '0.2mm solid #fecaca', zIndex: 5, lineHeight: 1.2, padding: '0.3mm' }}>⚠️ Longo p/ 25×10 — use 50×25 ou código curto</div>
+                          <div key={etq.uid} style={isBase25x10 ? { width: '25mm', height: '10mm', background: '#ffffff', border: '0.3mm solid #cccccc', borderRadius: '0.5mm', padding: '0.5mm', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxSizing: 'border-box', overflow: 'hidden', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' } : { width: cfg.largura + 'mm', height: cfg.altura + 'mm', position: 'relative', background: '#fff', border: bordaPrint, boxSizing: 'border-box', overflow: 'hidden' }}>
+                            {isBase25x10 ? (
+                              <>
+                                <div style={{ fontSize: '1.8mm', color: '#8B0000', fontWeight: 'bold', textAlign: 'center', lineHeight: 1.2, letterSpacing: '0.1mm', width: '100%' }}>
+                                  <div style={{ fontSize: '2mm', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.nome || 'CÂMERA DOME HD')}</div>
+                                  <div style={{ fontSize: '1.7mm', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(`${etq.marca || 'INTELBRAS'} ${etq.modelo || 'VHL 1120 D'}`.trim())}</div>
+                                </div>
+                                {mostrarBarra && (
+                                  <div style={{ marginTop: '0.3mm', display: 'flex', alignItems: 'flex-end', height: '4mm', gap: '0.1mm', justifyContent: 'center', width: '100%', background: '#fff' }}>
+                                    <div style={{ display: 'flex', alignItems: 'flex-end', height: '4mm', gap: '0.1mm' }}>
+                                      <BarcodeSvg value={etq.codigo} largura={cfg.largura} barraLeft={1} manualWidth={larguraBarra || undefined} altura={4} />
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                {mostrarBarra && (
+                                  <div style={{ position: 'absolute', top: pos.barra?.top + 'mm', left: pos.barra?.left + 'mm', right: '1mm', height: alturaBarra + 'mm', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 0, background: '#FFFFFF' }}>
+                                    <BarcodeSvg value={etq.codigo} largura={cfg.largura} barraLeft={pos.barra?.left} manualWidth={larguraBarra || undefined} altura={alturaBarra} />
+                                  </div>
+                                )}
+                                {campos.includes('codigo') && (
+                                  <p style={{ position: 'absolute', top: pos.codigo?.top + 'mm', left: pos.codigo?.left + 'mm', fontSize: tCod + 'mm', fontWeight: neg.codigo ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.codigo)}</p>
+                                )}
+                                {campos.includes('produto') && (
+                                  <p style={{ position: 'absolute', top: pos.produto?.top + 'mm', left: pos.produto?.left + 'mm', fontSize: tProd + 'mm', fontWeight: neg.produto ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.nome || '')}</p>
+                                )}
+                                {campos.includes('marca') && (
+                                  <p style={{ position: 'absolute', top: pos.marca?.top + 'mm', left: pos.marca?.left + 'mm', fontSize: tMarca + 'mm', fontWeight: neg.marca ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.marca || '—')}</p>
+                                )}
+                                {campos.includes('modelo') && (
+                                  <p style={{ position: 'absolute', top: pos.modelo?.top + 'mm', left: pos.modelo?.left + 'mm', fontSize: tModelo + 'mm', fontWeight: neg.modelo ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.modelo || '—')}</p>
+                                )}
+                              </>
                             )}
                             <div className="absolute top-0 right-0 bg-blue-600 text-white text-[7px] px-1 py-0.5 rounded-bl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">#{etq.uid + 1}</div>
                           </div>
