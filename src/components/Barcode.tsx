@@ -9,11 +9,18 @@ interface BarcodeProps {
 
 // Largura ótima auto-ajustada para qualquer etiqueta (nunca muito junto)
 function calcOptimalWidth(value: string, larguraMm = 70): number {
-  const margin = 6
-  const disponivelMm = Math.max(12, larguraMm - 3)
+  const margin = 10
+  const disponivelMm = Math.max(8, larguraMm - 3)
   const disponivelPx = disponivelMm * 3.78
   const modulos = value.length * 11 + 35
-  return Math.max(1.4, Math.min(2.6, (disponivelPx - 2 * margin) / modulos))
+  const raw = (disponivelPx - 2 * margin) / modulos
+  if (larguraMm <= 30) {
+    if (value.length > 8) return Math.max(0.7, Math.min(1.4, raw))
+    return Math.max(0.8, Math.min(1.6, raw))
+  }
+  if (value.length > 12) return Math.max(0.9, Math.min(2.0, raw))
+  if (value.length > 8) return Math.max(1.0, Math.min(2.2, raw))
+  return Math.max(1.2, Math.min(2.6, raw))
 }
 
 // Cache global de barcodes renderizados — barcode identico = SVG identico
@@ -36,7 +43,7 @@ function generateBarcodeSvg(value: string, width: number, fontSize: number): str
       displayValue: false,
       background: "#FFFFFF",
       lineColor: "#000000",
-      margin: 6,
+      margin: 10,
       flat: true,
     })
     el.style.backgroundColor = "#FFFFFF"
@@ -65,7 +72,7 @@ const Barcode = memo(function Barcode({ value, width, fontSize = 10 }: BarcodePr
           displayValue: false,
           background: "#FFFFFF",
           lineColor: "#000000",
-          margin: 6,
+          margin: 10,
           flat: true,
         });
         svgRef.current.style.backgroundColor = "#FFFFFF";

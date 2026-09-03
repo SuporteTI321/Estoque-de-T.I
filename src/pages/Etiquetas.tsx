@@ -29,6 +29,7 @@ const PRESETS = [
   { nome: 'Com Código de Barras', icone: '📊', formato: 'medio', papel: 'a4', colunas: 2, margemSup: 5, margemEsq: 8, margemDir: 8, margemInf: 5, espacoH: 5, espacoV: 3, campos: ['codigo', 'produto', 'marca', 'modelo'], mostrarBarra: true, borda: { ativa: true, estilo: 'solid' as const, largura: 0.2, cor: '#333' }, posicoes: { codigo: { top: 2, left: 1 }, produto: { top: 5, left: 1 }, marca: { top: 10, left: 1 }, modelo: { top: 14, left: 1 }, barra: { top: 20, left: 1 } }, negritos: { codigo: true, produto: true, marca: false, modelo: false }, tamanhos: { codigo: 2.5, produto: 2.8, marca: 1.8, modelo: 1.4, alturaBarra: 8 } },
   { nome: 'Etiqueta Grande', icone: '🏷️', formato: 'grande', papel: 'a4', colunas: 2, margemSup: 8, margemEsq: 8, margemDir: 8, margemInf: 8, espacoH: 5, espacoV: 5, campos: ['codigo', 'produto', 'marca', 'modelo'], mostrarBarra: true, borda: { ativa: true, estilo: 'dashed' as const, largura: 0.2, cor: '#666' }, posicoes: { codigo: { top: 3, left: 2 }, produto: { top: 8, left: 2 }, marca: { top: 18, left: 2 }, modelo: { top: 24, left: 2 }, barra: { top: 35, left: 2 } }, negritos: { codigo: false, produto: true, marca: false, modelo: false }, tamanhos: { codigo: 2.8, produto: 4.2, marca: 2.5, modelo: 2.1, alturaBarra: 12 } },
   { nome: 'Rolo Térmico', icone: '🧾', formato: 'medio', papel: 'rollo', colunas: 1, margemSup: 2, margemEsq: 2, margemDir: 2, margemInf: 2, espacoH: 0, espacoV: 0, campos: ['codigo', 'produto', 'marca', 'modelo'], mostrarBarra: true, borda: { ativa: false, estilo: 'solid' as const, largura: 0.2, cor: '#ccc' }, posicoes: { codigo: { top: 2, left: 1 }, produto: { top: 6, left: 1 }, marca: { top: 12, left: 1 }, modelo: { top: 16, left: 1 }, barra: { top: 22, left: 1 } }, negritos: { codigo: false, produto: true, marca: false, modelo: false }, tamanhos: { codigo: 2.1, produto: 2.8, marca: 1.8, modelo: 1.4, alturaBarra: 10 } },
+  { nome: 'Só Barcode 25×10', icone: '⚡', formato: 'custom' as const, papel: 'a4', colunas: 8, margemSup: 2, margemEsq: 2, margemDir: 2, margemInf: 2, espacoH: 1, espacoV: 1, campos: [] as string[], mostrarBarra: true, borda: { ativa: false, estilo: 'solid' as const, largura: 0.2, cor: '#000' }, posicoes: { codigo: { top: 2, left: 1 }, produto: { top: 2, left: 1 }, marca: { top: 2, left: 1 }, modelo: { top: 2, left: 1 }, barra: { top: 1, left: 1 } }, negritos: { codigo: false, produto: false, marca: false, modelo: false }, tamanhos: { codigo: 2.1, produto: 2.8, marca: 1.8, modelo: 1.4, alturaBarra: 7 }, largura: 25, altura: 10 } as any,
 ]
 
 // ============================================================
@@ -43,14 +44,21 @@ function escHtml(s: string): string {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-// Calcula largura ótima do CODE128 para caber na etiqueta sem apertar nem esticar
+// Calcula largura ótima do CODE128 — 25×10 precisa de tratamento especial (muito pequeno)
 function calcBarcodeWidth(value: string, larguraMm: number, barraLeftMm: number): number {
-  const margin = 6
-  const disponivelMm = Math.max(12, larguraMm - (barraLeftMm ?? 1) - 2) // -2 margem direita + folga
-  const disponivelPx = disponivelMm * 3.78 // 96dpi / 25.4 = 3.78 px/mm
-  const modulos = value.length * 11 + 35 // start + dados + checksum + stop
+  const margin = 10
+  const disponivelMm = Math.max(8, larguraMm - (barraLeftMm ?? 1) - 2)
+  const disponivelPx = disponivelMm * 3.78
+  const modulos = value.length * 11 + 35
   const raw = (disponivelPx - 2 * margin) / modulos
-  return Math.max(1.4, Math.min(2.6, raw))
+  // 25×10 é minúsculo: permite 0.7 para códigos curtos, mas avisa se >6 chars
+  if (larguraMm <= 30) {
+    if (value.length > 8) return Math.max(0.7, Math.min(1.4, raw))
+    return Math.max(0.8, Math.min(1.6, raw))
+  }
+  if (value.length > 12) return Math.max(0.9, Math.min(2.0, raw))
+  if (value.length > 8) return Math.max(1.0, Math.min(2.2, raw))
+  return Math.max(1.2, Math.min(2.6, raw))
 }
 
 function getBarcodeSvg(value: string, width?: number, height?: number): string {
@@ -59,7 +67,7 @@ function getBarcodeSvg(value: string, width?: number, height?: number): string {
   try {
     const svgNs = 'http://www.w3.org/2000/svg'
     const el = document.createElementNS(svgNs, 'svg')
-    JsBarcode(el, value, { format: 'CODE128', width: w, height: h, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 6, flat: true, textMargin: 0 })
+    JsBarcode(el, value, { format: 'CODE128', width: w, height: h, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 10, flat: true, textMargin: 0 })
     el.setAttribute('style', 'display:block;width:auto;max-width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges;padding:0;margin:0 auto')
     el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
     el.style.backgroundColor = '#FFFFFF'
@@ -313,6 +321,8 @@ export default function Etiquetas() {
   // ---- Preset ----
   const aplicarPreset = (preset: typeof PRESETS[number]) => {
     setFormato(preset.formato); setPapel(preset.papel); setColunas(preset.colunas)
+    if ((preset as any).largura) setLargura((preset as any).largura)
+    if ((preset as any).altura) setAltura((preset as any).altura)
     setMargemSup(preset.margemSup); setMargemEsq(preset.margemEsq); setMargemDir(preset.margemDir); setMargemInf(preset.margemInf)
     setEspacoH(preset.espacoH); setEspacoV(preset.espacoV); setCampos([...preset.campos])
     setMostrarBarra(preset.mostrarBarra); setBorda({ ...preset.borda }); setPosicoes({ ...preset.posicoes })
@@ -646,6 +656,9 @@ export default function Etiquetas() {
                             )}
                             {campos.includes('modelo') && (
                               <p style={{ position: 'absolute', top: pos.modelo?.top + 'mm', left: pos.modelo?.left + 'mm', fontSize: tModelo + 'mm', fontWeight: neg.modelo ? 'bold' : 'normal', zIndex: 2, background: 'transparent', margin: 0, padding: 0, lineHeight: 1.3, fontFamily: 'sans-serif', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{escHtml(etq.modelo || '—')}</p>
+                            )}
+                            {cfg.largura <= 30 && etq.codigo.length > 7 && mostrarBarra && (
+                              <div style={{ position: 'absolute', bottom: '0.5mm', left: '1mm', right: '1mm', textAlign: 'center', fontSize: '1.6mm', color: '#dc2626', background: '#fef2f2', border: '0.2mm solid #fecaca', zIndex: 5, lineHeight: 1.2, padding: '0.3mm' }}>⚠️ Longo p/ 25×10 — use 50×25 ou código curto</div>
                             )}
                             <div className="absolute top-0 right-0 bg-blue-600 text-white text-[7px] px-1 py-0.5 rounded-bl opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">#{etq.uid + 1}</div>
                           </div>
