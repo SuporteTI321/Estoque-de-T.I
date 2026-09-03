@@ -10,7 +10,7 @@ import Inventario from "./pages/Inventario";
 import Categorias from "./pages/Categorias";
 import Produtos from "./pages/Produtos";
 import Relatorios from "./pages/Relatorios";
-import EtiquetaVueWrapper from "./pages/EtiquetaVueWrapper";
+
 
 import Configuracoes from "./pages/Configuracoes";
 import Usuarios from "./pages/Usuarios";
@@ -149,8 +149,7 @@ function AppRoutes() {
       <Route path="/categorias" element={<ProtectedRoute><Categorias /></ProtectedRoute>} />
       <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
-      <Route path="/etiquetas" element={<ProtectedRoute><EtiquetaVueWrapper /></ProtectedRoute>} />
-      <Route path="/etiqueta-vue" element={<ProtectedRoute><EtiquetaVueWrapper /></ProtectedRoute>} />
+
 
       <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
       <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
