@@ -28,6 +28,7 @@ const NAV: NavItem[] = [
   { to: "/inventario", label: "Inventário", icon: BarChart3 },
   { to: "/relatorios", label: "Relatórios", icon: FileBarChart },
   { to: "/etiquetas", label: "Etiquetas", icon: Tag },
+  { to: "/etiquetas-nova", label: "Etiquetas Nova", icon: Tag },
   { to: "/configuracoes", label: "Configurações", icon: Settings, adminOnly: true },
   { to: "/sincronizacao", label: "Sincronizar", icon: RefreshCw, adminOnly: true },
 ];

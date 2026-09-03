@@ -11,6 +11,7 @@ import Categorias from "./pages/Categorias";
 import Produtos from "./pages/Produtos";
 import Relatorios from "./pages/Relatorios";
 import Etiquetas from "./pages/Etiquetas";
+import EtiquetasNova from "./pages/EtiquetasNova";
 import Configuracoes from "./pages/Configuracoes";
 import Usuarios from "./pages/Usuarios";
 import Perfil from "./pages/Perfil";
@@ -149,6 +150,7 @@ function AppRoutes() {
       <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
       <Route path="/etiquetas" element={<ProtectedRoute><Etiquetas /></ProtectedRoute>} />
+      <Route path="/etiquetas-nova" element={<ProtectedRoute><EtiquetasNova /></ProtectedRoute>} />
       <Route path="/perfil" element={<ProtectedRoute><Perfil /></ProtectedRoute>} />
       <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
       <Route path="/usuarios" element={<ProtectedRoute><Usuarios /></ProtectedRoute>} />
