@@ -72,11 +72,11 @@ function getBarcodeSvg(value: string, width?: number): string {
 // ============================================================
 
 /** Componente seguro para barcode SVG — reutiliza getBarcodeSvg para garantir 100% igual ao Print */
-function BarcodeSvg({ value, largura, barraLeft }: { value: string; largura?: number; barraLeft?: number }) {
+function BarcodeSvg({ value, largura, barraLeft, manualWidth }: { value: string; largura?: number; barraLeft?: number; manualWidth?: number }) {
   const ref = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
     try {
-      const w = calcBarcodeWidth(value, largura ?? 70, barraLeft ?? 1)
+      const w = manualWidth && manualWidth > 0 ? manualWidth : calcBarcodeWidth(value, largura ?? 70, barraLeft ?? 1)
       node.innerHTML = getBarcodeSvg(value, w)
     } catch {
       const span = document.createElement('span')
@@ -85,7 +85,7 @@ function BarcodeSvg({ value, largura, barraLeft }: { value: string; largura?: nu
       span.textContent = value
       node.appendChild(span)
     }
-  }, [value, largura, barraLeft])
+  }, [value, largura, barraLeft, manualWidth])
   return <div ref={ref} style={{ width: '100%', height: '100%', backgroundColor: '#FFFFFF', display: 'flex', justifyContent: 'center', alignItems: 'center' }} />
 }
 
@@ -206,6 +206,7 @@ export default function Etiquetas() {
   const [tamanhoMarca, setTamanhoMarca] = useState(saved?.tamanhoMarca ?? 1.8)
   const [tamanhoModelo, setTamanhoModelo] = useState(saved?.tamanhoModelo ?? 1.4)
   const [alturaBarra, setAlturaBarra] = useState(saved?.alturaBarra ?? 10)
+  const [larguraBarra, setLarguraBarra] = useState(saved?.larguraBarra ?? 0) // 0=auto, >0 manual 1.0-3.0
 
   const [posicoes, setPosicoes] = useState(saved?.posicoes ?? {
     codigo: { top: 2, left: 1 }, produto: { top: 6, left: 1 }, marca: { top: 14, left: 1 },
@@ -239,14 +240,14 @@ export default function Etiquetas() {
       localStorage.setItem('etq_autosave', JSON.stringify({
         papel, formato, largura, altura, margemSup, margemEsq, margemDir, margemInf,
         colunas, espacoH, espacoV, inicioLinha, campos, mostrarBarra, borda,
-        tamanhoProd, tamanhoCod, tamanhoMarca, tamanhoModelo, alturaBarra,
+        tamanhoProd, tamanhoCod, tamanhoMarca, tamanhoModelo, alturaBarra, larguraBarra,
         posicoes, negritos, alinhamentoH, alinhamentoV, folhaUnica, etiquetasIndividuais,
       }))
     }, 300)
     return () => clearTimeout(t)
   }, [papel, formato, largura, altura, margemSup, margemEsq, margemDir, margemInf,
     colunas, espacoH, espacoV, inicioLinha, campos, mostrarBarra, borda,
-    tamanhoProd, tamanhoCod, tamanhoMarca, tamanhoModelo, alturaBarra,
+    tamanhoProd, tamanhoCod, tamanhoMarca, tamanhoModelo, alturaBarra, larguraBarra,
     posicoes, negritos, alinhamentoH, alinhamentoV, folhaUnica, carregando, etiquetasIndividuais])
 
   // ---- Load data ----
@@ -323,7 +324,7 @@ export default function Etiquetas() {
     setFormato('medio'); setLargura(70); setAltura(35); setMargemSup(5); setMargemEsq(5); setMargemDir(5); setMargemInf(5)
     setColunas(3); setEspacoH(0); setEspacoV(0); setInicioLinha(1); setCampos(['codigo', 'produto', 'marca', 'modelo'])
     setMostrarBarra(false); setBorda({ ativa: false, estilo: 'dashed', largura: 0.2, cor: '#ccc' })
-    setTamanhoProd(2.8); setTamanhoCod(2.1); setTamanhoMarca(1.8); setTamanhoModelo(1.4); setAlturaBarra(10)
+    setTamanhoProd(2.8); setTamanhoCod(2.1); setTamanhoMarca(1.8); setTamanhoModelo(1.4); setAlturaBarra(10); setLarguraBarra(0)
     setPosicoes({ codigo: { top: 2, left: 1 }, produto: { top: 6, left: 1 }, marca: { top: 14, left: 1 }, modelo: { top: 18, left: 1 }, barra: { top: 60, left: 1 } })
     setNegritos({ codigo: false, produto: true, marca: false, modelo: false })
     setAlinhamentoH('center'); setAlinhamentoV('start'); setEtiquetasIndividuais({})
@@ -351,7 +352,7 @@ export default function Etiquetas() {
         const pos = etqConfig.posicoes ?? posicoes
         const neg = etqConfig.negritos ?? negritos
         return `<div class="etq-item" style="width:${cfg.largura}mm;height:${cfg.altura}mm;position:relative;background:#fff;border:${bordaPrint};box-sizing:border-box;overflow:hidden;">
-          ${mostrarBarra ? `<div style="position:absolute;top:${pos.barra?.top}mm;left:${pos.barra?.left}mm;right:1mm;height:${alturaBarra}mm;overflow:hidden;display:flex;align-items:center;justify-content:center;z-index:0;background:#FFFFFF;">${getBarcodeSvg(etq.codigo, calcBarcodeWidth(etq.codigo, cfg.largura, pos.barra?.left))}</div>` : ''}
+          ${mostrarBarra ? `<div style="position:absolute;top:${pos.barra?.top}mm;left:${pos.barra?.left}mm;right:1mm;height:${alturaBarra}mm;overflow:hidden;display:flex;align-items:center;justify-content:center;z-index:0;background:#FFFFFF;">${getBarcodeSvg(etq.codigo, larguraBarra || calcBarcodeWidth(etq.codigo, cfg.largura, pos.barra?.left))}</div>` : ''}
           ${campos.includes('codigo') ? `<p style="position:absolute;top:${pos.codigo?.top}mm;left:${pos.codigo?.left}mm;font-size:${tCod}mm;font-weight:${neg.codigo ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.codigo)}</p>` : ''}
           ${campos.includes('produto') ? `<p style="position:absolute;top:${pos.produto?.top}mm;left:${pos.produto?.left}mm;font-size:${tProd}mm;font-weight:${neg.produto ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.nome || '')}</p>` : ''}
           ${campos.includes('marca') ? `<p style="position:absolute;top:${pos.marca?.top}mm;left:${pos.marca?.left}mm;font-size:${tMarca}mm;font-weight:${neg.marca ? 'bold' : 'normal'};z-index:2;background:transparent;margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escHtml(etq.marca || '—')}</p>` : ''}
@@ -553,6 +554,14 @@ export default function Etiquetas() {
                   <Field label="Marca" value={tamanhoMarca} onChange={v => setTamanhoMarca(Number(v))} step={0.1} unit="mm" />
                   <Field label="Modelo" value={tamanhoModelo} onChange={v => setTamanhoModelo(Number(v))} step={0.1} unit="mm" />
                   <Field label="Barcode Altura" value={alturaBarra} onChange={v => setAlturaBarra(Number(v))} step={1} unit="mm" />
+                  <div>
+                    <label className="mb-0.5 block text-[10px] font-medium text-slate-500">Barcode Espessura {larguraBarra===0 ? <span className="text-blue-600">(auto)</span> : ''}</label>
+                    <div className="flex gap-1 items-center">
+                      <input type="range" min={0} max={3} step={0.2} value={larguraBarra} onChange={e => setLarguraBarra(Number(e.target.value))} className="flex-1" />
+                      <span className="text-[10px] w-10 text-center font-mono bg-slate-50 border rounded px-1 py-0.5">{larguraBarra===0 ? 'AUTO' : larguraBarra.toFixed(1)}</span>
+                    </div>
+                    <div className="text-[9px] text-slate-400 mt-0.5">0=auto por etiqueta · 1.4 fino · 2.6 grosso. Se muito junto, aumente para 2.2-2.6</div>
+                  </div>
                 </Sec>
               </div>
               <div className="border-t border-slate-200 px-3 py-1 flex items-center justify-between">
@@ -631,7 +640,7 @@ export default function Etiquetas() {
                           <div key={etq.uid} style={{ width: cfg.largura + 'mm', height: cfg.altura + 'mm', position: 'relative', background: '#fff', border: bordaPrint, boxSizing: 'border-box', overflow: 'hidden' }}>
                             {mostrarBarra && (
                               <div style={{ position: 'absolute', top: pos.barra?.top + 'mm', left: pos.barra?.left + 'mm', right: '1mm', height: alturaBarra + 'mm', overflow: 'hidden', display: 'flex', alignItems: 'center', zIndex: 0, background: '#FFFFFF' }}>
-                                <BarcodeSvg value={etq.codigo} largura={cfg.largura} barraLeft={pos.barra?.left} />
+                                <BarcodeSvg value={etq.codigo} largura={cfg.largura} barraLeft={pos.barra?.left} manualWidth={larguraBarra || undefined} />
                               </div>
                             )}
                             {campos.includes('codigo') && (
