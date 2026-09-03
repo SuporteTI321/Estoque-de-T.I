@@ -20,13 +20,16 @@ function generateBarcodeSvg(value: string, width: number, fontSize: number): str
     JsBarcode(el, value, {
       format: "CODE128",
       width,
-      height: 40,
+      height: 50,
       fontSize,
       displayValue: false,
-      background: "transparent",
-      lineColor: "#000",
-      margin: 0,
+      background: "#FFFFFF",
+      lineColor: "#000000",
+      margin: 10,
+      flat: true,
     })
+    el.style.backgroundColor = "#FFFFFF"
+    el.style.shapeRendering = "crispEdges" as any
     const html = el.outerHTML
     barcodeCache.set(key, html)
     return html
@@ -44,20 +47,23 @@ const Barcode = memo(function Barcode({ value, width = 1.5, fontSize = 10 }: Bar
         JsBarcode(svgRef.current, value, {
           format: "CODE128",
           width,
-          height: 40,
+          height: 50,
           fontSize,
           displayValue: false,
-          background: "transparent",
-          lineColor: "#000",
-          margin: 0,
+          background: "#FFFFFF",
+          lineColor: "#000000",
+          margin: 10,
+          flat: true,
         });
+        svgRef.current.style.backgroundColor = "#FFFFFF";
+        (svgRef.current.style as any).shapeRendering = "crispEdges";
       } catch {
         // fallback: mostra o codigo como texto
       }
     }
   }, [value, width, fontSize]);
 
-  return <svg ref={svgRef} style={{ display: "block", width: "100%", height: "100%" }} />;
+  return <svg ref={svgRef} style={{ display: "block", width: "100%", height: "auto", backgroundColor: "#FFFFFF", shapeRendering: "crispEdges" as any }} />;
 });
 
 export { generateBarcodeSvg }

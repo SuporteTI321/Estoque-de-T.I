@@ -42,13 +42,15 @@ function escHtml(s: string): string {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 }
 
-function getBarcodeSvg(value: string, width: number = 1.0): string {
+function getBarcodeSvg(value: string, width: number = 2.0): string {
   try {
     const svgNs = 'http://www.w3.org/2000/svg'
     const el = document.createElementNS(svgNs, 'svg')
-    JsBarcode(el, value, { format: 'CODE128', width, height: 32, fontSize: 10, displayValue: false, background: 'transparent', lineColor: '#000', margin: 2, textMargin: 0 })
-    el.setAttribute('style', 'display:block;width:100%;height:100%')
+    JsBarcode(el, value, { format: 'CODE128', width, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 10, flat: true, textMargin: 0 })
+    el.setAttribute('style', 'display:block;width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges')
     el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+    // força fundo branco em todos os rects
+    el.style.backgroundColor = '#FFFFFF'
     return el.outerHTML
   } catch {
     return `<span style="font-family:monospace;font-size:8px">${escHtml(value)}</span>`
@@ -59,7 +61,7 @@ function getBarcodeSvg(value: string, width: number = 1.0): string {
 //  SUB-COMPONENTS
 // ============================================================
 
-/** Componente seguro para barcode SVG — usa ref em vez de dangerouslySetInnerHTML */
+/** Componente seguro para barcode SVG — preto 100% + fundo branco 100% para leitura */
 function BarcodeSvg({ value }: { value: string }) {
   const ref = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
@@ -67,9 +69,10 @@ function BarcodeSvg({ value }: { value: string }) {
     try {
       const svgNs = 'http://www.w3.org/2000/svg'
       const el = document.createElementNS(svgNs, 'svg')
-      JsBarcode(el, value, { format: 'CODE128', width: 1.0, height: 32, fontSize: 10, displayValue: false, background: 'transparent', lineColor: '#000', margin: 2, textMargin: 0 })
-      el.setAttribute('style', 'display:block;width:100%;height:100%')
+      JsBarcode(el, value, { format: 'CODE128', width: 2.0, height: 44, fontSize: 10, displayValue: false, background: '#FFFFFF', lineColor: '#000000', margin: 10, flat: true, textMargin: 0 })
+      el.setAttribute('style', 'display:block;width:100%;height:100%;background:#FFFFFF;shape-rendering:crispEdges;image-rendering:crisp-edges')
       el.setAttribute('preserveAspectRatio', 'xMidYMid meet')
+      el.style.backgroundColor = '#FFFFFF'
       node.appendChild(el)
     } catch {
       const span = document.createElement('span')
@@ -79,7 +82,7 @@ function BarcodeSvg({ value }: { value: string }) {
       node.appendChild(span)
     }
   }, [value])
-  return <div ref={ref} style={{ width: '100%', height: '100%' }} />
+  return <div ref={ref} style={{ width: '100%', height: '100%', backgroundColor: '#FFFFFF' }} />
 }
 
 function Sec({ title, open, onToggle, children }: { title: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
@@ -343,6 +346,10 @@ export default function Etiquetas() {
     const css = `
       @page{margin:0;size:${pageSize}}
       *{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
+      svg{background:#FFFFFF !important;shape-rendering:crispEdges;image-rendering:crisp-edges;image-rendering:-webkit-optimize-contrast}
+      svg rect[fill=\"#FFFFFF\"], svg rect[fill=\"white\"]{fill:#FFFFFF !important}
+      svg rect[fill=\"#000000\"], svg rect[fill=\"#000\"], svg g rect{fill:#000000 !important;stroke:none !important}
+      svg path{stroke:#000000 !important}
       body{margin:0;padding:0}
       .folha{page-break-after:${folhaUnica ? 'always' : 'auto'};position:relative;background:#fff}
       .folha:last-child{page-break-after:auto}
@@ -353,7 +360,7 @@ export default function Etiquetas() {
         align-content:${alinhamentoV === 'center' ? 'center' : alinhamentoV === 'end' ? 'end' : 'start'}}
       .etq-item{width:${cfg.largura}mm;height:${cfg.altura}mm;position:relative;background:#fff;border:${bordaPrint};box-sizing:border-box;overflow:hidden}
       .etq-item p{margin:0;padding:0;line-height:1.3;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .etq-item svg{display:block;width:100%;height:100%}
+      .etq-item svg{display:block;width:100%;height:100%;background:#FFFFFF !important}
     `
     const fullHtml = `<!DOCTYPE html><html><head><meta charset="utf-8"><style>${css}</style></head><body>${todasPaginasPrint.join('\n')}</body></html>`
     const iframe = document.createElement('iframe')

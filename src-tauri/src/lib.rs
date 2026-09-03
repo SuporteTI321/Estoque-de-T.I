@@ -2174,16 +2174,18 @@ fn print_product_label(
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.12.3/dist/JsBarcode.all.min.js"></script>
 <style>
   @page {{ size: A4; margin: 10mm; }}
-  body {{ font-family: monospace; margin: 0; padding: 3mm; color: #000;
-         -webkit-print-color-adjust: exact; print-color-adjust: exact; }}
+  body {{ font-family: monospace; margin: 0; padding: 3mm; color: #000; background: #fff;
+         -webkit-print-color-adjust: exact; print-color-adjust: exact; color-adjust: exact; }}
   .grid {{ display: flex; flex-wrap: wrap; gap: 3mm; }}
   .etiq {{ width: {largura}; height: {altura}; border: 1px solid #333; padding: 3mm;
-          box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column; }}
+          box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column; background: #fff; }}
   .emp {{ text-align: center; font-size: {fs}; }}
   .nome {{ text-align: center; font-size: {fs}; font-weight: bold; }}
   .linha {{ font-size: {fs}; }}
-  .bc {{ margin-top: auto; max-width: 100%; }}
-  @media print {{ .etiq {{ page-break-inside: avoid; }} }}
+  .bc {{ margin-top: auto; max-width: 100%; background: #FFFFFF !important; shape-rendering: crispEdges; image-rendering: crisp-edges; }}
+  svg rect {{ shape-rendering: crispEdges; }}
+  @media print {{ .etiq {{ page-break-inside: avoid; }} svg{{ background: #fff !important; }} }}
+
 </style></head>
 <body>
   <div class="grid">{etiquetas}</div>
@@ -2194,8 +2196,10 @@ fn print_product_label(
           try {{
             JsBarcode(el, el.getAttribute('data-val'), {{
               format: 'CODE128', displayValue: true,
-              fontSize: {fs_num}, height: 30
+              fontSize: {fs_num}, height: 44, width: 2, background: '#FFFFFF', lineColor: '#000000', margin: 10, flat: true
             }});
+            el.style.background = '#FFFFFF';
+            el.style.shapeRendering = 'crispEdges';
           }} catch (e) {{}}
         }});
         window.print();
