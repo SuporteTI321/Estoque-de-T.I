@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { Settings, Palette, Download, Upload, Trash2, RotateCcw, Users, User, X, Plus, Package } from "lucide-react";
+import { Settings, Palette, Download, Upload, Trash2, RotateCcw, Users, User, X, Plus, Package, Tag } from "lucide-react";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
 import DataTable, { type Column } from "../components/DataTable";
@@ -14,7 +14,7 @@ import { isImportKeyAllowed, isImportValueSafe } from "../lib/security";
 
 // Validação de import centralizada em security.ts (isImportKeyAllowed / isImportValueSafe)
 
-type Tab = "categorias" | "usuarios" | "perfil" | "geral";
+type Tab = "categorias" | "usuarios" | "perfil" | "geral" | "regras";
 
 export default function Configuracoes() {
   const [tab, setTab] = useState<Tab>((localStorage.getItem("almox_active_tab") as Tab) || "categorias");
@@ -418,33 +418,42 @@ function parseCSVLine(line: string, sep: string = ","): string[] {
         icon={<Settings className="h-5 w-5" />}
       />
 
-      {/* Abas */}
-      <div className="mb-6 flex gap-2 border-b border-gray-200">
-        {[
-          { key: "perfil" as Tab, label: "Perfil", icon: User },
-          { key: "usuarios" as Tab, label: "Usuários", icon: Users },
-          { key: "categorias" as Tab, label: "Categorias", icon: Settings },
-          { key: "geral" as Tab, label: "Geral", icon: Palette },
-        ].map((t) => {
-          const Icon = t.icon;
-          return (
-            <button
-              key={t.key}
-              onClick={() => { setTab(t.key); localStorage.setItem("almox_active_tab", t.key); }}
-              className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition ${
-                tab === t.key
-                  ? "border-blue-600 text-blue-700"
-                  : "border-transparent text-gray-500 hover:text-gray-700"
-              }`}
-            >
-              <Icon className="h-4 w-4" />
-              {t.label}
-            </button>
-          );
-        })}
+      {/* Abas + ação contextual alinhada */}
+      <div className="mb-6 flex items-end justify-between gap-2 border-b border-gray-200">
+        <div className="flex gap-2">
+          {[
+            { key: "perfil" as Tab, label: "Perfil", icon: User },
+            { key: "usuarios" as Tab, label: "Usuários", icon: Users },
+            { key: "categorias" as Tab, label: "Categorias", icon: Settings },
+            { key: "regras" as Tab, label: "Regras", icon: Tag },
+            { key: "geral" as Tab, label: "Geral", icon: Palette },
+          ].map((t) => {
+            const Icon = t.icon;
+            return (
+              <button
+                key={t.key}
+                onClick={() => { setTab(t.key); localStorage.setItem("almox_active_tab", t.key); }}
+                className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold border-b-2 transition ${
+                  tab === t.key
+                    ? "border-blue-600 text-blue-700"
+                    : "border-transparent text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                <Icon className="h-4 w-4" />
+                {t.label}
+              </button>
+            );
+          })}
+        </div>
+        {tab === "categorias" && (
+          <div className="pb-2">
+            <Button icon={<Plus className="h-4 w-4" />} onClick={() => window.dispatchEvent(new CustomEvent("abrir-nova-categoria"))}>Nova Categoria</Button>
+          </div>
+        )}
       </div>
 
       {tab === "categorias" && <CategoriasTab />}
+      {tab === "regras" && <RegrasTab />}
       {tab === "usuarios" && <UsuariosTab />}
       {tab === "perfil" && <PerfilTab />}
       {tab === "geral" && (() => {
@@ -628,6 +637,12 @@ function CategoriasTab() {
   const [open, setOpen] = useState(false);
   const [form, setForm] = useState<{ nome: string; descricao: string }>({ nome: "", descricao: "" });
 
+  useEffect(() => {
+    const abrir = () => setOpen(true);
+    window.addEventListener("abrir-nova-categoria", abrir);
+    return () => window.removeEventListener("abrir-nova-categoria", abrir);
+  }, []);
+
   const EXCLUIDAS_KEY = "almox_categorias_excluidas";
   function getExcluidas(): string[] {
     try { return JSON.parse(localStorage.getItem(EXCLUIDAS_KEY) || "[]"); } catch { return []; }
@@ -763,7 +778,6 @@ function CategoriasTab() {
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end"><Button icon={<Plus className="h-4 w-4" />} onClick={() => setOpen(true)}>Nova Categoria</Button></div>
       <DataTable columns={columns} data={categorias} />
       {open && (
         <Window title="Nova Categoria" onClose={() => setOpen(false)} open={open}>
@@ -782,6 +796,97 @@ function CategoriasTab() {
           </div>
         </Window>
       )}
+    </div>
+  );
+}
+
+/* ==================== REGRAS DE CÓDIGO ==================== */
+function RegrasTab() {
+  const [regras, setRegras] = useState<Record<string, string>>({});
+  const [msg, setMsgLocal] = useState<string | null>(null);
+  const [migrando, setMigrando] = useState(false);
+
+  useEffect(() => {
+    import("../lib/regrasCodigo").then(m => setRegras(m.loadRegras()));
+  }, []);
+
+  const lista = Object.entries(regras).sort((a, b) => a[0].localeCompare(b[0], 'pt-BR'));
+
+  async function salvar() {
+    const m = await import("../lib/regrasCodigo");
+    m.saveRegras(regras);
+    setMsgLocal("Regras salvas! Novos produtos já usam as novas siglas.");
+    setTimeout(() => setMsgLocal(null), 2500);
+  }
+
+  async function resetar() {
+    if (!confirm("Voltar para as siglas padrão?")) return;
+    const m = await import("../lib/regrasCodigo");
+    m.resetRegras();
+    setRegras(m.loadRegras());
+    setMsgLocal("Siglas padrão restauradas.");
+    setTimeout(() => setMsgLocal(null), 2500);
+  }
+
+  async function aplicarMigracao() {
+    if (!confirm("Aplicar as siglas atuais em todos os produtos? Isso atualiza os códigos no banco.")) return;
+    setMigrando(true);
+    try {
+      const produtos = await api.produtos.list();
+      const { migrarCodigos } = await import("../lib/utils");
+      const { lista: migrados, alterados } = migrarCodigos(produtos);
+      let gravados = 0;
+      for (const prod of migrados) {
+        const original = produtos.find(x => x.id === prod.id);
+        if (original && original.codigo !== prod.codigo) {
+          try {
+            await api.produtos.update(prod.id, {
+              codigo: prod.codigo, nome: prod.nome, marca: prod.marca ?? null,
+              modelo: prod.modelo ?? null, descricao: prod.descricao ?? null,
+              categoria_id: prod.categoria_id ?? null, fornecedor_id: prod.fornecedor_id ?? null,
+              unidade: prod.unidade, preco_compra: prod.preco_compra || 0,
+              preco_venda: prod.preco_venda || 0, estoque: prod.estoque || 0,
+              estoque_minimo: prod.estoque_minimo || 0, custo_total: prod.custo_total ?? 0,
+            });
+            gravados++;
+          } catch {}
+        }
+      }
+      setMsgLocal(alterados === 0 ? "Nenhum código precisou de ajuste." : `${gravados} produto(s) atualizado(s) com as novas siglas!`);
+    } catch (e) {
+      setMsgLocal("Erro na migração: " + String(e));
+    }
+    setMigrando(false);
+    setTimeout(() => setMsgLocal(null), 3000);
+  }
+
+  return (
+    <div className="space-y-3 max-w-3xl">
+      <div className="rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+        <strong>Centro de Regras.</strong> Edite a sigla de cada categoria aqui — sem mexer em código.
+        Formato: <span className="font-mono font-bold">00000-SIGLA</span>. Novos produtos usam na hora; existentes via “Aplicar migração”.
+      </div>
+      {msg && <div className="rounded-lg bg-emerald-50 px-4 py-2.5 text-xs font-medium text-emerald-700">{msg}</div>}
+      <div className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+        <div className="grid grid-cols-[1fr_140px_160px] gap-2 border-b border-gray-200 bg-gray-50 px-4 py-2 text-xs font-semibold uppercase text-gray-500">
+          <span>Categoria</span><span className="text-center">Sigla</span><span className="text-center">Prévia</span>
+        </div>
+        <div className="max-h-[480px] overflow-y-auto">
+          {lista.map(([cat, sigla]) => (
+            <div key={cat} className="grid grid-cols-[1fr_140px_160px] gap-2 items-center border-b border-gray-100 px-4 py-1.5">
+              <span className="text-sm text-gray-800">{cat}</span>
+              <input value={sigla} onChange={e => setRegras(r => ({ ...r, [cat]: e.target.value.toUpperCase().slice(0, 4) }))}
+                maxLength={4} className="rounded-lg border border-gray-300 px-2 py-1 text-center font-mono text-sm font-bold uppercase" />
+              <span className="text-center font-mono text-xs text-gray-500">00001-{sigla}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={salvar}>Salvar Regras</Button>
+        <Button variant="secondary" onClick={aplicarMigracao} disabled={migrando}>{migrando ? "Migrando..." : "Aplicar migração nos produtos"}</Button>
+        <Button variant="ghost" onClick={resetar}>Restaurar padrão</Button>
+      </div>
     </div>
   );
 }

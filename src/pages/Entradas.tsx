@@ -9,7 +9,7 @@ import Window from "../components/Window";
 import type { Movimentacao, Produto, Loja } from "../lib/types";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/useAuth";
-import { renumerar } from "../lib/utils";
+import { renumerar, migrarCodigos } from "../lib/utils";
 
 export default function Entradas() {
   const { user } = useAuth();
@@ -40,11 +40,12 @@ export default function Entradas() {
     Promise.all([api.movimentacoes.list(), api.produtos.list(), api.lojas.list()])
       .then(([m, p, l]) => {
         const r = renumerar(p);
-        const mapa = new Map(r.map(pp => [pp.id, pp.codigo]));
-                  setProdutos(r);
+        const { lista: migrados } = migrarCodigos(r);
+        const mapa = new Map(migrados.map(pp => [pp.id, pp.codigo]));
+                  setProdutos(migrados);
           setLojas(l);
           setMovs(m.filter(x => x.tipo === "entrada").map(x => ({ ...x, produto_codigo: mapa.get(x.produto_id) || "" 
-})).sort((a,b) => new Date(b.data_movimento).getTime() - new Date(a.data_movimento).getTime()));
+})).sort((a,b) => new Date(a.data_movimento).getTime() - new Date(b.data_movimento).getTime()));
         setErro(null);
       })
       .catch((e) => { console.error("[Entradas] falha ao carregar dados:", e); setErro("Nao foi possivel carregar as entradas."); });
@@ -140,7 +141,7 @@ export default function Entradas() {
         data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
         loja_origem_nome: null, loja_destino_nome: null,
       });
-      if (novo) setMovs((prev) => [...prev, novo].sort((a,b)=> a.quantidade - b.quantidade));
+      if (novo) setMovs((prev) => [...prev, novo].sort((a,b)=> new Date(a.data_movimento).getTime() - new Date(b.data_movimento).getTime()));
       setOpen(false);
       resetForm();
       loadData();

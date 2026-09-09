@@ -44,6 +44,16 @@ export default function Etiquetas() {
   const [formato, setFormato] = useState(saved?.formato ?? 'medio')
   const [largura, setLargura] = useState(saved?.largura ?? 70)
   const [altura, setAltura] = useState(saved?.altura ?? 35)
+
+  // Handlers que sincronizam largura/altura com formato custom
+  const handleSetLargura = (v: number) => {
+    setLargura(v)
+    if (formato !== 'custom') setFormato('custom')
+  }
+  const handleSetAltura = (v: number) => {
+    setAltura(v)
+    if (formato !== 'custom') setFormato('custom')
+  }
   const [margemSup, setMargemSup] = useState(saved?.margemSup ?? 5)
   const [margemEsq, setMargemEsq] = useState(saved?.margemEsq ?? 5)
   const [margemDir, setMargemDir] = useState(saved?.margemDir ?? 5)
@@ -158,6 +168,8 @@ export default function Etiquetas() {
   // Presets
   const aplicarPreset = (preset: typeof PRESETS[number]) => {
     setFormato(preset.formato); setPapel(preset.papel); setColunas(preset.colunas)
+    const dimensoes = (TAMANHO_ETIQUETA as any)[preset.formato]
+    if (dimensoes) { setLargura(dimensoes.largura); setAltura(dimensoes.altura) }
     setMargemSup(preset.margemSup); setMargemEsq(preset.margemEsq); setMargemDir(preset.margemDir); setMargemInf(preset.margemInf)
     setEspacoH(preset.espacoH); setEspacoV(preset.espacoV); setCampos([...preset.campos])
     setMostrarBarra(preset.mostrarBarra); setBorda({ ...preset.borda }); setPosicoes({ ...preset.posicoes })
@@ -170,6 +182,8 @@ export default function Etiquetas() {
   const limpar = () => {
     setSelecionados([]); setQuantidades({})
     setFormato('medio'); setLargura(70); setAltura(35); setMargemSup(5); setMargemEsq(5); setMargemDir(5); setMargemInf(5)
+    const dimPadrao = (TAMANHO_ETIQUETA as any)['medio']
+    if (dimPadrao) { setLargura(dimPadrao.largura); setAltura(dimPadrao.altura) }
     setColunas(3); setEspacoH(0); setEspacoV(0); setInicioLinha(1); setCampos(['codigo', 'produto', 'marca', 'modelo', 'marcaEtiqueta'])
     setMostrarBarra(false); setBorda({ ativa: false, estilo: 'dashed', largura: 0.2, cor: '#ccc' }); setTamanhoProd(2.8); setTamanhoCod(2.1)
     setTamanhoMarca(1.8); setTamanhoModelo(1.4); setTamanhoMarcaEtq(1.4); setAlturaBarra(10)
@@ -206,14 +220,17 @@ export default function Etiquetas() {
       .folha{page-break-after:${folhaUnica ? 'always' : 'auto'};position:relative;background:#fff}
       .folha:last-child{page-break-after:auto}
       .folha .info-label{position:absolute;top:1mm;right:2mm;font-size:8px;color:#94a3b8;font-family:sans-serif}
-      .etq-grid{display:grid;grid-template-columns:repeat(${colunas},${cfg.largura}mm);grid-template-rows:repeat(auto,${cfg.altura}mm);gap:${espacoV}mm ${espacoH}mm;
+      .etq-grid{display:grid;grid-template-columns:repeat(${colunas},${cfg.largura}mm);grid-auto-rows:${cfg.altura}mm;gap:${espacoV}mm ${espacoH}mm;
         padding:${margemSup}mm ${margemDir}mm ${margemInf}mm ${margemEsq}mm;
         box-sizing:border-box;width:${cfg.papelLargura}mm;height:${cfg.papelAltura}mm;margin:0 auto;
         justify-content:${alinhamentoH === 'center' ? 'center' : alinhamentoH === 'right' ? 'end' : 'start'};
         align-content:${alinhamentoV === 'center' ? 'center' : alinhamentoV === 'end' ? 'end' : 'start'}}
       .etq-item{width:${cfg.largura}mm;height:${cfg.altura}mm;position:relative;background:#fff;border:${bordaPrint};box-sizing:border-box;overflow:hidden}
-      .etq-item p{margin:0;padding:0;line-height:1.3;letter-spacing:0.02em;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-      .etq-item svg{display:block}
+      .etq-item p{margin:0;padding:0;line-height:1.3;letter-spacing:0.02em;font-family:sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;z-index:1}
+      .etq-item .barcode-wrap{z-index:0}
+      .etq-item svg{display:block;margin:0 auto;padding:0;width:auto !important;max-width:100%;background:#fff !important}
+      .etq-item svg rect{shape-rendering:crispEdges}
+      .etq-item div{line-height:0;text-align:center}
     `
     const fullHtml = `<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}</body></html>`
     const iframe = document.createElement('iframe')
@@ -222,6 +239,17 @@ export default function Etiquetas() {
     const d = iframe.contentWindow?.document
     if (d) {
       d.open(); d.write(fullHtml); d.close()
+      try {
+        d.querySelectorAll('.etq-item .barcode-wrap').forEach((el: any) => { el.style.zIndex = '0'; });
+        d.querySelectorAll('.etq-item p').forEach((p: any) => { p.style.zIndex = '1'; });
+        d.querySelectorAll('.etq-item svg').forEach((s: any) => {
+          // Mantém os atributos width/height do JsBarcode (largura intrínseca) — igual ao preview.
+          // Remover o width quebrava a proporção e deixava o print diferente.
+          s.style.width = 'auto'; s.style.maxWidth = '100%'; s.style.margin = '0 auto';
+          s.style.display = 'block'; s.style.padding = '0'; s.style.background = '#ffffff';
+          s.style.setProperty('shape-rendering', 'crispEdges');
+        });
+      } catch {}
       const w = iframe.contentWindow
       w?.focus(); w?.print()
       iframe.style.visibility = 'hidden'
@@ -263,7 +291,7 @@ export default function Etiquetas() {
                 secoesAbertas={secoesAbertas} toggleSecao={toggleSecao}
                 mostrarConfig={mostrarConfig} setMostrarConfig={setMostrarConfig}
                 cfg={cfg} papel={papel} setPapel={setPapel} formato={formato} setFormato={setFormato}
-                largura={largura} setLargura={setLargura} altura={altura} setAltura={setAltura}
+                largura={largura} setLargura={handleSetLargura} altura={altura} setAltura={handleSetAltura}
                 margemSup={margemSup} setMargemSup={setMargemSup} margemEsq={margemEsq} setMargemEsq={setMargemEsq}
                 margemDir={margemDir} setMargemDir={setMargemDir} margemInf={margemInf} setMargemInf={setMargemInf}
                 colunas={colunas} setColunas={setColunas} espacoH={espacoH} setEspacoH={setEspacoH}

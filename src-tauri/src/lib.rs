@@ -2151,8 +2151,8 @@ fn print_product_label(
     let disponivel = (largura_num - 6.0).max(12.0);
     let raw_w = (disponivel * 3.78 - 20.0) / modulos;
     let barcode_w = if largura_num <= 30.0 {
-        if codigo.len() > 8 { raw_w.clamp(0.7, 1.4) } else { raw_w.clamp(0.8, 1.6) }
-    } else if codigo.len() > 12 { raw_w.clamp(0.9, 2.0) } else if codigo.len() > 8 { raw_w.clamp(1.0, 2.2) } else { raw_w.clamp(1.2, 2.6) };
+        if codigo.len() > 8 { raw_w.clamp(1.0, 1.6) } else { raw_w.clamp(1.1, 1.8) }
+    } else if codigo.len() > 12 { raw_w.clamp(1.2, 2.2) } else if codigo.len() > 8 { raw_w.clamp(1.3, 2.4) } else { raw_w.clamp(1.4, 2.8) };
 
     // Gera N etiquetas (uma por unidade)
     let mut etiquetas = String::new();

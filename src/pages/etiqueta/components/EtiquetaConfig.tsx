@@ -65,7 +65,7 @@ interface EtiquetaConfigProps {
 
 export default function EtiquetaConfig(props: EtiquetaConfigProps) {
   const {
-    secoesAbertas, toggleSecao, cfg,
+    secoesAbertas, toggleSecao, cfg, formato,
     largura, setLargura, altura, setAltura,
     margemSup, setMargemSup, margemEsq, setMargemEsq, margemDir, setMargemDir, margemInf, setMargemInf,
     colunas, setColunas, espacoH, setEspacoH, espacoV, setEspacoV, inicioLinha, setInicioLinha,
@@ -111,7 +111,7 @@ export default function EtiquetaConfig(props: EtiquetaConfigProps) {
             <div><label className="text-[10px] font-medium text-slate-500">Altura</label>
               <Campo value={altura} onChange={setAltura} className="w-full mt-1" /></div>
           </div>
-          <div className="text-[10px] font-semibold text-blue-700 bg-blue-50 rounded-lg px-3 py-1.5 text-center">{cfg.largura}×{cfg.altura}mm · {etqPorPagina}/folha</div>
+          <div className="text-[10px] font-semibold text-blue-700 bg-blue-50 rounded-lg px-3 py-1.5 text-center">{formato === 'custom' ? 'Custom' : formato.charAt(0).toUpperCase() + formato.slice(1)} · {cfg.largura}×{cfg.altura}mm · {etqPorPagina}/folha</div>
         </Secao>
 
         {/* Layout */}

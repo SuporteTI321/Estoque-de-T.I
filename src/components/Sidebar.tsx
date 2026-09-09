@@ -85,9 +85,7 @@ export default function Sidebar({ user, open = false, onClose }: SidebarProps) {
 
       {/* Footer user */}
       <div className="border-t border-gray-200 px-4 py-3 text-xs text-gray-500">
-        <div className="font-semibold text-gray-700">{user.nome}</div>
-        <div className="capitalize">{user.perfil}</div>
-        {user.loja_nome && <div className="mt-0.5">{user.loja_nome}</div>}
+        {/* Informações do usuário removidas conforme solicitado */}
       </div>
     </aside>
     </>

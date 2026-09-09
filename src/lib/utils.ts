@@ -1,29 +1,83 @@
 import type { Produto } from "./types";
+import { getSigla } from "./regrasCodigo";
 
 /**
- * Gera codigo sequencial para cada produto: 00001-SIGLA
- * onde SIGLA = primeiras 4 letras da categoria (ou "PROD").
+ * Gera a sigla vigente de uma categoria.
+ * Fonte única: Centro de Regras (Configurações > Regras).
+ * Mantido aqui por compatibilidade com Produtos/Entradas/Saídas.
+ */
+export function siglaCategoria(catNome?: string | null, catId?: number | null): string {
+  return getSigla(catNome, catId);
+}
+
+/**
+ * Gera codigo sequencial para cada produto: XXXXX-SIGLA
+ * onde SIGLA = sigla oficial da categoria (ou "PROD").
  * Retorna a lista com o campo `codigo` atualizado.
  */
 export function renumerar(lista: Produto[]): Produto[] {
-    // Gera codigo sequencial: XXXXX-SIGLA
-    // SIGLA = primeiras 4 letras da categoria (sem espacos, uppercase)
-    // Apenas preenche produtos SEM codigo (preserva codigos existentes)
-    return [...lista]
-      .sort((a, b) => a.id - b.id)
-      .map((p, i) => {
-        // Preserva o codigo real vindo do banco
-        if (p.codigo) return p;
-        const cat = (p.categoria_nome || "PROD")
-          .toUpperCase()
-          .replace(/[^A-Z]/g, "")
-          .substring(0, 4);
-        return {
-          ...p,
-          codigo: `${String(i + 1).padStart(5, "0")}-${cat}`,
-        };
-      });
+  return [...lista]
+    .sort((a, b) => a.id - b.id)
+    .map((p, i) => {
+      // Preserva o codigo real vindo do banco
+      if (p.codigo) return p;
+      const sigla = siglaCategoria(p.categoria_nome, p.categoria_id);
+      return {
+        ...p,
+        codigo: `${String(i + 1).padStart(5, "0")}-${sigla}`,
+      };
+    });
+}
+
+/**
+ * Mapa inverso: sigla antiga → sigla nova (para migração).
+ * Usado para atualizar códigos que ainda usam siglas antigas.
+ */
+const MIGRACAO_SIGLAS: Record<string, string> = {
+  'CABO': 'CFPC',  // Cabo de Força de PC
+  'SEGU': 'PSEG',  // Proteção e Segurança
+  'AVID': 'AAVI',  // Áudio e Vídeo
+  'MATE': 'MESC',  // Material de Escritório (fallback antigo)
+};
+
+/**
+ * Verifica se a sigla de um código está desatualizada.
+ * Retorna a nova sigla se precisar migrar, ou null se já está correta.
+ */
+export function migrarSigla(codigoAtual: string, catNome?: string | null, catId?: number | null): string | null {
+  const match = codigoAtual.match(/^(\d+)-([A-Z_]{4})$/);
+  if (!match) return null;
+  const [, num, siglaAntiga] = match;
+  // Se a sigla antiga está no mapa de migração, retorna a nova
+  if (MIGRACAO_SIGLAS[siglaAntiga]) {
+    const novaSigla = MIGRACAO_SIGLAS[siglaAntiga];
+    return `${num}-${novaSigla}`;
   }
+  // Se a sigla não bate com a categoria atual, corrige
+  const siglaEsperada = siglaCategoria(catNome, catId);
+  if (siglaAntiga !== siglaEsperada) {
+    return `${num}-${siglaEsperada}`;
+  }
+  return null;
+}
+
+/**
+ * Atualiza códigos com siglas desatualizadas para as oficiais.
+ * Retorna a lista com códigos corrigidos + flag de alteração.
+ */
+export function migrarCodigos(lista: Produto[]): { lista: Produto[]; alterados: number } {
+  let alterados = 0;
+  const listaAtualizada = lista.map(p => {
+    if (!p.codigo) return p;
+    const novoCodigo = migrarSigla(p.codigo, p.categoria_nome, p.categoria_id);
+    if (novoCodigo && novoCodigo !== p.codigo) {
+      alterados++;
+      return { ...p, codigo: novoCodigo };
+    }
+    return p;
+  });
+  return { lista: listaAtualizada, alterados };
+}
 
 /**
  * Monta um Map<produto_id, codigo> a partir de uma lista de produtos.

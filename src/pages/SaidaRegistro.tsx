@@ -9,7 +9,7 @@ import Window from "../components/Window";
 import type { Movimentacao, Produto, Loja, Usuario } from "../lib/types";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/useAuth";
-import { renumerar } from "../lib/utils";
+import { renumerar, migrarCodigos } from "../lib/utils";
 
 type LoteItem = { produto_id: string; cod_produto: string; quantidade: number };
 
@@ -79,8 +79,9 @@ export default function SaidaRegistro() {
     Promise.all([api.movimentacoes.list(), api.produtos.list(), api.lojas.list(), api.usuarios.list()])
       .then(([m, p, l, u]) => {
         const r = renumerar(p);
-        const mapa = new Map(r.map(pp => [pp.id, pp.codigo]));
-                  setProdutos(r);
+        const { lista: migrados } = migrarCodigos(r);
+        const mapa = new Map(migrados.map(pp => [pp.id, pp.codigo]));
+                  setProdutos(migrados);
           setLojas(l);
           setUsuarios(u);
           setEntradasCod(m.filter(x => x.tipo === "entrada" && !!x.observacao?.match(/cod_produto:(.+)/)));
@@ -143,6 +144,8 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
   const gruposCod = useMemo(() => {
     type ItemCod = { codigo: string; produto: Produto; mov: Movimentacao | null };
     const map = new Map<string, ItemCod[]>();
+    // Chave global para dedup: produto_id + código — evita listar o mesmo item duas vezes.
+    const vistos = new Set<string>();
     // Adiciona produtos que tem entrada com cod_produto
     for (const mov of entradasCod) {
       const code = mov.observacao?.match(/cod_produto:(.+)/)?.[1]?.trim();
@@ -150,19 +153,30 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
       const prod = produtos.find(pp => pp.id === mov.produto_id) || produtos.find(pp => pp.nome === mov.produto_nome);
       if (!prod) continue;
       const key = `${prod.nome} — ${prod.marca || "Sem marca"} / ${prod.modelo || "Sem modelo"}`;
+      const dedup = `${prod.id}|${code}`;
+      if (vistos.has(dedup)) continue;
+      vistos.add(dedup);
       if (!map.has(key)) map.set(key, []);
-      if (!map.get(key)!.some(x => x.codigo === code)) map.get(key)!.push({ codigo: code, produto: prod, mov });
+      map.get(key)!.push({ codigo: code, produto: prod, mov });
     }
-    // Adiciona produtos ativos que NAO tem entrada (usa codigo proprio)
-    for (const p of produtos.filter(p => p.ativo && p.codigo)) {
+    // Para cada produto ativo: se já tem entrada com cod_produto, mostra só essa; senão, mostra o código do cadastro.
+    for (const p of produtos.filter(p => p.ativo)) {
+      // Se já apareceu via entrada, não duplica — já está no map.
       const key = `${p.nome} — ${p.marca || "Sem marca"} / ${p.modelo || "Sem modelo"}`;
+      const temEntrada = Array.from(map.get(key) || []).some(x => x.produto.id === p.id);
+      if (temEntrada) continue;
+      // Sem entrada: usa o código do cadastro (se existir).
+      if (!p.codigo) continue;
+      const dedup = `${p.id}|${p.codigo}`;
+      if (vistos.has(dedup)) continue;
+      vistos.add(dedup);
       if (!map.has(key)) map.set(key, []);
-      if (!map.get(key)!.some(x => x.codigo === p.codigo)) map.get(key)!.push({ codigo: p.codigo, produto: p, mov: null });
+      map.get(key)!.push({ codigo: p.codigo, produto: p, mov: null });
     }
     let entries = Array.from(map.entries());
     const term = codPickerSearch.trim().toLowerCase();
     if (term) {
-      entries = entries.map(([k, arr]) => [k, arr.filter(x => x.codigo.toLowerCase().includes(term) || x.produto.nome.toLowerCase().includes(term) || k.toLowerCase().includes(term))] as [string, ItemCod[]]).filter(([, arr]) => arr.length > 0);
+      entries = entries.map(([k, arr]) => [k, arr.filter(x => x.codigo.toLowerCase().includes(term) || x.produto.nome.toLowerCase().includes(term) || (x.produto.marca || '').toLowerCase().includes(term) || (x.produto.modelo || '').toLowerCase().includes(term) || k.toLowerCase().includes(term))] as [string, ItemCod[]]).filter(([, arr]) => arr.length > 0);
     }
     return entries;
   }, [produtos, entradasCod, codPickerSearch]);

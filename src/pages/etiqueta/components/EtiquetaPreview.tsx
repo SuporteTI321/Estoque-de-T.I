@@ -7,10 +7,32 @@ import { useEffect, useRef } from 'react'
 interface BarcodeProps {
   codigo: string
   altura?: number
+  maxWidthMm?: number
+  compacto?: boolean
 }
 
-function Barcode({ codigo, altura = 15 }: BarcodeProps) {
+const MM_PX = 3.7795275591
+
+// Espaçamento interno (módulo): prioriza barras bem separadas.
+// Modo normal: mínimo 1.3. Modo compacto (etiquetas <30mm): mínimo 0.85.
+// CODE128: ~11 módulos por caractere + overhead de start/stop.
+function escolherModulo(codigo: string, maxWidthMm?: number, compacto?: boolean): number {
+  if (!maxWidthMm || maxWidthMm <= 0) return 2
+  const availPx = maxWidthMm * MM_PX
+  const totalModulos = 11 * (codigo.length + 3) + 2
+  const quiet = compacto ? 4 * 2 : 8 * 2
+  const prefs = compacto ? [2, 1.7, 1.4, 1.2, 1, 0.85] : [2.8, 2.5, 2.2, 2, 1.8, 1.6, 1.4, 1.3]
+  for (const m of prefs) {
+    if (totalModulos * m + quiet <= availPx) return m
+  }
+  // Etiqueta muito estreita: melhor ajuste contínuo (cabe sem cortar).
+  return Math.max(compacto ? 0.8 : 1, (availPx - quiet) / totalModulos)
+}
+
+function Barcode({ codigo, altura = 15, maxWidthMm, compacto }: BarcodeProps) {
   const svgRef = useRef<SVGSVGElement>(null)
+  const modulo = escolherModulo(codigo, maxWidthMm, compacto)
+  const quiet = compacto ? 4 : 8
 
   useEffect(() => {
     if (!svgRef.current || !codigo) return
@@ -20,24 +42,26 @@ function Barcode({ codigo, altura = 15 }: BarcodeProps) {
         try {
           mod.default(svgRef.current, codigo, {
             format: 'CODE128',
-            width: 2,
-            height: altura,
+            width: modulo,
+            height: Math.max(20, altura * MM_PX),
             displayValue: false,
             background: '#ffffff',
+            lineColor: '#000000',
             margin: 0,
             marginTop: 0,
             marginBottom: 0,
-            marginLeft: 2,
-            marginRight: 2,
+            marginLeft: quiet,
+            marginRight: quiet,
             flat: true,
           })
+          svgRef.current!.style.setProperty('shape-rendering', 'crispEdges')
         } catch {}
       }
     })
     return () => { cancelled = true }
-  }, [codigo, altura])
+  }, [codigo, altura, modulo, quiet])
 
-  return codigo ? <svg ref={svgRef} style={{ width: '100%', height: `${altura}mm`, display: 'block' }} /> : null
+  return codigo ? <svg ref={svgRef} style={{ width: 'auto', maxWidth: '100%', height: `${altura}mm`, display: 'block', margin: '0 auto', padding: 0 }} /> : null
 }
 
 interface EtiquetaItemProps {
@@ -80,6 +104,7 @@ function EtiquetaItem({ p, cfg, campos, mostrarBarra, borda, posicoes, negritos,
     fontSize: `${size}mm`,
     fontWeight: bold ? 'bold' : 'normal',
     margin: 0,
+    zIndex: 1,
     lineHeight: 1.3,
     letterSpacing: '0.02em',
     fontFamily: 'sans-serif',
@@ -103,11 +128,18 @@ function EtiquetaItem({ p, cfg, campos, mostrarBarra, borda, posicoes, negritos,
       {camposAtivos.includes('marca') && <p style={textStyle(pos.marca, tMarca, neg.marca)}>{p.marca}</p>}
       {camposAtivos.includes('modelo') && <p style={textStyle(pos.modelo, tModelo, neg.modelo)}>{p.modelo}</p>}
       {camposAtivos.includes('marcaEtiqueta') && p.marcaEtiqueta && <p style={textStyle(pos.marcaEtiqueta, tMarcaEtq, neg.marcaEtiqueta)}>{p.marcaEtiqueta}</p>}
-      {barcodeAtivo && p.codigo && (
-        <div style={{ position: 'absolute', top: `${pos.barra?.top ?? 60}mm`, left: `${barraLeft}mm`, width: `calc(100% - ${(barraLeft ?? 1) * 2}mm)` }}>
-          <Barcode codigo={p.codigo} altura={h} />
-        </div>
-      )}
+      {barcodeAtivo && p.codigo && (() => {
+        const dispMm = Math.max(5, cfg.largura - (barraLeft ?? 1) * 2)
+        // Etiqueta estreita (<30mm, ex. 20x10): codifica só a parte numérica (única por produto)
+        // para o CODE128 caber com barras legíveis. Busca por número continua funcionando.
+        const compacto = dispMm < 30
+        const conteudo = compacto ? (String(p.codigo).match(/^\d+/)?.[0] ?? p.codigo) : p.codigo
+        return (
+          <div className="barcode-wrap" style={{ position: 'absolute', top: `${pos.barra?.top ?? 60}mm`, left: `${barraLeft}mm`, width: `calc(100% - ${(barraLeft ?? 1) * 2}mm)`, lineHeight: 0, margin: 0, padding: 0, textAlign: 'center', zIndex: 0 }}>
+            <Barcode codigo={conteudo} altura={h} maxWidthMm={dispMm} compacto={compacto} />
+          </div>
+        )
+      })()}
     </div>
   )
 }
@@ -195,7 +227,7 @@ export default function EtiquetaPreview({
         style={{ backgroundImage: 'radial-gradient(circle, #cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px' }}>
         <div className="flex justify-center py-8 min-h-full items-start">
           <div className="relative bg-white shadow-xl rounded-sm"
-            style={{ width: `${cfg.papelLargura * zoom}mm`, minHeight: `${cfg.papelAltura * zoom}mm`, transform: `scale(${zoom})`, transformOrigin: 'top center' }}>
+            style={{ width: `${cfg.papelLargura}mm`, minHeight: `${cfg.papelAltura}mm`, transform: `scale(${zoom})`, transformOrigin: 'top center', flexShrink: 0 }}>
 
             {/* Margin guides */}
             <div className="absolute -top-7 left-0 right-0 flex justify-between px-1">
@@ -212,7 +244,7 @@ export default function EtiquetaPreview({
             }}>
               <div style={{
                 display: 'grid', gridTemplateColumns: `repeat(${colunas}, ${cfg.largura}mm)`,
-                gridTemplateRows: `repeat(auto, ${cfg.altura}mm)`,
+                gridAutoRows: `${cfg.altura}mm`,
                 gap: `${espacoV}mm ${espacoH}mm`,
                 padding: `${margemSup}mm ${margemDir}mm ${margemInf}mm ${margemEsq}mm`,
                 boxSizing: 'border-box', width: `${cfg.papelLargura}mm`, height: `${cfg.papelAltura}mm`,
@@ -246,6 +278,7 @@ export default function EtiquetaPreview({
           <div key={pgIdx} className="folha" style={{ width: `${cfg.papelLargura}mm`, minHeight: `${cfg.papelAltura}mm`, background: '#fff', margin: '0 auto', boxSizing: 'border-box', position: 'relative' }}>
             <div className="etq-grid" style={{
               display: 'grid', gridTemplateColumns: `repeat(${colunas}, ${cfg.largura}mm)`,
+              gridAutoRows: `${cfg.altura}mm`,
               gap: `${espacoV}mm ${espacoH}mm`,
               padding: `${margemSup}mm ${margemDir}mm ${margemInf}mm ${margemEsq}mm`,
               boxSizing: 'border-box', width: `${cfg.papelLargura}mm`, height: `${cfg.papelAltura}mm`, margin: '0 auto',

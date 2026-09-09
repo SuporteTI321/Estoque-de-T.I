@@ -8,7 +8,7 @@ import Button from "../components/Button";
 import Window from "../components/Window";
 import type { Produto, Categoria } from "../lib/types";
 import { api, store } from "../lib/api";
-import { renumerar } from "../lib/utils";
+import { renumerar, siglaCategoria, migrarCodigos } from "../lib/utils";
 import { CATS_PADRAO, normCat } from "../lib/constants";
 
 export default function Produtos() {
@@ -54,10 +54,37 @@ export default function Produtos() {
   function load() {
     Promise.all([api.produtos.list(), api.categorias.list()])
       .then(async ([p, c]) => {
-        // Exibe o código real do banco (renumerar só preenche produtos SEM código).
-        // Não persistir renumeração aqui: payload parcial falha e disparava loop de updates.
+        // 1. Renumera produtos sem código
         const renum = renumerar(p);
-        setItems(renum);
+        // 2. Migra siglas antigas para oficiais
+        const { lista: migrados, alterados } = migrarCodigos(renum);
+        if (alterados > 0) {
+          console.log(`[Produtos] ${alterados} código(s) migrado(s) para siglas oficiais`);
+          // Persistir migração no backend
+          for (const prod of migrados) {
+            const original = p.find(x => x.id === prod.id);
+            if (original && original.codigo !== prod.codigo) {
+              try {
+                await api.produtos.update(prod.id, {
+                  codigo: prod.codigo,
+                  nome: prod.nome,
+                  marca: prod.marca ?? null,
+                  modelo: prod.modelo ?? null,
+                  descricao: prod.descricao ?? null,
+                  categoria_id: prod.categoria_id ?? null,
+                  fornecedor_id: prod.fornecedor_id ?? null,
+                  unidade: prod.unidade,
+                  preco_compra: prod.preco_compra || 0,
+                  preco_venda: prod.preco_venda || 0,
+                  estoque: prod.estoque || 0,
+                  estoque_minimo: prod.estoque_minimo || 0,
+                  custo_total: prod.custo_total ?? 0,
+                });
+              } catch (e) { console.error(`[Migração] Erro ao atualizar produto ${prod.id}:`, e); }
+            }
+          }
+        }
+        setItems(migrados);
         // Sincronizar categorias com Configuracoes (32 padrao)
         const catsFinal = await syncCategorias(c || []);
         setCats(catsFinal);
@@ -77,10 +104,24 @@ export default function Produtos() {
     return nomes[u.toLowerCase()] || u;
   }
 
+
+
+  // Calcula próximo número sequencial baseado em todos os códigos existentes
+  function proximoNumero(): number {
+    let max = 0;
+    for (const p of items) {
+      const m = p.codigo?.match(/^(\d+)-/);
+      if (m) {
+        const n = parseInt(m[1], 10);
+        if (n > max) max = n;
+      }
+    }
+    return max + 1;
+  }
+
   function openNew() {
-    const nextNum = items.length + 1;
     setEditing(null);
-    setForm({ codigo: `${String(nextNum).padStart(5, "0")}-PROD`, unidade: "un", estoque: 0, estoque_minimo: 0, ativo: true, preco_compra: 0, preco_venda: 0, custo_total: 0 });
+    setForm({ codigo: '', unidade: 'un', estoque: 0, estoque_minimo: 0, ativo: true, preco_compra: 0, preco_venda: 0, custo_total: 0 });
     setOpen(true);
   }
   function openEdit(p: Produto) {
@@ -99,7 +140,13 @@ export default function Produtos() {
         setTimeout(() => load(), 300);
       } else {
         const catNome = cats.find(c => c.id === form.categoria_id)?.nome || null;
-        const n = await api.produtos.create({ ...form, categoria_nome: catNome } as Omit<Produto, "id">);
+        // Gera código automaticamente se estiver vazio
+        let codigo = form.codigo;
+        if (!codigo || codigo.trim() === '') {
+          const sigla = siglaCategoria(catNome);
+          codigo = `${String(proximoNumero()).padStart(5, '0')}-${sigla}`;
+        }
+        const n = await api.produtos.create({ ...form, codigo, categoria_nome: catNome } as Omit<Produto, "id">);
         if (n) {
             const novaLista = renumerar([...items, n]);
             setItems(novaLista);
@@ -124,7 +171,9 @@ export default function Produtos() {
   }
 
   const cols: Column<Produto>[] = [
-    { key: "codigo", label: "CÓDIGO", width: "110px" },
+    { key: "codigo", label: "CÓDIGO", width: "130px", align: "center", render: (r) => (
+      <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700">{r.codigo || <span className="text-gray-300">—</span>}</span>
+    ) },
     { key: "nome", label: "PRODUTO", width: "auto", headerAlign: "center" },
     { key: "marca", label: "MARCA", width: "130px", render: (r) => r.marca || <span className="text-gray-300">—</span> },
     { key: "modelo", label: "MODELO", width: "130px", render: (r) => r.modelo || <span className="text-gray-300">—</span> },
@@ -256,7 +305,8 @@ export default function Produtos() {
           <div className="grid grid-cols-[120px_1fr] gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700">Código</label>
-              <input value={form.codigo || ""} readOnly className="mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm" />
+              <input value={form.codigo || ""} onChange={(e) => setForm(f => ({ ...f, codigo: e.target.value.toUpperCase() }))}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase" placeholder="00001-PROD" />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Produto</label>
@@ -281,7 +331,16 @@ export default function Produtos() {
               <label className="block text-sm font-medium text-gray-700">Categoria</label>
               <select value={showNewCat ? "new" : String(form.categoria_id || "")} onChange={(e) => {
                 if (e.target.value === "new") { setShowNewCat(true); }
-                else { setForm({ ...form, categoria_id: e.target.value ? Number(e.target.value) : null }); }
+                else {
+                  const catId = e.target.value ? Number(e.target.value) : null;
+                  const cat = cats.find(c => c.id === catId);
+                  const sigla = siglaCategoria(cat?.nome);
+                  // Gera código apenas se for novo produto e código ainda não definido
+                  const novoCodigo = (!editing && !form.codigo) || (!editing && form.codigo?.endsWith('-PROD'))
+                    ? `${String(proximoNumero()).padStart(5, '0')}-${sigla}`
+                    : form.codigo;
+                  setForm(f => ({ ...f, categoria_id: catId, codigo: novoCodigo }));
+                }
               }} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
                 <option value="">Selecione...</option>
                 {cats.map((c) => <option key={c.id} value={c.id}>{c.nome.toUpperCase()}</option>)}
