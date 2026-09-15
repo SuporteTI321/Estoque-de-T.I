@@ -1,7 +1,36 @@
-import { useState, useEffect, useRef } from "react";
-import { Bell, HelpCircle, Search, ChevronDown, LogOut, AlertCircle, AlertTriangle, Menu } from "lucide-react";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
+import { Bell, HelpCircle, Search, ChevronDown, LogOut, AlertCircle, AlertTriangle, Menu, X } from "lucide-react";
 import type { Usuario, Alerta, Produto } from "../lib/types";
 import { api } from "../lib/api";
+
+const LS_DISMISS = "almox_alertas_estoque_excluidos";
+const LS_SYS_DISMISS = "almox_sistema_dispensados"; // IDs virtuais (negativos) dispensados
+
+function fmtData(iso: string): string {
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const hh = String(d.getHours()).padStart(2, "0");
+    const mi = String(d.getMinutes()).padStart(2, "0");
+    return `${dd}/${mm} ${hh}:${mi}`;
+  } catch { return ""; }
+}
+
+function iconeSistema(tipo: string) {
+  if (tipo === "estoque_zerado") return <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />;
+  if (tipo === "estoque_baixo") return <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />;
+  return <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />;
+}
+
+function rotaSistema(tipo: string): string | null {
+  if (tipo === "estoque_zerado" || tipo === "estoque_baixo") return "/produtos";
+  return null;
+}
+
+interface AlertaEstoque { id: number; tipo: string; titulo: string; msg: string }
 
 interface HeaderProps {
   user: Usuario;
@@ -26,48 +55,92 @@ export default function Header({ user, title, subtitle, onLogout, onMenu }: Head
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
 
-  // Alertas estáticos do banco
+  const navigate = useNavigate();
+
+  // Alertas do sistema (backend) — sempre recarrega, mostra só não-lidos
   const [alertas, setAlertas] = useState<Alerta[]>([]);
-  useEffect(() => {
-    if (!localStorage.getItem("almox_alertas")) {
-      api.alertas.list().then(dados => {
-        const arr = Array.isArray(dados) ? dados : [];
-        localStorage.setItem("almox_alertas", JSON.stringify(arr));
-        setAlertas(arr);
-      }).catch(() => {});
-    } else {
-      try { setAlertas(JSON.parse(localStorage.getItem("almox_alertas")!)); }
+  const loadSistema = useCallback(() => {
+    api.alertas.list().then(dados => {
+      const arr = (Array.isArray(dados) ? dados : []).filter(a => !a.lido);
+      // Dispensados virtuais: mantém só os que ainda existem (reativa sozinho ao normalizar)
+      let disp: number[] = [];
+      try { disp = JSON.parse(localStorage.getItem(LS_SYS_DISMISS) || "[]"); if (!Array.isArray(disp)) disp = []; } catch { disp = []; }
+      const ainda = disp.filter(id => arr.some(a => a.id === id));
+      localStorage.setItem(LS_SYS_DISMISS, JSON.stringify(ainda));
+      const visiveis = arr.filter(a => !ainda.includes(a.id));
+      localStorage.setItem("almox_alertas", JSON.stringify(visiveis));
+      setAlertas(visiveis);
+    }).catch(() => {
+      try { setAlertas((JSON.parse(localStorage.getItem("almox_alertas") || "[]") as Alerta[]).filter(a => !a.lido)); }
       catch { setAlertas([]); }
-    }
+    });
   }, []);
 
-  // Alertas de estoque dinâmicos
-  const [alertasEstoque, setAlertasEstoque] = useState<{ tipo: string; titulo: string; msg: string }[]>([]);
-  useEffect(() => {
+  // Alertas de estoque dinâmicos — dispensa por ID, auto-reativa ao normalizar
+  const [alertasEstoque, setAlertasEstoque] = useState<AlertaEstoque[]>([]);
+  const loadEstoque = useCallback(() => {
     api.produtos.list().then(produtos => {
-      const excluidos: string[] = JSON.parse(localStorage.getItem("almox_alertas_estoque_excluidos") || "[]");
-      const arr: { tipo: string; titulo: string; msg: string }[] = [];
-      for (const p of produtos.filter((p: Produto) => p.ativo)) {
-        if (excluidos.includes(p.nome)) continue;
-        if (p.estoque === 0) {
-          arr.push({ tipo: "critico", titulo: p.nome, msg: "Sem estoque disponível" });
-        } else if (p.estoque <= p.estoque_minimo) {
-          arr.push({ tipo: "baixo", titulo: p.nome, msg: `Estoque: ${p.estoque} un. (mín. ${p.estoque_minimo})` });
-        }
+      let excluidos: number[] = [];
+      try {
+        const raw = JSON.parse(localStorage.getItem(LS_DISMISS) || "[]");
+        excluidos = Array.isArray(raw) ? raw.filter((x): x is number => typeof x === "number") : [];
+      } catch { excluidos = []; }
+      const arr: AlertaEstoque[] = [];
+      const aindaExcluidos: number[] = [];
+      for (const p of (produtos as Produto[]).filter(p => p.ativo)) {
+        const critico = p.estoque === 0;
+        const baixo = !critico && p.estoque <= p.estoque_minimo;
+        if (!critico && !baixo) continue; // normalizou → sai da lista de dispensados (volta a alertar se cair de novo)
+        if (excluidos.includes(p.id)) { aindaExcluidos.push(p.id); continue; }
+        arr.push({
+          id: p.id,
+          tipo: critico ? "critico" : "baixo",
+          titulo: p.nome,
+          msg: critico ? "Sem estoque disponível" : `Estoque: ${p.estoque} un. (mín. ${p.estoque_minimo})`,
+        });
       }
+      localStorage.setItem(LS_DISMISS, JSON.stringify(aindaExcluidos));
       setAlertasEstoque(arr);
     }).catch(() => {});
   }, []);
 
+  useEffect(() => { loadSistema(); loadEstoque(); }, [loadSistema, loadEstoque]);
+  // Recarrega sempre que abrir o sino — badge nunca fica defasado
+  useEffect(() => { if (notifOpen) { loadSistema(); loadEstoque(); } }, [notifOpen, loadSistema, loadEstoque]);
+
   const totalNotificacoes = alertas.length + alertasEstoque.length;
 
+  function dispensarEstoque(id: number) {
+    const atuais: number[] = JSON.parse(localStorage.getItem(LS_DISMISS) || "[]");
+    const lista = Array.isArray(atuais) ? atuais.filter(x => typeof x === "number") : [];
+    if (!lista.includes(id)) lista.push(id);
+    localStorage.setItem(LS_DISMISS, JSON.stringify(lista));
+    setAlertasEstoque(prev => prev.filter(a => a.id !== id));
+  }
+
+  async function dispensarSistema(id: number) {
+    if (id < 0) {
+      // Virtual (calculado): dispensa local; volta sozinho se a condição persistir após normalizar
+      let disp: number[] = [];
+      try { disp = JSON.parse(localStorage.getItem(LS_SYS_DISMISS) || "[]"); if (!Array.isArray(disp)) disp = []; } catch { disp = []; }
+      if (!disp.includes(id)) disp.push(id);
+      localStorage.setItem(LS_SYS_DISMISS, JSON.stringify(disp));
+    } else {
+      try { await api.alertas.markLido(id); } catch {}
+    }
+    setAlertas(prev => prev.filter(a => a.id !== id));
+  }
+
   async function limparNotificacoes() {
-    // Limpa alertas do sistema
-    localStorage.setItem("almox_alertas", "[]");
+    // Sistema: marca como lido no backend (não só esconde local)
+    const virtuais = alertas.filter(a => a.id < 0).map(a => a.id);
+    if (virtuais.length > 0) localStorage.setItem(LS_SYS_DISMISS, JSON.stringify(virtuais));
+    for (const a of alertas) { if (a.id >= 0) { try { await api.alertas.markLido(a.id); } catch {} } }
     setAlertas([]);
-    // Limpa alertas de estoque (salva nomes como excluídos)
-    const nomes = alertasEstoque.map(a => a.titulo);
-    localStorage.setItem("almox_alertas_estoque_excluidos", JSON.stringify(nomes));
+    localStorage.setItem("almox_alertas", "[]");
+    // Estoque: dispensa por ID (reativa sozinho quando o estoque normalizar)
+    const ids = alertasEstoque.map(a => a.id);
+    localStorage.setItem(LS_DISMISS, JSON.stringify(ids));
     setAlertasEstoque([]);
     setNotifOpen(false);
   }
@@ -127,13 +200,18 @@ export default function Header({ user, title, subtitle, onLogout, onMenu }: Head
                     <AlertTriangle className="h-3.5 w-3.5" />
                     Estoque Baixo / Indisponível
                   </div>
-                  {alertasEstoque.slice(0, 10).map((a, i) => (
-                    <div key={`est-${i}`} className="flex items-start gap-2.5 border-b border-gray-50 px-4 py-2.5 last:border-0 hover:bg-gray-50 transition">
+                  {alertasEstoque.slice(0, 10).map((a) => (
+                    <div key={`est-${a.id}`} className="group flex items-start gap-2.5 border-b border-gray-50 px-4 py-2.5 last:border-0 hover:bg-gray-50 transition cursor-pointer"
+                      onClick={() => { setNotifOpen(false); navigate("/entradas?novo=true&produto=" + a.id); }} title="Clique para dar entrada">
                       <AlertCircle className={`mt-0.5 h-4 w-4 shrink-0 ${a.tipo === "critico" ? "text-red-500" : "text-amber-500"}`} />
                       <div className="min-w-0 flex-1">
                         <div className="text-xs font-semibold text-gray-900 truncate">{a.titulo}</div>
                         <div className="text-[11px] text-gray-500">{a.msg}</div>
                       </div>
+                      <button onClick={(e) => { e.stopPropagation(); dispensarEstoque(a.id); }} title="Dispensar"
+                        className="rounded p-1 text-gray-300 opacity-0 transition hover:bg-gray-200 hover:text-gray-600 group-hover:opacity-100">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   ))}
                   {alertasEstoque.length > 10 && (
@@ -150,12 +228,24 @@ export default function Header({ user, title, subtitle, onLogout, onMenu }: Head
                   <div className="bg-blue-50 px-4 py-2 text-[11px] font-semibold uppercase text-blue-700">
                     Sistema
                   </div>
-                  {alertas.map((a, i) => (
-                    <div key={`sys-${i}`} className="border-b border-gray-50 px-4 py-2.5 last:border-0 hover:bg-gray-50 transition">
-                      <div className="text-xs font-medium text-gray-900">{a.titulo}</div>
-                      <div className="text-[11px] text-gray-500 mt-0.5">{a.mensagem}</div>
+                  {alertas.map((a) => {
+                    const rota = rotaSistema(a.tipo);
+                    return (
+                    <div key={`sys-${a.id}`} className={`group flex items-start gap-2 border-b border-gray-50 px-4 py-2.5 last:border-0 hover:bg-gray-50 transition ${rota ? "cursor-pointer" : ""}`}
+                      onClick={rota ? () => { setNotifOpen(false); navigate(rota); } : undefined} title={rota ? "Clique para ver" : undefined}>
+                      {iconeSistema(a.tipo)}
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-medium text-gray-900">{a.titulo}</div>
+                        <div className="text-[11px] text-gray-500 mt-0.5">{a.mensagem}</div>
+                        {a.data_alerta && <div className="text-[10px] text-gray-400 mt-0.5">{fmtData(a.data_alerta)}</div>}
+                      </div>
+                      <button onClick={(e) => { e.stopPropagation(); dispensarSistema(a.id); }} title="Marcar como lida"
+                        className="rounded p-1 text-gray-300 opacity-0 transition hover:bg-gray-200 hover:text-gray-600 group-hover:opacity-100">
+                        <X className="h-3.5 w-3.5" />
+                      </button>
                     </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
 

@@ -51,6 +51,7 @@ export interface Movimentacao {
   produto_id: number;
   produto_nome: string | null;
   produto_codigo?: string;
+  cod_produto?: string;
   quantidade: number;
   loja_origem_id: number | null;
   loja_origem_nome: string | null;

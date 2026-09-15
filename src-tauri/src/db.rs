@@ -342,15 +342,13 @@ pub fn seed_data(conn: &Connection) -> Result<()> {
 
     let now = chrono::Local::now().to_rfc3339();
 
-    let alertas: &[(&str, &str, &str)] = &[
-        ("estoque_baixo", "87 itens com estoque abaixo do mínimo", "Verifique e reabasteça os itens."),
-        ("solicitacao", "12 solicitações de pedido pendentes", "Acesse para analisar e aprovar."),
-        ("vencimento", "5 itens próximos do vencimento", "Verifique itens com validade próxima."),
-    ];
-    for a in alertas {
+    // Sem seeds falsos: o campo Sistema é calculado em tempo real (list_alertas).
+    // Apenas boas-vindas, uma única vez e somente se a tabela estiver vazia.
+    let total_alertas: i64 = conn.query_row("SELECT COUNT(*) FROM alertas", [], |r| r.get(0)).unwrap_or(0);
+    if total_alertas == 0 {
         conn.execute(
-            "INSERT OR IGNORE INTO alertas (tipo, titulo, mensagem, data_alerta) VALUES (?1, ?2, ?3, ?4)",
-            params![a.0, a.1, a.2, &now],
+            "INSERT INTO alertas (tipo, titulo, mensagem, data_alerta) VALUES ('info', 'Bem-vindo ao Estoque de T.I', 'Os avisos do sistema aparecem aqui com dados reais do seu estoque.', ?1)",
+            params![&now],
         )?;
     }
 

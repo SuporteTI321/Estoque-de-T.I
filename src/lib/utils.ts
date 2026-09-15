@@ -16,15 +16,22 @@ export function siglaCategoria(catNome?: string | null, catId?: number | null): 
  * Retorna a lista com o campo `codigo` atualizado.
  */
 export function renumerar(lista: Produto[]): Produto[] {
+  // Usa max+1 (não índice) para nunca colidir com códigos existentes após exclusões
+  let max = 0;
+  for (const p of lista) {
+    const m = p.codigo?.match(/^(\d+)-/);
+    if (m) { const n = parseInt(m[1], 10); if (n > max) max = n; }
+  }
+  let next = max + 1;
   return [...lista]
     .sort((a, b) => a.id - b.id)
-    .map((p, i) => {
+    .map((p) => {
       // Preserva o codigo real vindo do banco
       if (p.codigo) return p;
       const sigla = siglaCategoria(p.categoria_nome, p.categoria_id);
       return {
         ...p,
-        codigo: `${String(i + 1).padStart(5, "0")}-${sigla}`,
+        codigo: `${String(next++).padStart(5, "0")}-${sigla}`,
       };
     });
 }

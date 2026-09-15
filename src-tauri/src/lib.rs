@@ -1708,8 +1708,38 @@ fn create_pedido(
 #[tauri::command(rename_all = "snake_case")]
 fn list_alertas() -> Result<Vec<Alerta>, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let now = chrono::Local::now().to_rfc3339();
+    let mut out = Vec::new();
+    // Alertas calculados em tempo real (IDs negativos = virtuais, nunca persistem)
+    let zerados: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM produtos WHERE ativo=1 AND estoque=0",
+        [], |r| r.get(0)).unwrap_or(0);
+    if zerados > 0 {
+        out.push(Alerta {
+            id: -1,
+            tipo: "estoque_zerado".to_string(),
+            titulo: format!("{} produto(s) sem estoque", zerados),
+            mensagem: "Itens zerados precisam de reposição.".to_string(),
+            data_alerta: now.clone(),
+            lido: false,
+        });
+    }
+    let baixos: i64 = conn.query_row(
+        "SELECT COUNT(*) FROM produtos WHERE ativo=1 AND estoque>0 AND estoque<=estoque_minimo",
+        [], |r| r.get(0)).unwrap_or(0);
+    if baixos > 0 {
+        out.push(Alerta {
+            id: -2,
+            tipo: "estoque_baixo".to_string(),
+            titulo: format!("{} produto(s) abaixo do mínimo", baixos),
+            mensagem: "Verifique e reabasteça os itens.".to_string(),
+            data_alerta: now.clone(),
+            lido: false,
+        });
+    }
+    // Alertas manuais não-lidos do banco
     let mut stmt = conn
-        .prepare("SELECT id, tipo, titulo, mensagem, data_alerta, lido FROM alertas ORDER BY data_alerta DESC")
+        .prepare("SELECT id, tipo, titulo, mensagem, data_alerta, lido FROM alertas WHERE lido=0 ORDER BY data_alerta DESC")
         .map_err(|e| e.to_string())?;
     let rows = stmt
         .query_map([], |row| {
@@ -1723,7 +1753,6 @@ fn list_alertas() -> Result<Vec<Alerta>, String> {
             })
         })
         .map_err(|e| e.to_string())?;
-    let mut out = Vec::new();
     for r in rows {
         out.push(r.map_err(|e| e.to_string())?);
     }
@@ -1732,6 +1761,7 @@ fn list_alertas() -> Result<Vec<Alerta>, String> {
 
 #[tauri::command(rename_all = "snake_case")]
 fn mark_alerta_lido(id: i64) -> Result<(), String> {
+    if id < 0 { return Ok(()); } // alerta calculado (virtual) — dispensa é só local no frontend
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     conn.execute("UPDATE alertas SET lido=1 WHERE id=?1", params![id])
         .map_err(|e| e.to_string())?;

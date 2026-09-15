@@ -9,6 +9,7 @@ import Window from "../components/Window";
 import type { Produto, Categoria } from "../lib/types";
 import { api, store } from "../lib/api";
 import { renumerar, siglaCategoria, migrarCodigos } from "../lib/utils";
+import { previewCodigo } from "../lib/regrasCodigo";
 import { CATS_PADRAO, normCat } from "../lib/constants";
 
 export default function Produtos() {
@@ -121,7 +122,8 @@ export default function Produtos() {
 
   function openNew() {
     setEditing(null);
-    setForm({ codigo: '', unidade: 'un', estoque: 0, estoque_minimo: 0, ativo: true, preco_compra: 0, preco_venda: 0, custo_total: 0 });
+    // Gera código imediatamente para o usuário VER (número = max+1, sigla PROD até escolher categoria)
+    setForm({ codigo: previewCodigo(proximoNumero(), 'PROD'), unidade: 'un', estoque: 0, estoque_minimo: 0, ativo: true, preco_compra: 0, preco_venda: 0, custo_total: 0 });
     setOpen(true);
   }
   function openEdit(p: Produto) {
@@ -139,12 +141,13 @@ export default function Produtos() {
         setOpen(false);
         setTimeout(() => load(), 300);
       } else {
-        const catNome = cats.find(c => c.id === form.categoria_id)?.nome || null;
-        // Gera código automaticamente se estiver vazio
+        const catSel = cats.find(c => c.id === form.categoria_id);
+        const catNome = catSel?.nome || null;
+        // Gera código automaticamente se estiver vazio (fallback de segurança)
         let codigo = form.codigo;
         if (!codigo || codigo.trim() === '') {
-          const sigla = siglaCategoria(catNome);
-          codigo = `${String(proximoNumero()).padStart(5, '0')}-${sigla}`;
+          const sigla = siglaCategoria(catNome, form.categoria_id ?? undefined);
+          codigo = previewCodigo(proximoNumero(), sigla);
         }
         const n = await api.produtos.create({ ...form, codigo, categoria_nome: catNome } as Omit<Produto, "id">);
         if (n) {
@@ -304,9 +307,10 @@ export default function Produtos() {
         <div className="space-y-3">
           <div className="grid grid-cols-[120px_1fr] gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700">Código</label>
+              <label className="block text-sm font-medium text-gray-700">Código <span className="ml-1 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">AUTO</span></label>
               <input value={form.codigo || ""} onChange={(e) => setForm(f => ({ ...f, codigo: e.target.value.toUpperCase() }))}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm uppercase" placeholder="00001-PROD" />
+                className="mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm uppercase font-mono font-semibold text-slate-700" placeholder="00001-PROD"
+                title="Código gerado automaticamente (número + sigla da categoria). Pode editar se precisar." />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Produto</label>
@@ -334,11 +338,14 @@ export default function Produtos() {
                 else {
                   const catId = e.target.value ? Number(e.target.value) : null;
                   const cat = cats.find(c => c.id === catId);
-                  const sigla = siglaCategoria(cat?.nome);
-                  // Gera código apenas se for novo produto e código ainda não definido
-                  const novoCodigo = (!editing && !form.codigo) || (!editing && form.codigo?.endsWith('-PROD'))
-                    ? `${String(proximoNumero()).padStart(5, '0')}-${sigla}`
-                    : form.codigo;
+                  const sigla = siglaCategoria(cat?.nome, catId);
+                  // Novo produto: preserva o número e troca só a sigla (não pula sequência ao trocar de categoria)
+                  let novoCodigo = form.codigo;
+                  if (!editing) {
+                    const m = form.codigo?.match(/^(\d+)-/);
+                    const num = m ? m[1] : String(proximoNumero()).padStart(5, '0');
+                    novoCodigo = `${num}-${sigla}`;
+                  }
                   setForm(f => ({ ...f, categoria_id: catId, codigo: novoCodigo }));
                 }
               }} className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
@@ -406,7 +413,14 @@ export default function Produtos() {
             <Button onClick={async () => {
               if (!novaCat.trim()) return;
               const c = await api.categorias.create({ nome: novaCat.trim().toUpperCase(), descricao: null, ativa: true });
-              if (c) { setCats(prev => [...prev, c]); setForm({ ...form, categoria_id: c?.id ?? null }); }
+              if (c) {
+                setCats(prev => [...prev, c]);
+                // Regenera sigla do código com a nova categoria (preserva número)
+                const sigla = siglaCategoria(c?.nome, c?.id);
+                const m = form.codigo?.match(/^(\d+)-/);
+                const num = m ? m[1] : String(proximoNumero()).padStart(5, '0');
+                setForm({ ...form, categoria_id: c?.id ?? null, codigo: !editing ? `${num}-${sigla}` : form.codigo });
+              }
               setShowNewCat(false); setNovaCat("");
             }} disabled={!novaCat.trim()}>Salvar</Button>
           </div>

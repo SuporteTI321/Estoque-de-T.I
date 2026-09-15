@@ -89,19 +89,66 @@ export default function Etiquetas() {
 
   const [carregando, setCarregando] = useState(true)
   const [buscaPreview, setBuscaPreview] = useState('')
-  const [_perfis, setPerfis] = useState<any[]>([])
-  const [_nomePerfil, _setNomePerfil] = useState('')
+  const [perfis, setPerfis] = useState<any[]>([])
+  const [nomePerfil, setNomePerfil] = useState('')
   const [mostrarConfig, setMostrarConfig] = useState(true)
   const [copiadoPreset, setCopiadoPreset] = useState<string | null>(null)
   const [zoom, setZoom] = useState(1)
   const [mostrarModalProdutos, setMostrarModalProdutos] = useState(false)
 
   const [secoesAbertas, setSecoesAbertas] = useState<Record<string, boolean>>({
-    presets: false, perfis: false, papelFormato: false,
+    presets: false, perfis: true, papelFormato: false,
     layout: false, campos: false, posicaoFolha: false, posicoes: false, tamanhos: false, individual: false,
   })
   const toggleSecao = useCallback((key: string) => {
     setSecoesAbertas(prev => ({ ...prev, [key]: !prev[key] }))
+  }, [])
+
+  // Perfis: Salvar / Carregar / Excluir
+  const coletarCfgAtual = useCallback(() => ({
+    papel, formato, largura, altura, margemSup, margemEsq, margemDir, margemInf,
+    colunas, espacoH, espacoV, inicioLinha, campos, mostrarBarra, borda,
+    tamanhoProd, tamanhoCod, tamanhoMarca, tamanhoModelo, tamanhoMarcaEtq, alturaBarra,
+    posicoes, negritos, alinhamentoH, alinhamentoV, folhaUnica, etiquetasIndividuais,
+  }), [papel, formato, largura, altura, margemSup, margemEsq, margemDir, margemInf, colunas, espacoH, espacoV, inicioLinha, campos, mostrarBarra, borda, tamanhoProd, tamanhoCod, tamanhoMarca, tamanhoModelo, tamanhoMarcaEtq, alturaBarra, posicoes, negritos, alinhamentoH, alinhamentoV, folhaUnica, etiquetasIndividuais])
+
+  const salvarPerfil = useCallback(() => {
+    const nome = nomePerfil.trim()
+    if (!nome) { alert("Informe um nome para o perfil"); return }
+    const cfgAtual = coletarCfgAtual()
+    const lista: any[] = JSON.parse(localStorage.getItem('etq_perfis') || '[]')
+    const idx = lista.findIndex((p: any) => p.nome.toLowerCase() === nome.toLowerCase())
+    if (idx >= 0) lista[idx] = { nome, cfg: cfgAtual, data: new Date().toISOString() }
+    else lista.push({ nome, cfg: cfgAtual, data: new Date().toISOString() })
+    localStorage.setItem('etq_perfis', JSON.stringify(lista))
+    setPerfis(lista)
+    setNomePerfil('')
+  }, [nomePerfil, coletarCfgAtual])
+
+  const carregarPerfil = useCallback((nome: string) => {
+    const lista: any[] = JSON.parse(localStorage.getItem('etq_perfis') || '[]')
+    const perfil = lista.find((p: any) => p.nome === nome)
+    if (!perfil?.cfg) return
+    const c = perfil.cfg
+    setPapel(c.papel ?? 'a4'); setFormato(c.formato ?? 'medio')
+    setLargura(c.largura ?? 70); setAltura(c.altura ?? 35)
+    setMargemSup(c.margemSup ?? 5); setMargemEsq(c.margemEsq ?? 5); setMargemDir(c.margemDir ?? 5); setMargemInf(c.margemInf ?? 5)
+    setColunas(c.colunas ?? 3); setEspacoH(c.espacoH ?? 0); setEspacoV(c.espacoV ?? 0); setInicioLinha(c.inicioLinha ?? 1)
+    setCampos(c.campos ?? ['codigo','produto']); setMostrarBarra(c.mostrarBarra ?? false); setBorda(c.borda ?? { ativa:false })
+    setTamanhoProd(c.tamanhoProd ?? 2.8); setTamanhoCod(c.tamanhoCod ?? 2.1); setTamanhoMarca(c.tamanhoMarca ?? 1.8)
+    setTamanhoModelo(c.tamanhoModelo ?? 1.4); setTamanhoMarcaEtq(c.tamanhoMarcaEtq ?? 1.4); setAlturaBarra(c.alturaBarra ?? 10)
+    setPosicoes(c.posicoes ?? { codigo:{top:2,left:1}, produto:{top:6,left:1}, marca:{top:14,left:1}, modelo:{top:18,left:1}, marcaEtiqueta:{top:22,left:1}, barra:{top:60,left:1} })
+    setNegritos(c.negritos ?? { codigo:false, produto:true })
+    setAlinhamentoH(c.alinhamentoH ?? 'center'); setAlinhamentoV(c.alinhamentoV ?? 'start')
+    setFolhaUnica(c.folhaUnica ?? true); setEtiquetasIndividuais(c.etiquetasIndividuais ?? {})
+  }, [])
+
+  const excluirPerfil = useCallback((nome: string) => {
+    if (!confirm(`Excluir perfil "${nome}"?`)) return
+    const lista: any[] = JSON.parse(localStorage.getItem('etq_perfis') || '[]')
+    const nova = lista.filter((p: any) => p.nome !== nome)
+    localStorage.setItem('etq_perfis', JSON.stringify(nova))
+    setPerfis(nova)
   }, [])
 
   // Auto-save
@@ -308,6 +355,8 @@ export default function Etiquetas() {
                 copiadoPreset={copiadoPreset} aplicarPreset={aplicarPreset}
                 selecionados={selecionados} setMostrarModalProdutos={setMostrarModalProdutos}
                 limpar={limpar}
+                perfis={perfis} nomePerfil={nomePerfil} setNomePerfil={setNomePerfil}
+                salvarPerfil={salvarPerfil} carregarPerfil={carregarPerfil} excluirPerfil={excluirPerfil}
               />
             )}
 

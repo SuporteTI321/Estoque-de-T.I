@@ -2,7 +2,7 @@
  * EtiquetaConfig — Painel lateral de configuração
  * Extraído e convertido de: controle-estoque-tauri (Next.js) → React/Vite/Tauri
  */
-import { ChevronDown, ChevronRight } from 'lucide-react'
+import { ChevronDown, ChevronRight, Save, Trash2, FolderOpen } from 'lucide-react'
 
 interface SecaoProps {
   titulo: string
@@ -61,6 +61,8 @@ interface EtiquetaConfigProps {
   PRESETS: any[]; copiadoPreset: string | null; aplicarPreset: (p: any) => void
   selecionados: number[]; setMostrarModalProdutos: (v: boolean) => void
   limpar: () => void
+  perfis: any[]; nomePerfil: string; setNomePerfil: (v: string) => void
+  salvarPerfil: () => void; carregarPerfil: (nome: string) => void; excluirPerfil: (nome: string) => void
 }
 
 export default function EtiquetaConfig(props: EtiquetaConfigProps) {
@@ -76,6 +78,7 @@ export default function EtiquetaConfig(props: EtiquetaConfigProps) {
     alinhamentoV, setAlinhamentoV, etqPorPagina, totalPaginas,
     PRESETS, copiadoPreset, aplicarPreset,
     selecionados, setMostrarModalProdutos, limpar,
+    perfis, nomePerfil, setNomePerfil, salvarPerfil, carregarPerfil, excluirPerfil,
   } = props
 
   return (
@@ -87,6 +90,31 @@ export default function EtiquetaConfig(props: EtiquetaConfigProps) {
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {/* Perfis Salvos */}
+        <Secao titulo={`Perfis Salvos${perfis.length ? ` (${perfis.length})` : ''}`} aberta={secoesAbertas.perfis} aoToggle={() => toggleSecao('perfis')}>
+          <div className="space-y-2">
+            <div className="flex gap-1.5">
+              <input value={nomePerfil} onChange={e => setNomePerfil(e.target.value)} placeholder="Nome do perfil..." className="flex-1 rounded-md border border-slate-200 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none" onKeyDown={e => { if (e.key === 'Enter') salvarPerfil(); }} />
+              <button onClick={salvarPerfil} className="flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-blue-700"><Save size={12} />Salvar</button>
+            </div>
+            {perfis.length === 0 ? (
+              <p className="text-[11px] text-slate-400 text-center py-2">Nenhum perfil salvo</p>
+            ) : (
+              <div className="space-y-1 max-h-40 overflow-y-auto">
+                {perfis.map((p: any) => (
+                  <div key={p.nome} className="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
+                    <FolderOpen size={12} className="text-slate-400 shrink-0" />
+                    <span className="flex-1 truncate text-xs font-medium text-slate-700">{p.nome}</span>
+                    <button onClick={() => carregarPerfil(p.nome)} className="rounded bg-blue-600 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-blue-700">Carregar</button>
+                    <button onClick={() => excluirPerfil(p.nome)} className="rounded p-1 text-slate-400 hover:text-red-500 hover:bg-red-50"><Trash2 size={12} /></button>
+                  </div>
+                ))}
+              </div>
+            )}
+            <p className="text-[10px] text-slate-400">Salva papel, margens, colunas, campos, posições e tamanhos.</p>
+          </div>
+        </Secao>
+
         {/* Presets */}
         <Secao titulo="Presets" aberta={secoesAbertas.presets} aoToggle={() => toggleSecao('presets')}>
           <div className="grid grid-cols-2 gap-1.5">
