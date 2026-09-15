@@ -44,7 +44,8 @@ export default function Entradas() {
         const mapa = new Map(migrados.map(pp => [pp.id, pp.codigo]));
                   setProdutos(migrados);
           setLojas(l);
-          setMovs(m.filter(x => x.tipo === "entrada").map(x => ({ ...x, produto_codigo: mapa.get(x.produto_id) || "" 
+          setMovs(m.filter(x => x.tipo === "entrada").map(x => ({ ...x, produto_codigo: mapa.get(x.produto_id) || "",
+            cod_produto: x.observacao?.match(/^cod_produto:(.+)$/m)?.[1]?.trim() || "" 
 })).sort((a,b) => new Date(a.data_movimento).getTime() - new Date(b.data_movimento).getTime()));
         setErro(null);
       })
@@ -52,14 +53,14 @@ export default function Entradas() {
   }
   useEffect(() => { loadData(); }, []);
 
-  // Abre form automaticamente se veio com ?novo=true
+  // Abre form automaticamente se veio com ?novo=true (sem depender de produtos para nao reabrir apos save)
   useEffect(() => {
     if (searchParams.get("novo") === "true") {
       const prodId = searchParams.get("produto");
       if (prodId) setForm(f => ({ ...f, produto_id: prodId }));
       setOpen(true);
     }
-  }, [searchParams, produtos]);
+  }, [searchParams]);
 
   async function handleSave() {
     try {
@@ -69,7 +70,7 @@ export default function Entradas() {
         const validas = loteItens.filter(i => i.cod_produto.trim());
         if (!form.produto_id) { alert("Selecione o produto."); return; }
         if (validas.length === 0) { alert("Adicione ao menos um item com Cod. Produto."); return; }
-        if (validas.length > 20) { alert("Limite de 20 linhas por lote."); return; }
+        if (validas.length > 100) { alert("Limite de 100 linhas por lote."); return; }
         if (validas.some(i => !Number.isFinite(Number(i.quantidade)) || Number(i.quantidade) <= 0)) {
           alert("Quantidades do lote devem ser numeros maiores que zero.");
           return;
@@ -108,6 +109,7 @@ export default function Entradas() {
         loadData();
         return;
       }
+      if (!form.produto_id) { alert("Selecione o produto."); return; }
       const qtdNum = Number(form.quantidade);
       if (!Number.isFinite(qtdNum) || qtdNum <= 0) {
         alert("Informe uma quantidade valida (maior que zero).");
@@ -171,8 +173,7 @@ export default function Entradas() {
           return p?.categoria_nome || "—";
         }},
     { key: "id", label: "Cod. Produto", width: "130px", align: "center", render: (r) => {
-      const m = r.observacao?.match(/^cod_produto:(.+)$/);
-      return m?.[1] || "—";
+      return r.cod_produto || r.observacao?.match(/^cod_produto:(.+)$/m)?.[1]?.trim() || "—";
     }},
         { key: "quantidade", label: "Quantidade", width: "120px", align: "center", render: (r) => r.quantidade },
     { key: "data_movimento", label: "Data", width: "120px", align: "center", render: (r) => new Date(r.data_movimento).toLocaleDateString("pt-BR") },
@@ -207,8 +208,8 @@ export default function Entradas() {
       <DataTable<Movimentacao>
         data={movs}
         columns={cols}
-        searchKeys={["produto_nome", "produto_codigo"]}
-        searchPlaceholder="Buscar por produto ou codigo..."
+        searchKeys={["produto_nome", "produto_codigo", "cod_produto"]}
+        searchPlaceholder="Buscar por produto, codigo ou cod. produto..."
         emptyMessage="Nenhuma entrada registrada"
       />
 
@@ -223,6 +224,16 @@ export default function Entradas() {
         </>}
       >
         <div className="space-y-3 py-1">
+        {!editing && (
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Produto</label>
+            <select value={form.produto_id} onChange={(e) => setForm({ ...form, produto_id: e.target.value })}
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+              <option value="">Selecione o produto...</option>
+              {produtos.map(pp => <option key={pp.id} value={pp.id}>{pp.codigo ? `${pp.codigo} — ` : ""}{pp.nome}</option>)}
+            </select>
+          </div>
+        )}
         <div className="grid grid-cols-[120px_1fr] gap-3">
           <div>
             <label className="block text-sm font-medium text-gray-700">Codigo</label>
