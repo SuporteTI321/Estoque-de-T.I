@@ -1,19 +1,30 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package as PackageIcon, Plus, Pencil, Trash2, ArrowDownToLine, ArrowUpFromLine } from "lucide-react";
+import { Package as PackageIcon, Plus, Pencil, Trash2, ArrowDownToLine, ArrowUpFromLine, RotateCcw, Search } from "lucide-react";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
 import DataTable, { type Column } from "../components/DataTable";
 import Button from "../components/Button";
 import Window from "../components/Window";
-import type { Produto, Categoria } from "../lib/types";
+import type { Produto, Categoria, Movimentacao } from "../lib/types";
 import { api, store } from "../lib/api";
+import { useAuth } from "../lib/useAuth";
 import { renumerar, siglaCategoria, migrarCodigos } from "../lib/utils";
 import { previewCodigo } from "../lib/regrasCodigo";
 import { CATS_PADRAO, normCat } from "../lib/constants";
 
+// Linha da janela de retorno: uma saída registrada ainda não devolvida (integralmente)
+type LinhaRetorno = {
+  mov: Movimentacao;
+  codigo: string;
+  solicitante: string;
+  devolvido: number;
+  saldo: number;
+};
+
 export default function Produtos() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [items, setItems] = useState<Produto[]>([]);
   const [cats, setCats] = useState<Categoria[]>([]);
   const [open, setOpen] = useState(false);
@@ -26,6 +37,22 @@ export default function Produtos() {
   const [selectedIds, setSelectedIds] = useState<Set<number | string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
   const [bulkForm, setBulkForm] = useState<{ categoria_id: number | null; unidade: string }>({ categoria_id: null, unidade: "" });
+
+  // ── Retorno de saída (devolução de produtos que já saíram) ──
+  const [retOpen, setRetOpen] = useState(false);
+  const [retProdFiltro, setRetProdFiltro] = useState<number | null>(null);
+  const [retMovs, setRetMovs] = useState<Movimentacao[]>([]);
+  const [retBusca, setRetBusca] = useState("");
+  const [retSel, setRetSel] = useState<Set<number>>(new Set());
+  const [retQtd, setRetQtd] = useState<Record<number, number>>({});
+  const [retData, setRetData] = useState<string>(() => hojeISO());
+  const [retCarregando, setRetCarregando] = useState(false);
+  const [retSalvando, setRetSalvando] = useState(false);
+
+  function hojeISO(): string {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  }
 
 
 
@@ -173,6 +200,162 @@ export default function Produtos() {
     } catch {}
   }
 
+  // ─────────────────────────────────────────────────────────────
+  //  Retorno de saída — devolve ao estoque produtos que já saíram
+  // ─────────────────────────────────────────────────────────────
+
+  // Saldo pendente por saída: total saído menos o já devolvido.
+  // Cada devolução é gravada como movimentação tipo "entrada" com
+  // saida_ref:<id_da_saida_original> na observação.
+  const linhasRetorno = useMemo<LinhaRetorno[]>(() => {
+    const devolvidos = new Map<number, number>();
+    for (const m of retMovs) {
+      if (m.tipo !== "entrada") continue;
+      const ref = m.observacao?.match(/saida_ref:\s*(\d+)/)?.[1];
+      if (!ref) continue;
+      const id = Number(ref);
+      devolvidos.set(id, (devolvidos.get(id) || 0) + Number(m.quantidade || 0));
+    }
+    const termo = retBusca.trim().toLowerCase();
+    const saidas: LinhaRetorno[] = [];
+    for (const m of retMovs) {
+      if (m.tipo !== "saida") continue;
+      if (retProdFiltro !== null && m.produto_id !== retProdFiltro) continue;
+      const total = Number(m.quantidade || 0);
+      const devolvido = Math.min(devolvidos.get(m.id) || 0, total);
+      const saldo = total - devolvido;
+      if (saldo <= 0) continue;
+      const codigo = m.observacao?.match(/^cod_produto:(.+)$/m)?.[1]?.trim() || "";
+      const solicitante = m.observacao?.match(/por ([^-]+) - /)?.[1]?.trim() || "";
+      const nome = m.produto_nome || "";
+      if (termo && !(
+        nome.toLowerCase().includes(termo) ||
+        codigo.toLowerCase().includes(termo) ||
+        solicitante.toLowerCase().includes(termo)
+      )) continue;
+      saidas.push({ mov: m, codigo, solicitante, devolvido, saldo });
+    }
+    return saidas.sort((a, b) =>
+      new Date(b.mov.data_movimento).getTime() - new Date(a.mov.data_movimento).getTime()
+    );
+  }, [retMovs, retProdFiltro, retBusca]);
+
+  async function carregarRetornos() {
+    setRetCarregando(true);
+    try {
+      setRetMovs(await api.movimentacoes.list());
+    } catch (e) {
+      console.error("[Retorno] falha ao carregar movimentações:", e);
+      setRetMovs([]);
+    } finally {
+      setRetCarregando(false);
+    }
+  }
+
+  async function abrirRetorno(produtoId: number | null = null) {
+    setRetProdFiltro(produtoId);
+    setRetBusca("");
+    setRetSel(new Set());
+    setRetQtd({});
+    setRetData(hojeISO());
+    setRetOpen(true);
+    await carregarRetornos();
+  }
+
+  function toggleRetorno(id: number) {
+    setRetSel(prev => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+    setRetQtd(prev => {
+      if (id in prev) return prev;
+      const l = linhasRetorno.find(x => x.mov.id === id);
+      return l ? { ...prev, [id]: l.saldo } : prev;
+    });
+  }
+
+  // Marca/desmarca todas as linhas (inclusive as filtradas pela busca)
+  function alternarTodosRetorno() {
+    const todos = linhasRetorno.map(l => l.mov.id);
+    const todosMarcados = todos.length > 0 && todos.every(id => retSel.has(id));
+    if (todosMarcados) {
+      setRetSel(new Set());
+      setRetQtd({});
+      return;
+    }
+    setRetSel(new Set(todos));
+    const qtds: Record<number, number> = {};
+    for (const l of linhasRetorno) qtds[l.mov.id] = l.saldo;
+    setRetQtd(prev => ({ ...qtds, ...prev }));
+  }
+
+  async function devolver() {
+    const alvos = linhasRetorno.filter(l => retSel.has(l.mov.id));
+    if (alvos.length === 0) { alert("Selecione ao menos uma saída para devolver."); return; }
+
+    const qtds = alvos.map(l => Number(retQtd[l.mov.id] ?? l.saldo));
+    if (qtds.some(q => !Number.isFinite(q) || q <= 0)) {
+      alert("Quantidades devem ser números maiores que zero."); return;
+    }
+    const acimaDoSaldo = alvos.filter((l, i) => qtds[i] > l.saldo);
+    if (acimaDoSaldo.length > 0) {
+      alert("Quantidade maior que a saída registrada em:\n" +
+        acimaDoSaldo.map(l => `• ${l.mov.produto_nome}${l.codigo ? ` (${l.codigo})` : ""} — saldo ${l.saldo}`).join("\n"));
+      return;
+    }
+    const totalUn = qtds.reduce((s, q) => s + q, 0);
+    if (!confirm(
+      `Confirmar retorno de ${alvos.length} saída(s), totalizando ${totalUn} unidade(s)?\n\n` +
+      `O estoque dos produtos será atualizado.`
+    )) return;
+
+    setRetSalvando(true);
+    const falhas: string[] = [];
+    let gravados = 0;
+    for (let i = 0; i < alvos.length; i++) {
+      const l = alvos[i];
+      try {
+        await api.movimentacoes.create({
+          tipo: "entrada",
+          produto_id: l.mov.produto_id,
+          produto_nome: l.mov.produto_nome,
+          quantidade: qtds[i],
+          loja_origem_id: null,
+          loja_origem_nome: null,
+          loja_destino_id: null,
+          loja_destino_nome: null,
+          usuario_id: user?.id ?? null,
+          observacao: [
+            `Retorno de saida - ${l.mov.produto_nome || ""}`,
+            `solicitante:${l.solicitante || "desconhecido"}`,
+            l.codigo ? `cod_produto:${l.codigo}` : null,
+            `saida_ref:${l.mov.id}`,
+          ].filter(Boolean).join("\n"),
+          // A saída original não reduziu custo_total: o retorno devolve só a quantidade,
+          // para não duplicar o valor em estoque.
+          preco_compra: 0,
+          unidade: l.mov.unidade ?? 1,
+          data_movimento: `${retData || hojeISO()}T12:00:00`,
+        });
+        gravados++;
+      } catch (e) {
+        falhas.push(`${l.mov.produto_nome}${l.codigo ? ` (${l.codigo})` : ""}: ${e instanceof Error ? e.message : String(e)}`);
+      }
+    }
+    setRetSalvando(false);
+
+    if (falhas.length > 0) {
+      alert(`Retorno concluído parcialmente.\n\nGravados: ${gravados}\nFalhas: ${falhas.length}\n\n${falhas.join("\n").slice(0, 800)}`);
+    }
+
+    setRetSel(new Set());
+    setRetQtd({});
+    await carregarRetornos(); // linhas totalmente devolvidas somem da lista
+    load();                   // atualiza estoque na tabela de produtos
+  }
+
   const cols: Column<Produto>[] = [
     { key: "codigo", label: "CÓDIGO", width: "130px", align: "center", render: (r) => (
       <span className="inline-flex items-center rounded-md bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700">{r.codigo || <span className="text-gray-300">—</span>}</span>
@@ -183,10 +366,11 @@ export default function Produtos() {
     { key: "categoria_nome", label: "CATEGORIA", width: "150px", render: (r) => r.categoria_nome ? String(r.categoria_nome).toUpperCase() : <span className="text-gray-300">—</span> },
     { key: "estoque_minimo", label: "ESTOQUE MÍNIMO", width: "120px", align: "center" },
     { key: "estoque", label: "ESTOQUE", width: "100px", align: "center" },
-    { key: "acoes", label: "Ação", align: "center", width: "100px", render: (r) => (
+    { key: "acoes", label: "Ação", align: "center", width: "140px", render: (r) => (
       <div className="flex justify-center gap-1">
         <button onClick={() => navigate("/entradas?novo=true&produto=" + r.id)} title="Nova Entrada" className="rounded p-1.5 text-green-600 hover:bg-green-50"><ArrowDownToLine className="h-3.5 w-3.5" /></button>
         <button onClick={() => navigate("/saida-registro?novo=true&produto=" + r.id)} title="Nova Saída" className="rounded p-1.5 text-orange-600 hover:bg-orange-50"><ArrowUpFromLine className="h-3.5 w-3.5" /></button>
+        <button onClick={() => abrirRetorno(r.id)} title="Retorno de Saída (devolver ao estoque)" className="rounded p-1.5 text-teal-600 hover:bg-teal-50"><RotateCcw className="h-3.5 w-3.5" /></button>
         <button onClick={() => openEdit(r)} className="rounded p-1.5 text-blue-600 hover:bg-blue-50"><Pencil className="h-3.5 w-3.5" /></button>
         <button onClick={() => del(r)} className="rounded p-1.5 text-red-600 hover:bg-red-50"><Trash2 className="h-3.5 w-3.5" /></button>
       </div>
@@ -202,6 +386,8 @@ export default function Produtos() {
         action={
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-400">Total: {items.length}</span>
+            <Button variant="secondary" icon={<RotateCcw className="h-4 w-4" />} onClick={() => abrirRetorno()}
+              title="Devolver ao estoque produtos que já tiveram saída">Retorno de Saída</Button>
             <Button icon={<Plus className="h-4 w-4" />} onClick={openNew}>Novo Produto</Button>
           </div>
         }
@@ -214,6 +400,7 @@ export default function Produtos() {
         selectable
         selectedIds={selectedIds}
         onSelectionChange={setSelectedIds}
+        pageSize={16}
       />
 
       {/* Barra de seleção em lote */}
@@ -492,6 +679,163 @@ export default function Produtos() {
           <div className="flex justify-end gap-2">
             <Button onClick={() => setShowNewUnid(false)} variant="ghost">Fechar</Button>
           </div>
+        </div>
+      </Window>
+
+      {/* Janela flutuante: Retorno de Saída (devolução, individual ou em lote) */}
+      <Window
+        open={retOpen}
+        onClose={() => setRetOpen(false)}
+        title="Retorno de Saída"
+        subtitle={retProdFiltro !== null
+          ? `Produto: ${items.find(p => p.id === retProdFiltro)?.nome || "—"}`
+          : "Devolva ao estoque produtos que já tiveram saída"}
+        size="xl"
+        footer={<>
+          <span className="mr-auto text-xs text-gray-500">
+            {retSel.size > 0
+              ? `${retSel.size} saída(s) selecionada(s) · ${linhasRetorno.filter(l => retSel.has(l.mov.id)).reduce((s, l) => s + Number(retQtd[l.mov.id] ?? l.saldo), 0)} unidade(s)`
+              : "Selecione as saídas para devolver"}
+          </span>
+          <Button variant="secondary" onClick={() => setRetOpen(false)}>Fechar</Button>
+          <Button variant="success" icon={<RotateCcw className="h-4 w-4" />} onClick={devolver}
+            disabled={retSalvando || retCarregando || retSel.size === 0}>
+            {retSalvando ? "Devolvendo..." : `Devolver${retSel.size > 0 ? ` (${retSel.size})` : ""}`}
+          </Button>
+        </>}
+      >
+        <div className="space-y-3">
+          {/* Barra de ferramentas: busca, data e seleção em lote */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="relative min-w-[220px] flex-1">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                value={retBusca}
+                onChange={(e) => setRetBusca(e.target.value)}
+                placeholder="Buscar por produto, código ou solicitante..."
+                className="w-full rounded-lg border border-gray-300 bg-gray-50 py-2 pl-9 pr-3 text-sm outline-none focus:border-blue-400 focus:bg-white"
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-medium text-gray-500">Data do retorno</label>
+              <input
+                type="date"
+                value={retData}
+                onChange={(e) => setRetData(e.target.value)}
+                className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              />
+            </div>
+            <button
+              onClick={alternarTodosRetorno}
+              disabled={linhasRetorno.length === 0}
+              className="rounded-lg border border-gray-300 px-3 py-2 text-xs font-medium text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {linhasRetorno.length > 0 && linhasRetorno.every(l => retSel.has(l.mov.id)) ? "Desmarcar todos" : "Marcar todos"}
+            </button>
+          </div>
+
+          {/* Resumo */}
+          <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
+            <span>{linhasRetorno.length} saída(s) disponível(is) para retorno</span>
+            {retProdFiltro !== null && (
+              <button onClick={() => setRetProdFiltro(null)}
+                className="rounded bg-blue-50 px-2 py-0.5 font-medium text-blue-700 hover:bg-blue-100">
+                filtro: {items.find(p => p.id === retProdFiltro)?.nome || "produto"} ✕
+              </button>
+            )}
+          </div>
+
+          {/* Lista de saídas pendentes */}
+          {retCarregando ? (
+            <div className="py-10 text-center text-sm text-gray-400">Carregando saídas...</div>
+          ) : linhasRetorno.length === 0 ? (
+            <div className="py-10 text-center">
+              <p className="text-sm font-medium text-gray-500">Nenhuma saída pendente de retorno</p>
+              <p className="mt-1 text-xs text-gray-400">
+                {retProdFiltro !== null ? "Este produto não tem saídas em aberto." : "Todas as saídas já foram devolvidas."}
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 text-[11px] font-semibold uppercase text-gray-500">
+                  <tr>
+                    <th className="w-10 px-3 py-2.5 text-center">
+                      <input
+                        type="checkbox"
+                        checked={linhasRetorno.every(l => retSel.has(l.mov.id))}
+                        onChange={alternarTodosRetorno}
+                        className="h-4 w-4 cursor-pointer accent-teal-600"
+                        title="Marcar todas as linhas listadas"
+                      />
+                    </th>
+                    <th className="px-3 py-2.5 text-left">Código</th>
+                    <th className="px-3 py-2.5 text-left">Produto</th>
+                    <th className="px-3 py-2.5 text-left">Solicitante</th>
+                    <th className="px-3 py-2.5 text-left">Data Saída</th>
+                    <th className="px-3 py-2.5 text-center">Saída</th>
+                    <th className="px-3 py-2.5 text-center">Devolvido</th>
+                    <th className="px-3 py-2.5 text-center">Saldo</th>
+                    <th className="px-3 py-2.5 text-center">Devolver</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {linhasRetorno.map((l) => {
+                    const marcado = retSel.has(l.mov.id);
+                    const qtd = retQtd[l.mov.id] ?? l.saldo;
+                    return (
+                      <tr key={l.mov.id} className={marcado ? "bg-teal-50/70" : "transition hover:bg-gray-50"}>
+                        <td className="px-3 py-2 text-center">
+                          <input
+                            type="checkbox"
+                            checked={marcado}
+                            onChange={() => toggleRetorno(l.mov.id)}
+                            className="h-4 w-4 cursor-pointer accent-teal-600"
+                          />
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-2">
+                          <span className="rounded bg-slate-100 px-2 py-0.5 font-mono text-xs font-semibold text-slate-700">
+                            {l.codigo || "—"}
+                          </span>
+                        </td>
+                        <td className="max-w-[220px] truncate px-3 py-2" title={l.mov.produto_nome || ""}>
+                          {l.mov.produto_nome || "—"}
+                        </td>
+                        <td className="whitespace-nowrap px-3 py-2 text-gray-600">{l.solicitante || "—"}</td>
+                        <td className="whitespace-nowrap px-3 py-2 text-gray-500">
+                          {l.mov.data_movimento ? new Date(l.mov.data_movimento).toLocaleDateString("pt-BR") : "—"}
+                        </td>
+                        <td className="px-3 py-2 text-center text-gray-600">{l.mov.quantidade}</td>
+                        <td className="px-3 py-2 text-center text-gray-400">{l.devolvido}</td>
+                        <td className="px-3 py-2 text-center font-semibold text-gray-900">{l.saldo}</td>
+                        <td className="px-3 py-2">
+                          <input
+                            type="number"
+                            min={1}
+                            max={l.saldo}
+                            value={qtd}
+                            disabled={!marcado}
+                            onChange={(e) => setRetQtd(prev => ({
+                              ...prev,
+                              [l.mov.id]: Math.max(1, Math.min(l.saldo, Number(e.target.value) || 1)),
+                            }))}
+                            title={marcado ? "Quantidade a devolver" : "Marque a linha para informar a quantidade"}
+                            className="w-20 rounded border border-gray-300 px-2 py-1 text-center text-sm disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-400"
+                          />
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          <p className="text-[11px] leading-relaxed text-gray-400">
+            Cada retorno é gravado como uma <strong>entrada</strong> ligada à saída original
+            (campo <span className="font-mono">saida_ref</span>), atualizando o estoque do produto.
+            Saídas com todo o saldo devolvido deixam de aparecer nesta lista.
+          </p>
         </div>
       </Window>
     </Layout>
