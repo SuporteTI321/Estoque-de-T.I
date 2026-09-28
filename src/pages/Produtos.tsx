@@ -455,8 +455,6 @@ export default function Produtos() {
         action={
           <div className="flex items-center gap-3">
             <span className="text-xs text-gray-400">Total: {items.length}</span>
-            <Button variant="secondary" icon={<RotateCcw className="h-4 w-4" />} onClick={() => abrirRetorno()}
-              title="Devolver ao estoque produtos que já tiveram saída">Retorno de Saída</Button>
             <Button icon={<Plus className="h-4 w-4" />} onClick={openNew}>Novo Produto</Button>
           </div>
         }
