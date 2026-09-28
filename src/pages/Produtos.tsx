@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Package as PackageIcon, Plus, Pencil, Trash2, ArrowDownToLine, ArrowUpFromLine, RotateCcw, Search } from "lucide-react";
+import { Package as PackageIcon, Plus, Pencil, Trash2, ArrowDownToLine, ArrowUpFromLine, RotateCcw, Search, ScanBarcode } from "lucide-react";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
 import DataTable, { type Column } from "../components/DataTable";
@@ -21,6 +21,42 @@ type LinhaRetorno = {
   devolvido: number;
   saldo: number;
 };
+
+// Monta a lista de saídas com saldo pendente de retorno.
+// Saldo = quantidade da saída original menos o que já foi devolvido:
+// cada devolução é uma movimentação tipo "entrada" com saida_ref:<id> na observação.
+function calcularLinhas(retMovs: Movimentacao[], retProdFiltro: number | null, retBusca: string): LinhaRetorno[] {
+  const devolvidos = new Map<number, number>();
+  for (const m of retMovs) {
+    if (m.tipo !== "entrada") continue;
+    const ref = m.observacao?.match(/saida_ref:\s*(\d+)/)?.[1];
+    if (!ref) continue;
+    const id = Number(ref);
+    devolvidos.set(id, (devolvidos.get(id) || 0) + Number(m.quantidade || 0));
+  }
+  const termo = retBusca.trim().toLowerCase();
+  const saidas: LinhaRetorno[] = [];
+  for (const m of retMovs) {
+    if (m.tipo !== "saida") continue;
+    if (retProdFiltro !== null && m.produto_id !== retProdFiltro) continue;
+    const total = Number(m.quantidade || 0);
+    const devolvido = Math.min(devolvidos.get(m.id) || 0, total);
+    const saldo = total - devolvido;
+    if (saldo <= 0) continue;
+    const codigo = m.observacao?.match(/^cod_produto:(.+)$/m)?.[1]?.trim() || "";
+    const solicitante = m.observacao?.match(/por ([^-]+) - /)?.[1]?.trim() || "";
+    const nome = m.produto_nome || "";
+    if (termo && !(
+      nome.toLowerCase().includes(termo) ||
+      codigo.toLowerCase().includes(termo) ||
+      solicitante.toLowerCase().includes(termo)
+    )) continue;
+    saidas.push({ mov: m, codigo, solicitante, devolvido, saldo });
+  }
+  return saidas.sort((a, b) =>
+    new Date(b.mov.data_movimento).getTime() - new Date(a.mov.data_movimento).getTime()
+  );
+}
 
 export default function Produtos() {
   const navigate = useNavigate();
@@ -48,6 +84,10 @@ export default function Produtos() {
   const [retData, setRetData] = useState<string>(() => hojeISO());
   const [retCarregando, setRetCarregando] = useState(false);
   const [retSalvando, setRetSalvando] = useState(false);
+  // Leitura de código de barras
+  const [retBarcode, setRetBarcode] = useState("");
+  const [retBarcodeMsg, setRetBarcodeMsg] = useState<{ tipo: "ok" | "erro"; texto: string } | null>(null);
+  const barcodeRef = useRef<HTMLInputElement>(null);
 
   function hojeISO(): string {
     const d = new Date();
@@ -204,41 +244,10 @@ export default function Produtos() {
   //  Retorno de saída — devolve ao estoque produtos que já saíram
   // ─────────────────────────────────────────────────────────────
 
-  // Saldo pendente por saída: total saído menos o já devolvido.
-  // Cada devolução é gravada como movimentação tipo "entrada" com
-  // saida_ref:<id_da_saida_original> na observação.
-  const linhasRetorno = useMemo<LinhaRetorno[]>(() => {
-    const devolvidos = new Map<number, number>();
-    for (const m of retMovs) {
-      if (m.tipo !== "entrada") continue;
-      const ref = m.observacao?.match(/saida_ref:\s*(\d+)/)?.[1];
-      if (!ref) continue;
-      const id = Number(ref);
-      devolvidos.set(id, (devolvidos.get(id) || 0) + Number(m.quantidade || 0));
-    }
-    const termo = retBusca.trim().toLowerCase();
-    const saidas: LinhaRetorno[] = [];
-    for (const m of retMovs) {
-      if (m.tipo !== "saida") continue;
-      if (retProdFiltro !== null && m.produto_id !== retProdFiltro) continue;
-      const total = Number(m.quantidade || 0);
-      const devolvido = Math.min(devolvidos.get(m.id) || 0, total);
-      const saldo = total - devolvido;
-      if (saldo <= 0) continue;
-      const codigo = m.observacao?.match(/^cod_produto:(.+)$/m)?.[1]?.trim() || "";
-      const solicitante = m.observacao?.match(/por ([^-]+) - /)?.[1]?.trim() || "";
-      const nome = m.produto_nome || "";
-      if (termo && !(
-        nome.toLowerCase().includes(termo) ||
-        codigo.toLowerCase().includes(termo) ||
-        solicitante.toLowerCase().includes(termo)
-      )) continue;
-      saidas.push({ mov: m, codigo, solicitante, devolvido, saldo });
-    }
-    return saidas.sort((a, b) =>
-      new Date(b.mov.data_movimento).getTime() - new Date(a.mov.data_movimento).getTime()
-    );
-  }, [retMovs, retProdFiltro, retBusca]);
+  const linhasRetorno = useMemo<LinhaRetorno[]>(
+    () => calcularLinhas(retMovs, retProdFiltro, retBusca),
+    [retMovs, retProdFiltro, retBusca]
+  );
 
   async function carregarRetornos() {
     setRetCarregando(true);
@@ -258,8 +267,12 @@ export default function Produtos() {
     setRetSel(new Set());
     setRetQtd({});
     setRetData(hojeISO());
+    setRetBarcode("");
+    setRetBarcodeMsg(null);
     setRetOpen(true);
     await carregarRetornos();
+    // Leitor de código de barras já pronto para a primeira leitura
+    setTimeout(() => barcodeRef.current?.focus(), 250);
   }
 
   function toggleRetorno(id: number) {
@@ -290,6 +303,62 @@ export default function Produtos() {
     for (const l of linhasRetorno) qtds[l.mov.id] = l.saldo;
     setRetQtd(prev => ({ ...qtds, ...prev }));
   }
+
+  // ── Leitura por código de barras ──────────────────────────────
+  // Localiza a saída pendente daquele código e a auto-seleciona.
+  // Cada leitura soma 1 unidade (ler de novo incrementa até o saldo).
+  function processarCodigo(bruto: string) {
+    const cod = bruto.trim().toUpperCase();
+    if (!cod) return;
+
+    // 1) Procura entre as linhas visíveis (com os filtros atuais)
+    let alvo = linhasRetorno.find(l => (l.codigo || "").trim().toUpperCase() === cod);
+    // 2) Não achou: procura ignorando o texto de busca digitado e limpa esse filtro
+    if (!alvo) {
+      const semFiltroTexto = calcularLinhas(retMovs, retProdFiltro, "");
+      alvo = semFiltroTexto.find(l => (l.codigo || "").trim().toUpperCase() === cod);
+      if (alvo) setRetBusca("");
+    }
+
+    if (!alvo) {
+      setRetBarcodeMsg({ tipo: "erro", texto: `Código ${cod} não encontrado entre as saídas pendentes de retorno.` });
+      setRetBarcode("");
+      barcodeRef.current?.focus();
+      return;
+    }
+
+    const alvoFinal: LinhaRetorno = alvo;
+    const id = alvoFinal.mov.id;
+    const atual = Number(retQtd[id] ?? 0);
+    const nova = Math.max(1, Math.min(alvoFinal.saldo, atual + 1));
+    setRetSel(prev => new Set(prev).add(id));
+    setRetQtd(prev => ({ ...prev, [id]: nova }));
+    setRetBarcodeMsg({
+      tipo: "ok",
+      texto: `✓ ${alvoFinal.codigo || "s/ código"} — ${alvoFinal.mov.produto_nome} · ${nova} de ${alvoFinal.saldo} unidade(s) a devolver`,
+    });
+    setRetBarcode("");
+    barcodeRef.current?.focus();
+  }
+
+  // Leitores que não enviam Enter: dispara quando o valor digitado/lido
+  // bater exatamente com um código de produto já cadastrado na saída.
+  useEffect(() => {
+    if (!retOpen) return;
+    const v = retBarcode.trim().toUpperCase();
+    if (!v) return;
+    const existe = calcularLinhas(retMovs, retProdFiltro, "")
+      .some(l => (l.codigo || "").trim().toUpperCase() === v);
+    if (existe) processarCodigo(v);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [retBarcode, retOpen, retMovs, retProdFiltro]);
+
+  // A confirmação de leitura bem-sucedida some sozinha
+  useEffect(() => {
+    if (retBarcodeMsg?.tipo !== "ok") return;
+    const t = setTimeout(() => setRetBarcodeMsg(null), 4000);
+    return () => clearTimeout(t);
+  }, [retBarcodeMsg]);
 
   async function devolver() {
     const alvos = linhasRetorno.filter(l => retSel.has(l.mov.id));
@@ -705,8 +774,22 @@ export default function Produtos() {
         </>}
       >
         <div className="space-y-3">
-          {/* Barra de ferramentas: busca, data e seleção em lote */}
+          {/* Barra de ferramentas: código de barras, busca, data e seleção em lote */}
           <div className="flex flex-wrap items-center gap-2">
+            {/* Leitura por código de barras — auto-seleciona o produto */}
+            <div className="flex min-w-[230px] flex-1 items-center gap-2 rounded-lg border-2 border-teal-500/70 bg-teal-50/60 px-3 py-1.5 focus-within:border-teal-600 focus-within:bg-white">
+              <ScanBarcode className="h-4 w-4 shrink-0 text-teal-600" />
+              <input
+                ref={barcodeRef}
+                value={retBarcode}
+                onChange={(e) => setRetBarcode(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); processarCodigo(retBarcode); } }}
+                placeholder="Leia o código de barras do produto..."
+                autoFocus
+                className="w-full min-w-0 bg-transparent font-mono text-sm text-gray-900 outline-none placeholder:font-sans placeholder:text-teal-700/70"
+                title="Aproxime o leitor: ao ler o código, a saída correspondente é selecionada automaticamente (cada leitura soma 1 unidade)"
+              />
+            </div>
             <div className="relative min-w-[220px] flex-1">
               <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
@@ -733,6 +816,17 @@ export default function Produtos() {
               {linhasRetorno.length > 0 && linhasRetorno.every(l => retSel.has(l.mov.id)) ? "Desmarcar todos" : "Marcar todos"}
             </button>
           </div>
+
+          {/* Feedback da leitura do código de barras */}
+          {retBarcodeMsg && (
+            <div role="status" className={`rounded-lg border px-3 py-2 text-xs font-medium ${
+              retBarcodeMsg.tipo === "ok"
+                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                : "border-red-200 bg-red-50 text-red-700"
+            }`}>
+              {retBarcodeMsg.texto}
+            </div>
+          )}
 
           {/* Resumo */}
           <div className="flex flex-wrap items-center gap-2 text-xs text-gray-500">
