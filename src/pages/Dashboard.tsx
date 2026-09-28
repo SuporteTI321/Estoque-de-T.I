@@ -2,7 +2,11 @@ import { useEffect, useState, useCallback } from "react";
 import {
   Package, Boxes, AlertTriangle, AlertCircle,
   TrendingUp, TrendingDown, ShoppingCart, Truck,
+  Layers, PieChart as PieIcon,
 } from "lucide-react";
+import {
+  PieChart, Pie, Cell, BarChart as RBarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+} from "recharts";
 import Layout from "../components/Layout";
 import type { DashboardStats, Movimentacao, Produto } from "../lib/types";
 import { api } from "../lib/api";
@@ -59,8 +63,8 @@ export default function Dashboard() {
   return (
     <Layout title="Dashboard" subtitle="Visão geral do estoque">
       {erro && <div className="mb-3 rounded-lg bg-red-50 px-4 py-2.5 text-xs font-medium text-red-700">{erro}</div>}
-      {/* KPI Cards */}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      {/* 6 Cards na mesma linha — calibrados */}
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6 auto-rows-fr items-stretch">
         <KpiCard
           icon={<Package className="h-5 w-5" />}
           iconBg="bg-blue-100 text-blue-600"
@@ -91,10 +95,6 @@ export default function Dashboard() {
           sub="indisponíveis"
           alert={indisponiveis > 0}
         />
-      </div>
-
-      {/* Row: Entradas/Saídas */}
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
         <ResumoCard
           icon={<Truck className="h-5 w-5" />}
           iconBg="bg-blue-100 text-blue-600"
@@ -111,75 +111,90 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Row: Donut + Categorias */}
-      <div className="mb-4 grid grid-cols-1 gap-3 lg:grid-cols-3">
-        {/* Grafico Estoque */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">Distribuição do Estoque</h3>
-          <p className="text-[11px] text-gray-400 mb-4">Status geral dos produtos</p>
-          <div className="space-y-4">
-            <BarChart
-              data={[
-                { label: "Disponíveis", value: dispCount, color: "bg-emerald-500" },
-                { label: "Estoque Baixo", value: baixoCount, color: "bg-amber-500" },
-                { label: "Sem Estoque", value: semEstoqueCount, color: "bg-red-500" },
-              ]}
-            />
-            <div className="mt-4 w-full space-y-2">
-              <Legend color="#10b981" label="Disponíveis" value={`${dispCount} (${totalDonut > 0 ? Math.round((dispCount / totalDonut) * 100) : 0}%)`} />
-              <Legend color="#f59e0b" label="Estoque Baixo" value={`${baixoCount} (${totalDonut > 0 ? Math.round((baixoCount / totalDonut) * 100) : 0}%)`} />
-              <Legend color="#ef4444" label="Sem Estoque" value={`${semEstoqueCount} (${totalDonut > 0 ? Math.round((semEstoqueCount / totalDonut) * 100) : 0}%)`} />
+      {/* Row: Gráficos + Últimas Movimentações */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+        {/* Distribuição do Estoque — Donut Moderno */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-3">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><PieIcon className="h-4 w-4 text-violet-600" />Distribuição do Estoque</h3>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-gray-100 text-gray-600">{totalDonut} produtos</span>
+          </div>
+          <p className="text-[11px] text-gray-400 mb-3">Disponível • Baixo • Zerado</p>
+          <div className="relative h-[220px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={[
+                    { name: "Disponíveis", value: dispCount, color: "#10b981" },
+                    { name: "Estoque Baixo", value: baixoCount, color: "#f59e0b" },
+                    { name: "Sem Estoque", value: semEstoqueCount, color: "#ef4444" },
+                  ].filter(d=>d.value>0)}
+                  cx="50%" cy="50%" innerRadius={62} outerRadius={88} paddingAngle={3} dataKey="value" stroke="#fff" strokeWidth={2}
+                >
+                  {["#10b981","#f59e0b","#ef4444"].map((c,i)=><Cell key={i} fill={c} />)}
+                </Pie>
+                <Tooltip contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 12 }} />
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-2xl font-black text-gray-900">{totalDonut}</span>
+              <span className="text-[10px] uppercase tracking-widest text-gray-400">produtos</span>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-2 mt-3">
+            <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-2.5 text-center">
+              <div className="h-2 w-2 rounded-full bg-emerald-500 mx-auto mb-1" />
+              <div className="text-[10px] text-emerald-700 font-semibold">Disponíveis</div>
+              <div className="text-sm font-bold text-emerald-700">{dispCount}</div>
+              <div className="text-[10px] text-emerald-600">{totalDonut>0?Math.round(dispCount/totalDonut*100):0}%</div>
+            </div>
+            <div className="rounded-xl bg-amber-50 border border-amber-100 p-2.5 text-center">
+              <div className="h-2 w-2 rounded-full bg-amber-500 mx-auto mb-1" />
+              <div className="text-[10px] text-amber-700 font-semibold">Baixo</div>
+              <div className="text-sm font-bold text-amber-700">{baixoCount}</div>
+              <div className="text-[10px] text-amber-600">{totalDonut>0?Math.round(baixoCount/totalDonut*100):0}%</div>
+            </div>
+            <div className="rounded-xl bg-red-50 border border-red-100 p-2.5 text-center">
+              <div className="h-2 w-2 rounded-full bg-red-500 mx-auto mb-1" />
+              <div className="text-[10px] text-red-700 font-semibold">Zerado</div>
+              <div className="text-sm font-bold text-red-700">{semEstoqueCount}</div>
+              <div className="text-[10px] text-red-600">{totalDonut>0?Math.round(semEstoqueCount/totalDonut*100):0}%</div>
             </div>
           </div>
         </div>
 
-        {/* Estoque por Categoria */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5 lg:col-span-2">
-          <h3 className="text-sm font-semibold text-gray-900 mb-1">Estoque por Categoria</h3>
-          <p className="text-[11px] text-gray-400 mb-4">Distribuição de unidades por categoria</p>
-          <div className="space-y-3">
+        {/* Estoque por Categoria — Barras Verticais */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-5">
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="text-sm font-bold text-gray-900 flex items-center gap-2"><Layers className="h-4 w-4 text-blue-600" />Estoque por Categoria</h3>
+            <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-700">{produtos.length} produtos</span>
+          </div>
+          <p className="text-[11px] text-gray-400 mb-3">Top 8 categorias por unidades em estoque</p>
+          <div className="h-[260px]">
             {(() => {
               const cats: Record<string, number> = {};
-              for (const p of produtos) {
-                const nome = p.categoria_nome || "Sem categoria";
-                cats[nome] = (cats[nome] || 0) + (p.estoque || 0);
-              }
-              const entries = Object.entries(cats).sort((a, b) => b[1] - a[1]);
-              const maxVal = Math.max(...entries.map(e => e[1]), 1);
-              const cores = [
-                "from-blue-500 to-blue-400",
-                "from-emerald-500 to-emerald-400",
-                "from-amber-500 to-amber-400",
-                "from-violet-500 to-violet-400",
-                "from-pink-500 to-pink-400",
-                "from-orange-500 to-orange-400",
-                "from-cyan-500 to-cyan-400",
-                "from-red-500 to-red-400",
-                "from-indigo-500 to-indigo-400",
-                "from-teal-500 to-teal-400",
-              ];
-              if (entries.length === 0) return <div className="text-center text-xs text-gray-400 py-4">Nenhuma categoria</div>;
-              return entries.slice(0, 8).map(([nome, value], i) => (
-                <div key={nome}>
-                  <div className="flex items-center justify-between text-xs mb-1">
-                    <span className="font-medium text-gray-700 truncate">{nome}</span>
-                    <span className="text-gray-500 font-mono ml-2">{value}</span>
-                  </div>
-                  <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden">
-                    <div className={`h-full rounded-full bg-gradient-to-r ${cores[i % cores.length]} transition-all duration-500`}
-                      style={{ width: `${(value / maxVal) * 100}%` }} />
-                  </div>
-                </div>
-              ));
+              for (const p of produtos) { const n = p.categoria_nome || "Sem categoria"; cats[n] = (cats[n]||0)+(p.estoque||0); }
+              const data = Object.entries(cats).sort((a,b)=>b[1]-a[1]).slice(0,8).map(([name, estoque])=> ({ name: name.length>14? name.slice(0,14)+"…": name, estoque, fullName: name }));
+              if(data.length===0) return <div className="flex h-full items-center justify-center text-xs text-gray-400">Nenhuma categoria</div>;
+              return (
+                <ResponsiveContainer width="100%" height="100%">
+                  <RBarChart data={data} margin={{ top: 8, right: 12, left: -10, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f3f4f6" vertical={false} />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#6b7280" }} axisLine={false} tickLine={false} interval={0} angle={-14} dy={10} height={40} />
+                    <YAxis tick={{ fontSize: 10, fill: "#6b7280" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                    <Tooltip cursor={{ fill: "#f9fafb" }} contentStyle={{ borderRadius: 12, border: "1px solid #e5e7eb", fontSize: 12 }} formatter={(v:any)=>[v, "unidades"]} labelFormatter={(l:any)=> data.find(d=>d.name===l)?.fullName || l} />
+                    <Bar dataKey="estoque" radius={[8,8,0,0]} barSize={26}>
+                      {data.map((_,i)=> <Cell key={i} fill={ ["#3b82f6","#10b981","#f59e0b","#8b5cf6","#ec4899","#f97316","#06b6d4","#ef4444"][i%8]} />)}
+                    </Bar>
+                  </RBarChart>
+                </ResponsiveContainer>
+              );
             })()}
           </div>
         </div>
-      </div>
-
-      {/* Row: Últimas Movimentações */}
-      <div className="grid grid-cols-1 gap-3">
-        {/* Últimas Movimentações */}
-        <div className="rounded-xl border border-gray-200 bg-white p-5">
+        {/* Últimas Movimentações — ao lado direito de Estoque por Categoria */}
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm lg:col-span-4 flex flex-col">
+          <div className="flex-1">
           <h3 className="text-sm font-semibold text-gray-900 mb-1">Últimas Movimentações</h3>
           <p className="text-[11px] text-gray-400 mb-3">Entradas e saídas recentes</p>
           <div className="space-y-2">
@@ -213,6 +228,7 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+      </div>
     </Layout>
   );
 }
@@ -230,18 +246,18 @@ function KpiCard({ icon, iconBg, label, value, sub, alert }: {
   alert?: boolean;
 }) {
   return (
-    <div className={`rounded-xl border bg-white p-4 transition hover:shadow-sm ${
-      alert ? "border-amber-300 shadow-amber-100" : "border-gray-200"
-    }`}>
-      <div className="flex items-center gap-3">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>
-          {icon}
+    <div className={`group relative flex h-full flex-col overflow-hidden rounded-2xl border bg-white p-[1px] transition-all hover:shadow-lg hover:-translate-y-0.5 ${alert ? "border-amber-300 shadow-md" : "border-gray-200"}`}>
+      <div className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition ${alert ? "bg-gradient-to-br from-amber-50 to-orange-50" : "bg-gradient-to-br from-gray-50 to-white"}`} />
+      <div className="relative flex h-full flex-col rounded-[15px] bg-white p-3.5">
+        <div className="flex items-start justify-between mb-2.5">
+          <div className={`flex h-9 w-9 items-center justify-center rounded-xl shadow-sm ${iconBg}`}>{icon}</div>
+          {alert && <span className="h-2 w-2 rounded-full bg-amber-500 animate-pulse" />}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="text-[11px] text-gray-500 truncate">{label}</div>
-          <div className="text-xl font-bold text-gray-900 leading-tight">{value}</div>
-          <div className="text-[10px] text-gray-400">{sub}</div>
-        </div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 truncate">{label}</div>
+        <div className="mt-1 text-xl font-black tracking-tight text-gray-900 leading-none">{value}</div>
+        <div className="mt-1 text-[11px] text-gray-500 truncate">{sub}</div>
+        <div className="flex-1" />
+        {alert ? <div className="mt-3 h-1.5 w-full rounded-full bg-gray-100 overflow-hidden"><div className="h-full bg-gradient-to-r from-amber-500 to-orange-500" style={{ width: "100%" }} /></div> : <div className="mt-3 h-1.5 w-full rounded-full bg-transparent" />}
       </div>
     </div>
   );
@@ -254,52 +270,27 @@ function ResumoCard({ icon, iconBg, titulo, valor, sub }: {
   valor: string;
   sub: string;
 }) {
+  const isEntrada = titulo.toLowerCase().includes("entrada");
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-4">
-      <div className="flex items-center gap-3">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-lg ${iconBg}`}>
-          {icon}
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-200 bg-white p-[1px] transition-all hover:shadow-lg hover:-translate-y-0.5">
+      <div className={`absolute inset-0 bg-gradient-to-br ${isEntrada ? "from-blue-50/80 to-cyan-50/80" : "from-violet-50/80 to-purple-50/80"} opacity-60 group-hover:opacity-100 transition`} />
+      <div className="relative flex h-full flex-col rounded-[15px] bg-white p-3.5">
+        <div className="flex items-start justify-between mb-2.5">
+          <div className={`flex h-9 w-9 items-center justify-center rounded-xl shadow-sm ${iconBg}`}>{icon}</div>
+          <div className={`hidden h-6 w-6 items-center justify-center rounded-full ${isEntrada ? "bg-blue-100 text-blue-600" : "bg-violet-100 text-violet-600"}`}>
+            <TrendingUp className={`h-3.5 w-3.5 ${isEntrada ? "" : "rotate-180"}`} />
+          </div>
         </div>
-        <div>
-          <div className="text-[11px] text-gray-500">{titulo}</div>
-          <div className="text-lg font-bold text-gray-900">{valor}</div>
-          <div className="text-[10px] text-gray-400">{sub}</div>
+        <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 truncate">{titulo}</div>
+        <div className="mt-1 text-xl font-black tracking-tight text-gray-900 leading-none">{valor}</div>
+        <div className="mt-1 inline-flex max-w-full truncate rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-600">{sub}</div>
+        <div className="flex-1" />
+        <div className="mt-3 h-1.5 w-full rounded-full bg-gray-100 overflow-hidden">
+          <div className={`h-full rounded-full transition-all duration-700 ${isEntrada ? "bg-gradient-to-r from-blue-500 to-cyan-500" : "bg-gradient-to-r from-violet-500 to-purple-500"}`} style={{ width: `${Math.min(100, parseInt(valor.replace(/\D/g, "")) || 30)}%` }} />
         </div>
       </div>
     </div>
   );
 }
 
-function Legend({ color, label, value }: { color: string; label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between">
-      <span className="flex items-center gap-2">
-        <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
-        <span className="text-xs text-gray-600">{label}</span>
-      </span>
-      <span className="text-xs font-semibold text-gray-700">{value}</span>
-    </div>
-  );
-}
 
-function BarChart({ data }: { data: { label: string; value: number; color: string }[] }) {
-  const maxValue = Math.max(...data.map(d => d.value), 1);
-  return (
-    <div className="space-y-3">
-      {data.map((d, i) => (
-        <div key={i}>
-          <div className="flex items-center justify-between text-xs mb-1">
-            <span className="font-medium text-gray-700">{d.label}</span>
-            <span className="text-gray-500 font-mono">{d.value}</span>
-          </div>
-          <div className="h-6 w-full rounded-lg bg-gray-100 overflow-hidden">
-            <div className={`h-full rounded-lg ${d.color} transition-all duration-700 ease-out flex items-center justify-end pr-2`}
-              style={{ width: `${d.value > 0 ? Math.max((d.value / maxValue) * 100, 8) : 0}%` }}>
-              {d.value > 0 && <span className="text-[10px] font-bold text-white">{d.value}</span>}
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
-}

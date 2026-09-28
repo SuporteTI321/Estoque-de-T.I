@@ -41,14 +41,14 @@ export default function Sidebar({ user, open = false, onClose }: SidebarProps) {
     <>
       {/* backdrop mobile */}
       {open && <div className="fixed inset-0 z-30 bg-black/40 lg:hidden" onClick={onClose} />}
-      <aside className={`flex w-60 shrink-0 flex-col border-r border-gray-200 bg-white fixed inset-y-0 left-0 z-40 transform transition-transform duration-200 lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
+      <aside className={`flex w-60 shrink-0 flex-col border-r border-red-900 bg-gradient-to-b from-red-900 via-red-800 to-red-700 fixed inset-y-0 left-0 z-40 transform transition-transform duration-200 lg:static lg:translate-x-0 ${open ? "translate-x-0" : "-translate-x-full"}`}>
 
       {/* Brand */}
-      <div className="flex items-center gap-3 border-b border-gray-200 px-5 py-4">
-        {(() => { const logo = localStorage.getItem("almox_logo"); return logo ? <img src={logo} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" /> : <img src={"/icons/icon.png"} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm" />; })()}
+      <div className="flex items-center gap-3 border-b border-red-900 px-5 py-4">
+        {(() => { const logo = localStorage.getItem("almox_logo"); return logo ? <img src={logo} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm ring-1 ring-white/10" /> : <img src={"/icons/icon.png"} alt="Logo" className="h-10 w-10 rounded-xl object-cover shadow-sm ring-1 ring-white/10" />; })()}
         <div>
-          <div className="text-sm font-bold text-gray-900">Controle de Estoque</div>
-          <div className="text-[11px] text-gray-500">Sistema de Gestão</div>
+          <div className="text-sm font-bold text-white">Controle de Estoque</div>
+          <div className="text-[11px] text-red-200">Sistema de Gestão</div>
         </div>
       </div>
 
@@ -64,8 +64,8 @@ export default function Sidebar({ user, open = false, onClose }: SidebarProps) {
                   className={({ isActive }) =>
                     `flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition ${
                       isActive
-                        ? "bg-blue-50 font-semibold text-blue-700"
-                        : "text-gray-700 hover:bg-gray-100"
+                        ? "bg-white font-semibold text-red-700 shadow-md shadow-red-900/30"
+                        : "text-red-100 hover:bg-red-700 hover:text-white"
                     }`
                   }
                 >
@@ -84,7 +84,7 @@ export default function Sidebar({ user, open = false, onClose }: SidebarProps) {
       </nav>
 
       {/* Footer user */}
-      <div className="border-t border-gray-200 px-4 py-3 text-xs text-gray-500">
+      <div className="border-t border-red-900 px-4 py-3 text-xs text-red-200">
         {/* Informações do usuário removidas conforme solicitado */}
       </div>
     </aside>

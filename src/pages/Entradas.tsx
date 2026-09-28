@@ -211,6 +211,7 @@ export default function Entradas() {
         searchKeys={["produto_nome", "produto_codigo", "cod_produto"]}
         searchPlaceholder="Buscar por produto, codigo ou cod. produto..."
         emptyMessage="Nenhuma entrada registrada"
+        pageSize={16}
       />
 
       <Window
