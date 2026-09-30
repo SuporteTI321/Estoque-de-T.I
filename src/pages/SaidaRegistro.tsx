@@ -36,8 +36,8 @@ export default function SaidaRegistro() {
   const [codLoteIdx, setCodLoteIdx] = useState<number | null>(null);
   const [itensAdicionais, setItensAdicionais] = useState<{ produto_id: string; cod_produto: string; quantidade: number }[]>([]);
   const [adicionalIdx, setAdicionalIdx] = useState<number | null>(null);
-  /** Loja que sofre a saída (debita o estoque por loja). */
-  const [lojaOrigemId, setLojaOrigemId] = useState<string>(user?.loja_id ? String(user.loja_id) : "");
+  // A loja que sofre a saída é sempre a do usuário logado (user.loja_id): o
+  // campo de escolha saiu do formulário.
   const [erro, setErro] = useState<string | null>(null);
 
   function resetForm() {
@@ -199,8 +199,12 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
   async function handleSave() {
     try {
       // Loja que sofre a saída — define o saldo por loja
-      const lojaSaida = lojas.find(l => l.id === Number(lojaOrigemId));
-      if (!lojaSaida) { alert("Selecione a loja de origem da saida."); return; }
+      // A saída debita a loja do usuário logado — não há mais escolha de origem.
+      const lojaSaida = lojas.find(l => l.id === user?.loja_id) || null;
+      if (!lojaSaida) {
+        alert("Seu usuario nao esta vinculado a uma loja.\n\nVincule uma loja em Meu Perfil para registrar saidas.");
+        return;
+      }
       // ── Saida em Lote (multi-produto) ──
       if (lote && !editing) {
         const validas = loteItens.filter(i => i.produto_id && i.cod_produto.trim());
@@ -338,7 +342,7 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
       return m?.[1] || "—";
     }},
     { key: "quantidade", label: "Quantidade", width: "100px", align: "center" },
-    { key: "observacao", label: "Solicitante", width: "140px", align: "center", render: (r) => {
+    { key: "observacao", label: "Pessoa / Loja", width: "150px", align: "center", render: (r) => {
       const match = r.observacao?.match(/por ([^-]+) - /);
       return match?.[1]?.trim() || "—";
     } },
@@ -387,20 +391,8 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
         </>}
       >
         <div className="space-y-3 py-1">
-          {/* Loja de origem da saída — debita o estoque desta loja */}
-          {!editing && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Loja de origem *</label>
-              <select value={lojaOrigemId} onChange={(e) => setLojaOrigemId(e.target.value)}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                <option value="">Selecione a loja que tem o item...</option>
-                {lojas.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
-              </select>
-              <p className="mt-1 text-[11px] text-gray-400">
-                O item e debitado do estoque desta loja (padrao: a loja do usuario).
-              </p>
-            </div>
-          )}
+          {/* A loja de origem não é mais escolhida: a saída debita sempre a loja
+              do usuário logado, como a entrada credita. */}
           {/* ── Saida unica ── */}
           {form.produto_id && !editing && (
             <>
@@ -577,7 +569,7 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
 
           <div className="grid grid-cols-1 gap-3">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Solicitante</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Pessoa / Loja</label>
               <button type="button" onClick={() => setNovoSolicitanteOpen(true)}
                 className={`w-full rounded-lg border px-3 py-2.5 text-sm text-left transition flex items-center gap-2 overflow-visible ${form.solicitante ? "border-gray-300 text-gray-900" : "border-gray-300 text-gray-400"} hover:border-blue-400`}>
                 {form.solicitante && (

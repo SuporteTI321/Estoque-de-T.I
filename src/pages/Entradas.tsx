@@ -234,18 +234,6 @@ export default function Entradas() {
         <div className="space-y-3 py-1">
         {!editing && (
           <>
-            <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2">
-              <div className="text-sm font-medium text-gray-700">
-                Loja de destino:{" "}
-                <span className="font-semibold text-blue-800">
-                  {lojas.find(l => l.id === user?.loja_id)?.nome || "sua loja não vinculada"}
-                </span>
-              </div>
-              <p className="mt-0.5 text-[11px] text-gray-500">
-                O estoque da entrada fica na loja do seu usuário — é ele que permite
-                transferir o item para outra loja.
-              </p>
-            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700">Produto</label>
               <select value={form.produto_id} onChange={(e) => setForm({ ...form, produto_id: e.target.value })}
