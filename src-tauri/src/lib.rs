@@ -267,6 +267,9 @@ pub struct Produto {
     pub estoque_minimo: i64,
     pub custo_total: f64,
     pub ativo: bool,
+    /// Onde o item é guardado fisicamente (sala, prateleira, armário).
+    /// Independe da loja, que controla entrada, saída e transferência.
+    pub localizacao: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -887,7 +890,7 @@ fn list_produtos() -> Result<Vec<Produto>, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare(
-            "SELECT p.id, p.codigo, p.nome, p.marca, p.modelo, p.descricao, p.categoria_id, c.nome, p.fornecedor_id, f.nome, p.unidade, p.preco_compra, p.preco_venda, p.estoque, p.estoque_minimo, p.custo_total, p.ativo
+            "SELECT p.id, p.codigo, p.nome, p.marca, p.modelo, p.descricao, p.categoria_id, c.nome, p.fornecedor_id, f.nome, p.unidade, p.preco_compra, p.preco_venda, p.estoque, p.estoque_minimo, p.custo_total, p.ativo, p.localizacao
              FROM produtos p
              LEFT JOIN categorias c ON p.categoria_id = c.id
              LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
@@ -914,6 +917,7 @@ fn list_produtos() -> Result<Vec<Produto>, String> {
                 estoque_minimo: row.get(14)?,
                 custo_total: row.get(15)?,
                 ativo: row.get::<_, i64>(16)? != 0,
+                localizacao: row.get(17)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -939,11 +943,12 @@ fn create_produto(
     estoque: i64,
     estoque_minimo: i64,
     custo_total: f64,
+    localizacao: Option<String>,
 ) -> Result<Produto, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     conn.execute(
-        "INSERT INTO produtos (codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
-        params![codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total],
+        "INSERT INTO produtos (codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, localizacao, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+        params![codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, localizacao, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total],
     )
     .map_err(|e| e.to_string())?;
     let id = conn.last_insert_rowid();
@@ -983,6 +988,7 @@ fn create_produto(
         estoque_minimo,
         custo_total,
         ativo: true,
+        localizacao,
     })
 }
 
@@ -1002,11 +1008,12 @@ fn update_produto(
     estoque: i64,
     estoque_minimo: i64,
     custo_total: f64,
+    localizacao: Option<String>,
 ) -> Result<Produto, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     conn.execute(
-        "UPDATE produtos SET codigo=?1, nome=?2, marca=?3, modelo=?4, descricao=?5, categoria_id=?6, fornecedor_id=?7, unidade=?8, preco_compra=?9, preco_venda=?10, estoque=?11, estoque_minimo=?12, custo_total=?13 WHERE id=?14",
-        params![codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total, id],
+        "UPDATE produtos SET codigo=?1, nome=?2, marca=?3, modelo=?4, descricao=?5, categoria_id=?6, fornecedor_id=?7, localizacao=?8, unidade=?9, preco_compra=?10, preco_venda=?11, estoque=?12, estoque_minimo=?13, custo_total=?14 WHERE id=?15",
+        params![codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, localizacao, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total, id],
     )
     .map_err(|e| e.to_string())?;
     // O estoque global é apenas o valor informado pelo usuário — a distribuição
@@ -1048,6 +1055,7 @@ fn update_produto(
         estoque_minimo,
         custo_total,
         ativo,
+        localizacao,
     })
 }
 
@@ -2283,13 +2291,14 @@ fn export_all_data() -> Result<ExportData, String> {
     let fornecedores: Vec<Fornecedor> = stmt_forn.query_map([], |r| Ok(Fornecedor { id: r.get(0)?, nome: r.get(1)?, cnpj: r.get(2)?, contato: r.get(3)?, email: r.get(4)?, telefone: r.get(5)?, ativo: r.get::<_, i64>(6)? != 0 }))
         .map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
-    let mut stmt_prod = conn.prepare("SELECT p.id, p.codigo, p.nome, p.marca, p.modelo, p.descricao, p.categoria_id, c.nome, p.fornecedor_id, f.nome, p.unidade, p.preco_compra, p.preco_venda, p.estoque, p.estoque_minimo, p.custo_total, p.ativo FROM produtos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN fornecedores f ON p.fornecedor_id = f.id").map_err(|e| e.to_string())?;
+    let mut stmt_prod = conn.prepare("SELECT p.id, p.codigo, p.nome, p.marca, p.modelo, p.descricao, p.categoria_id, c.nome, p.fornecedor_id, f.nome, p.unidade, p.preco_compra, p.preco_venda, p.estoque, p.estoque_minimo, p.custo_total, p.ativo, p.localizacao FROM produtos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN fornecedores f ON p.fornecedor_id = f.id").map_err(|e| e.to_string())?;
     let produtos: Vec<Produto> = stmt_prod.query_map([], |r| Ok(Produto {
         id: r.get(0)?, codigo: r.get(1)?, nome: r.get(2)?, marca: r.get(3)?, modelo: r.get(4)?,
         descricao: r.get(5)?, categoria_id: r.get(6)?, categoria_nome: r.get(7)?,
         fornecedor_id: r.get(8)?, fornecedor_nome: r.get(9)?, unidade: r.get(10)?,
         preco_compra: r.get(11)?, preco_venda: r.get(12)?, estoque: r.get(13)?,
         estoque_minimo: r.get(14)?, custo_total: r.get(15)?, ativo: r.get::<_, i64>(16)? != 0,
+        localizacao: r.get(17)?,
     })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
     // SEGURANÇA: Senha (hash Argon2) NUNCA é exportada no JSON de sync.

@@ -87,6 +87,7 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
             descricao TEXT,
             categoria_id INTEGER,
             fornecedor_id INTEGER,
+            localizacao TEXT,
             unidade TEXT NOT NULL DEFAULT 'un',
             preco_compra REAL NOT NULL DEFAULT 0,
             preco_venda REAL NOT NULL DEFAULT 0,
@@ -269,6 +270,17 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
     }
     // Migration: adiciona coluna setor se não existir
     let _ = conn.execute("ALTER TABLE pedidos ADD COLUMN setor TEXT", []);
+    // Migration: LOCALIZAÇÃO do estoque (sala/prateleira onde o item é guardado).
+    // Independentemente da loja, que é quem controla entrada, saída e transferência.
+    if conn.prepare("SELECT localizacao FROM produtos LIMIT 1").is_err() {
+        let _ = conn.execute("ALTER TABLE produtos ADD COLUMN localizacao TEXT", []);
+    }
+    // Migration: preenche a localização dos produtos já cadastrados.
+    // Roda sempre, mas só mexe quem está vazio — não sobrescreve edição do usuário.
+    let _ = conn.execute(
+        "UPDATE produtos SET localizacao = 'Setor de TI' WHERE localizacao IS NULL OR TRIM(localizacao) = ''",
+        [],
+    );
     Ok(())
 }
 

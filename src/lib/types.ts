@@ -32,6 +32,8 @@ export interface Produto {
   estoque_minimo: number;
   ativo: boolean;
   custo_total?: number;
+  /** Onde o item é guardado fisicamente (sala, prateleira, armário). */
+  localizacao?: string | null;
 }
 
 export interface Usuario {

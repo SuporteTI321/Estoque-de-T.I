@@ -145,6 +145,7 @@ export default function Produtos() {
                   categoria_id: prod.categoria_id ?? null,
                   fornecedor_id: prod.fornecedor_id ?? null,
                   unidade: prod.unidade,
+                  localizacao: prod.localizacao ?? null,
                   preco_compra: prod.preco_compra || 0,
                   preco_venda: prod.preco_venda || 0,
                   estoque: prod.estoque || 0,
@@ -193,7 +194,7 @@ export default function Produtos() {
   function openNew() {
     setEditing(null);
     // Gera código imediatamente para o usuário VER (número = max+1, sigla PROD até escolher categoria)
-    setForm({ codigo: previewCodigo(proximoNumero(), 'PROD'), unidade: 'un', estoque: 0, estoque_minimo: 0, ativo: true, preco_compra: 0, preco_venda: 0, custo_total: 0 });
+    setForm({ codigo: previewCodigo(proximoNumero(), 'PROD'), unidade: 'un', estoque: 0, estoque_minimo: 0, ativo: true, preco_compra: 0, preco_venda: 0, custo_total: 0, localizacao: "Setor de TI" });
     setOpen(true);
   }
   function openEdit(p: Produto) {
@@ -436,6 +437,7 @@ export default function Produtos() {
     { key: "marca", label: "MARCA", width: "130px", render: (r) => r.marca || <span className="text-gray-300">—</span> },
     { key: "modelo", label: "MODELO", width: "130px", render: (r) => r.modelo || <span className="text-gray-300">—</span> },
     { key: "categoria_nome", label: "CATEGORIA", width: "150px", render: (r) => r.categoria_nome ? String(r.categoria_nome).toUpperCase() : <span className="text-gray-300">—</span> },
+    { key: "localizacao", label: "LOCALIZAÇÃO", width: "140px", render: (r) => r.localizacao ? <span title={r.localizacao} className="font-medium text-gray-700">{r.localizacao}</span> : <span className="text-gray-300">—</span> },
     { key: "estoque_minimo", label: "ESTOQUE MÍNIMO", width: "120px", align: "center" },
     { key: "estoque", label: "ESTOQUE", width: "100px", align: "center" },
     {
@@ -677,6 +679,19 @@ export default function Produtos() {
               <input value={form.estoque ?? 0} readOnly
                 className="mt-1 w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 text-center" />
             </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Localização</label>
+            <input
+              value={form.localizacao ?? ""}
+              onChange={(e) => setForm({ ...form, localizacao: e.target.value })}
+              placeholder="Ex.: Setor de TI"
+              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            />
+            <p className="mt-1 text-[11px] text-gray-400">
+              Onde o item fica guardado (sala, prateleira, armário). É diferente da
+              loja, que controla entrada, saída e transferência.
+            </p>
           </div>
         </div>
       </Window>
