@@ -17,7 +17,7 @@ export default function Entradas() {
   const navigate = useNavigate();
   const [movs, setMovs] = useState<Movimentacao[]>([]);
   const [produtos, setProdutos] = useState<Produto[]>([]);
-  const [, setLojas] = useState<Loja[]>([]);
+  const [lojas, setLojas] = useState<Loja[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Movimentacao | null>(null);
   const [form, setForm] = useState<{ produto_id: string; quantidade: number; preco_compra: number; unidade: number; data: string; cod_produto: string }>({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, data: hojeInput(), cod_produto: "" });
@@ -65,6 +65,13 @@ export default function Entradas() {
   async function handleSave() {
     try {
       const p = produtos.find(pp => pp.id === Number(form.produto_id));
+      // A entrada sempre entra na loja do usuario logado — nao ha mais escolha de
+      // destino. E esse saldo que permite transferir o item para outra loja.
+      const lojaDestino = lojas.find(l => l.id === user?.loja_id) || null;
+      if (!lojaDestino) {
+        alert("Seu usuario nao esta vinculado a uma loja.\n\nVincule uma loja em Meu Perfil para registrar entradas.");
+        return;
+      }
       // -- Entrada em Lote: uma movimentacao por linha do mesmo produto --
       if (lote && !editing) {
         const validas = loteItens.filter(i => i.cod_produto.trim());
@@ -85,14 +92,14 @@ export default function Entradas() {
               produto_id: Number(form.produto_id),
               quantidade: Number(item.quantidade),
               loja_origem_id: null,
-              loja_destino_id: null,
+              loja_destino_id: lojaDestino.id,
               usuario_id: user?.id ?? null,
               observacao: `cod_produto:${item.cod_produto.trim()}`,
               produto_nome: p?.nome ?? null,
               preco_compra: form.preco_compra,
               unidade: form.unidade,
               data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
-              loja_origem_nome: null, loja_destino_nome: null,
+              loja_origem_nome: null, loja_destino_nome: lojaDestino.nome,
             });
             gravados++;
           } catch (e: any) {
@@ -134,14 +141,14 @@ export default function Entradas() {
         produto_id: Number(form.produto_id),
         quantidade: qtdNum,
         loja_origem_id: null,
-        loja_destino_id: null,
+        loja_destino_id: lojaDestino.id,
         usuario_id: user?.id ?? null,
         observacao: obsCod,
         produto_nome: p?.nome ?? null,
         preco_compra: form.preco_compra,
         unidade: form.unidade,
         data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
-        loja_origem_nome: null, loja_destino_nome: null,
+        loja_origem_nome: null, loja_destino_nome: lojaDestino.nome,
       });
       if (novo) setMovs((prev) => [...prev, novo].sort((a,b)=> new Date(a.data_movimento).getTime() - new Date(b.data_movimento).getTime()));
       setOpen(false);
@@ -179,7 +186,7 @@ export default function Entradas() {
     { key: "data_movimento", label: "Data", width: "120px", align: "center", render: (r) => new Date(r.data_movimento).toLocaleDateString("pt-BR") },
     { key: "id", label: "Acao", align: "center", width: "100px", render: (r) => (
       <div className="flex items-center justify-center gap-1">
-        <button onClick={(e) => { e.stopPropagation(); setEditing(r); const codManual = r.observacao?.match(/^cod_produto:(.+)$/m)?.[1]?.trim() || ""; setForm({ produto_id: String(r.produto_id), quantidade: r.quantidade, preco_compra: (r as any).preco_compra || 0, unidade: (r as any).unidade || 1, data: (r as any).data_movimento ? String(r.data_movimento).slice(0, 10) : hojeInput(), cod_produto: codManual }); setOpen(true); }}
+        <button onClick={(e) => { e.stopPropagation(); setEditing(r); const codManual = r.observacao?.match(/^cod_produto:(.+)$/m)?.[1]?.trim() || ""; setForm({ produto_id: String(r.produto_id), quantidade: r.quantidade, preco_compra: (r as any).preco_compra || 0, unidade: (r as any).unidade || 1, data: (r as any).data_movimento ? String((r as any).data_movimento).slice(0, 10) : hojeInput(), cod_produto: codManual }); setOpen(true); }}
           className="rounded p-1.5 text-blue-600 hover:bg-blue-50 transition" title="Editar entrada">
           <Pencil className="h-3.5 w-3.5" />
         </button>
@@ -226,14 +233,28 @@ export default function Entradas() {
       >
         <div className="space-y-3 py-1">
         {!editing && (
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Produto</label>
-            <select value={form.produto_id} onChange={(e) => setForm({ ...form, produto_id: e.target.value })}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-              <option value="">Selecione o produto...</option>
-              {produtos.map(pp => <option key={pp.id} value={pp.id}>{pp.codigo ? `${pp.codigo} — ` : ""}{pp.nome}</option>)}
-            </select>
-          </div>
+          <>
+            <div className="rounded-lg border border-blue-100 bg-blue-50/60 px-3 py-2">
+              <div className="text-sm font-medium text-gray-700">
+                Loja de destino:{" "}
+                <span className="font-semibold text-blue-800">
+                  {lojas.find(l => l.id === user?.loja_id)?.nome || "sua loja não vinculada"}
+                </span>
+              </div>
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                O estoque da entrada fica na loja do seu usuário — é ele que permite
+                transferir o item para outra loja.
+              </p>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Produto</label>
+              <select value={form.produto_id} onChange={(e) => setForm({ ...form, produto_id: e.target.value })}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <option value="">Selecione o produto...</option>
+                {produtos.map(pp => <option key={pp.id} value={pp.id}>{pp.codigo ? `${pp.codigo} — ` : ""}{pp.nome}</option>)}
+              </select>
+            </div>
+          </>
         )}
         <div className="grid grid-cols-[120px_1fr] gap-3">
           <div>

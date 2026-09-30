@@ -36,6 +36,8 @@ export default function SaidaRegistro() {
   const [codLoteIdx, setCodLoteIdx] = useState<number | null>(null);
   const [itensAdicionais, setItensAdicionais] = useState<{ produto_id: string; cod_produto: string; quantidade: number }[]>([]);
   const [adicionalIdx, setAdicionalIdx] = useState<number | null>(null);
+  /** Loja que sofre a saída (debita o estoque por loja). */
+  const [lojaOrigemId, setLojaOrigemId] = useState<string>(user?.loja_id ? String(user.loja_id) : "");
   const [erro, setErro] = useState<string | null>(null);
 
   function resetForm() {
@@ -196,6 +198,9 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
 
   async function handleSave() {
     try {
+      // Loja que sofre a saída — define o saldo por loja
+      const lojaSaida = lojas.find(l => l.id === Number(lojaOrigemId));
+      if (!lojaSaida) { alert("Selecione a loja de origem da saida."); return; }
       // ── Saida em Lote (multi-produto) ──
       if (lote && !editing) {
         const validas = loteItens.filter(i => i.produto_id && i.cod_produto.trim());
@@ -215,8 +220,8 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
               produto_id: p.id,
               produto_nome: p.nome,
               quantidade: Number(item.quantidade),
-              loja_origem_id: user?.loja_id || null,
-              loja_origem_nome: lojas.find(l => l.id === user?.loja_id)?.nome || null,
+              loja_origem_id: lojaSaida.id,
+              loja_origem_nome: lojaSaida.nome,
               loja_destino_id: null,
               loja_destino_nome: null,
               usuario_id: user?.id ?? null,
@@ -263,8 +268,8 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
           produto_id: p.id,
           produto_nome: p.nome,
           quantidade: qtdNum,
-          loja_origem_id: user?.loja_id || null,
-          loja_origem_nome: lojas.find(l => l.id === user?.loja_id)?.nome || null,
+          loja_origem_id: lojaSaida.id,
+          loja_origem_nome: lojaSaida.nome,
           loja_destino_id: null,
           loja_destino_nome: null,
           usuario_id: user?.id ?? null,
@@ -285,8 +290,8 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
               produto_id: pa.id,
               produto_nome: pa.nome,
               quantidade: Number(item.quantidade),
-              loja_origem_id: user?.loja_id || null,
-              loja_origem_nome: lojas.find(l => l.id === user?.loja_id)?.nome || null,
+              loja_origem_id: lojaSaida.id,
+              loja_origem_nome: lojaSaida.nome,
               loja_destino_id: null,
               loja_destino_nome: null,
               usuario_id: user?.id ?? null,
@@ -382,6 +387,20 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
         </>}
       >
         <div className="space-y-3 py-1">
+          {/* Loja de origem da saída — debita o estoque desta loja */}
+          {!editing && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Loja de origem *</label>
+              <select value={lojaOrigemId} onChange={(e) => setLojaOrigemId(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
+                <option value="">Selecione a loja que tem o item...</option>
+                {lojas.map(l => <option key={l.id} value={l.id}>{l.nome}</option>)}
+              </select>
+              <p className="mt-1 text-[11px] text-gray-400">
+                O item e debitado do estoque desta loja (padrao: a loja do usuario).
+              </p>
+            </div>
+          )}
           {/* ── Saida unica ── */}
           {form.produto_id && !editing && (
             <>

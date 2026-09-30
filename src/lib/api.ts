@@ -4,7 +4,8 @@
 
 import type {
   Loja, Categoria, Produto, Usuario, Movimentacao,
-  Solicitacao, SolicitacaoItem, Pedido, PedidoItem, Alerta, DashboardStats
+  Solicitacao, SolicitacaoItem, Pedido, PedidoItem, Alerta, DashboardStats,
+  Transferencia, TransferenciaItem, TransferenciaItemInput, EstoqueLojaItem
 } from "./types";
 import { getCloudConfig, verificarSenha } from "./cloudDb";
 import { remoteCall } from "./remoteApi";
@@ -36,6 +37,10 @@ export class BrowserStore {
   pedidos: Pedido[] = [];
   alertas: Alerta[] = [];
   itens: Record<number, SolicitacaoItem[]> = {};
+  transferencias: Transferencia[] = [];
+  transferenciaItens: Record<number, TransferenciaItem[]> = {};
+  /** Saldo por loja: linhas {loja_id, produto_id, quantidade} (mesmo formato do SQLite). */
+  estoqueLoja: { loja_id: number; produto_id: number; quantidade: number }[] = [];
 
   constructor() {
     this.lojas = loadFromLS("almox_lojas", []);
@@ -48,6 +53,15 @@ export class BrowserStore {
     this.alertas = loadFromLS("almox_alertas", []);
     this.itens = loadFromLS("almox_solicitacao_itens", {});
     this.pedidoItens = loadFromLS("almox_pedido_itens", {});
+    this.transferencias = loadFromLS("almox_transferencias", []);
+    this.estoqueLoja = loadFromLS("almox_estoque_loja", []);
+    // Itens de transferência persistidos como lista plana (formato de export)
+    const itensPlanos = loadFromLS<TransferenciaItem[]>("almox_transferencia_itens", []);
+    this.transferenciaItens = {};
+    for (const it of itensPlanos) {
+      if (!this.transferenciaItens[it.transferencia_id]) this.transferenciaItens[it.transferencia_id] = [];
+      this.transferenciaItens[it.transferencia_id].push(it);
+    }
   }
 
   // ---- Lojas ----
@@ -167,6 +181,82 @@ export class BrowserStore {
   markAlertaLido(id: number) {
     this.alertas = this.alertas.map(a => a.id === id ? { ...a, lido: true } : a);
     persist("almox_alertas", this.alertas);
+  }
+
+  // ---- Transferências (fallback local) ----
+  getTransferencias() { return this.transferencias; }
+  setTransferencias(arr: Transferencia[]) { this.transferencias = arr; persist("almox_transferencias", arr); }
+  addTransferencia(t: Transferencia) {
+    this.transferencias.unshift(t);
+    persist("almox_transferencias", this.transferencias);
+    return t;
+  }
+  updateTransferencia(id: number, patch: Partial<Transferencia>) {
+    this.transferencias = this.transferencias.map(t => t.id === id ? { ...t, ...patch } : t);
+    persist("almox_transferencias", this.transferencias);
+    return this.transferencias.find(t => t.id === id);
+  }
+  removeTransferencia(id: number) {
+    this.transferencias = this.transferencias.filter(t => t.id !== id);
+    delete this.transferenciaItens[id];
+    persist("almox_transferencias", this.transferencias);
+    this.persistTransferenciaItens();
+  }
+  getTransferenciaItens(id: number) { return this.transferenciaItens[id] ?? []; }
+  setTransferenciaItens(id: number, itens: TransferenciaItem[]) {
+    this.transferenciaItens[id] = itens;
+    this.persistTransferenciaItens();
+  }
+  /** Persiste o Record de itens como lista plana (formato de export/import). */
+  private persistTransferenciaItens() {
+    const planos: TransferenciaItem[] = [];
+    for (const chave of Object.keys(this.transferenciaItens)) {
+      planos.push(...(this.transferenciaItens[Number(chave)] ?? []));
+    }
+    persist("almox_transferencia_itens", planos);
+  }
+
+  // ---- Estoque por loja (fallback local) ----
+  /** Garante que todo produto tenha saldo atribuído a alguma loja (backfill local). */
+  garantirEstoqueLojaInicial() {
+    if (this.estoqueLoja.length > 0 || this.produtos.length === 0) return;
+    const principal = this.lojas.length > 0 ? Math.min(...this.lojas.map(l => l.id)) : 0;
+    if (principal <= 0) return;
+    this.estoqueLoja = this.produtos
+      .filter(p => (p.estoque || 0) > 0)
+      .map(p => ({ loja_id: principal, produto_id: p.id, quantidade: p.estoque }));
+    persist("almox_estoque_loja", this.estoqueLoja);
+  }
+  saldoLoja(lojaId: number, produtoId: number): number {
+    return this.estoqueLoja.find(e => e.loja_id === lojaId && e.produto_id === produtoId)?.quantidade ?? 0;
+  }
+  /** Ajusta o saldo de um produto em uma loja (nunca abaixo de zero). */
+  ajustarEstoqueLoja(lojaId: number, produtoId: number, delta: number) {
+    if (lojaId <= 0 || produtoId <= 0 || delta === 0) return;
+    const idx = this.estoqueLoja.findIndex(e => e.loja_id === lojaId && e.produto_id === produtoId);
+    if (idx >= 0) {
+      this.estoqueLoja[idx] = { ...this.estoqueLoja[idx], quantidade: Math.max(0, this.estoqueLoja[idx].quantidade + delta) };
+    } else {
+      this.estoqueLoja.push({ loja_id: lojaId, produto_id: produtoId, quantidade: Math.max(0, delta) });
+    }
+    persist("almox_estoque_loja", this.estoqueLoja);
+  }
+  /** Lista o estoque de todos os produtos ativos em uma loja (base interligada). */
+  getEstoqueLoja(lojaId: number): EstoqueLojaItem[] {
+    this.garantirEstoqueLojaInicial();
+    return this.produtos
+      .filter(p => p.ativo)
+      .map(p => ({
+        produto_id: p.id,
+        produto_nome: p.nome,
+        produto_codigo: p.codigo,
+        unidade: p.unidade,
+        estoque_minimo: p.estoque_minimo,
+        loja_id: lojaId,
+        loja_nome: this.lojas.find(l => l.id === lojaId)?.nome ?? null,
+        quantidade: this.saldoLoja(lojaId, p.id),
+      }))
+      .sort((a, b) => a.produto_nome.localeCompare(b.produto_nome));
   }
 }
 
@@ -540,6 +630,137 @@ export const api = {
     }),
   },
 
+  // ---- Transferências entre lojas ----
+  transferencias: {
+    list: () => apiCall<Transferencia[]>("list_transferencias", {}, () => store.getTransferencias())
+      .then((dados) => { store.setTransferencias(dados); return dados; }),
+    listItens: (transferencia_id: number) => apiCall<TransferenciaItem[]>(
+      "list_transferencia_itens", { transferencia_id },
+      () => store.getTransferenciaItens(transferencia_id)
+    ),
+    create: (dados: {
+      loja_origem_id: number;
+      loja_destino_id: number;
+      observacao?: string | null;
+      usuario_id?: number | null;
+      itens: TransferenciaItemInput[];
+    }) => writeCall<Transferencia>("create_transferencia", {
+      loja_origem_id: dados.loja_origem_id,
+      loja_destino_id: dados.loja_destino_id,
+      observacao: dados.observacao || null,
+      usuario_id: dados.usuario_id ?? null,
+      itens: dados.itens,
+    }, () => {
+      // ---- Fallback local (sem backend) ----
+      store.garantirEstoqueLojaInicial();
+      if (dados.loja_origem_id === dados.loja_destino_id) {
+        throw new Error("A loja de origem e a de destino devem ser diferentes.");
+      }
+      if (!dados.itens || dados.itens.length === 0) {
+        throw new Error("Adicione ao menos um item à transferência.");
+      }
+      // Consolida e valida saldo da origem
+      const exigido = new Map<number, number>();
+      for (const item of dados.itens) {
+        if (item.produto_id <= 0) throw new Error("Item inválido: produto não informado.");
+        if (!(item.quantidade > 0)) throw new Error("Quantidade deve ser maior que zero em todos os itens.");
+        exigido.set(item.produto_id, (exigido.get(item.produto_id) ?? 0) + item.quantidade);
+      }
+      for (const [produtoId, qtd] of exigido) {
+        const saldo = store.saldoLoja(dados.loja_origem_id, produtoId);
+        if (saldo < qtd) {
+          const nome = store.getProdutos().find(p => p.id === produtoId)?.nome ?? `produto #${produtoId}`;
+          throw new Error(`Saldo insuficiente na loja de origem para "${nome}": disponível ${saldo}, solicitado ${qtd}.`);
+        }
+      }
+      const agora = todayISO();
+      const nova: Transferencia = {
+        id: nextId(store.getTransferencias()),
+        loja_origem_id: dados.loja_origem_id,
+        loja_origem_nome: store.getLojas().find(l => l.id === dados.loja_origem_id)?.nome ?? null,
+        loja_destino_id: dados.loja_destino_id,
+        loja_destino_nome: store.getLojas().find(l => l.id === dados.loja_destino_id)?.nome ?? null,
+        usuario_id: dados.usuario_id ?? null,
+        usuario_nome: null,
+        observacao: dados.observacao || null,
+        status: "pendente",
+        total_itens: dados.itens.length,
+        total_quantidade: dados.itens.reduce((s, i) => s + i.quantidade, 0),
+        data_criacao: agora,
+        data_atualizacao: null,
+      };
+      store.addTransferencia(nova);
+      const itens: TransferenciaItem[] = dados.itens.map((item, i) => {
+        const p = store.getProdutos().find(pp => pp.id === item.produto_id);
+        return {
+          id: i + 1,
+          transferencia_id: nova.id,
+          produto_id: item.produto_id,
+          produto_nome: p?.nome ?? null,
+          produto_codigo: p?.codigo ?? null,
+          unidade: p?.unidade ?? null,
+          quantidade: item.quantidade,
+        };
+      });
+      store.setTransferenciaItens(nova.id, itens);
+      return nova;
+    }).then((t) => {
+      if (t && !store.getTransferencias().find(x => x.id === t.id)) store.addTransferencia(t);
+      return t;
+    }),
+    updateStatus: (id: number, status: string) => writeCall<Transferencia>("update_transferencia_status", { id, status }, () => {
+      // ---- Fallback local (sem backend) ----
+      const atual = store.getTransferencias().find(t => t.id === id);
+      if (!atual) throw new Error("Transferência não encontrada");
+      const transicaoOk =
+        (atual.status === "pendente" && ["em_transito", "concluida", "cancelada", "pendente"].includes(status)) ||
+        (atual.status === "em_transito" && ["concluida", "cancelada"].includes(status));
+      if (!transicaoOk) {
+        throw new Error(`Transição de status inválida: "${atual.status}" → "${status}".`);
+      }
+      if (status === "concluida" && atual.status !== "concluida") {
+        store.garantirEstoqueLojaInicial();
+        const itens = store.getTransferenciaItens(id);
+        // Valida saldo de novo antes de mover
+        const exigido = new Map<number, number>();
+        for (const item of itens) exigido.set(item.produto_id, (exigido.get(item.produto_id) ?? 0) + item.quantidade);
+        for (const [produtoId, qtd] of exigido) {
+          const saldo = store.saldoLoja(atual.loja_origem_id, produtoId);
+          if (saldo < qtd) {
+            const nome = store.getProdutos().find(p => p.id === produtoId)?.nome ?? `produto #${produtoId}`;
+            throw new Error(`Não foi possível concluir: saldo da origem em "${nome}" ficou insuficiente (${saldo}).`);
+          }
+        }
+        for (const item of itens) {
+          store.ajustarEstoqueLoja(atual.loja_origem_id, item.produto_id, -item.quantidade);
+          store.ajustarEstoqueLoja(atual.loja_destino_id, item.produto_id, item.quantidade);
+        }
+      }
+      return store.updateTransferencia(id, { status, data_atualizacao: todayISO() }) as Transferencia;
+    }),
+    delete: (id: number) => writeCall<void>("delete_transferencia", { id }, () => {
+      const atual = store.getTransferencias().find(t => t.id === id);
+      if (!atual) throw new Error("Transferência não encontrada");
+      if (atual.status === "concluida" || atual.status === "em_transito") {
+        throw new Error("Só é possível excluir transferências pendentes ou canceladas.");
+      }
+      store.removeTransferencia(id);
+    }).then(() => {
+      store.removeTransferencia(id);
+    }),
+  },
+
+  // ---- Estoque por loja (base de produtos interligada) ----
+  estoqueLoja: {
+    list: (loja_id: number) => apiCall<EstoqueLojaItem[]>("list_estoque_loja", { loja_id }, () => {
+      store.garantirEstoqueLojaInicial();
+      return store.getEstoqueLoja(loja_id);
+    }),
+    /** Define o saldo do produto na loja e recalcula o estoque global. */
+    definirSaldoInicial: (produto_id: number, loja_id: number, quantidade: number) =>
+      writeCall<void>("definir_saldo_inicial_loja", { produto_id, loja_id, quantidade }, () => undefined),
+  },
+
   // ---- Solicitacoes ----
   solicitacoes: {
     list: () => apiCall<Solicitacao[]>("list_solicitacoes", {}, () => store.getSolicitacoes()),
@@ -778,6 +999,9 @@ export const api = {
         ["pedidos", "almox_pedidos"],
         ["pedido_itens", "almox_pedido_itens"],
         ["alertas", "almox_alertas"],
+        ["transferencias", "almox_transferencias"],
+        ["transferencia_itens", "almox_transferencia_itens"],
+        ["estoque_loja", "almox_estoque_loja"],
       ];
       const dados: Record<string, any> = { versao: "1.0", data_exportacao: new Date().toISOString() };
       for (const [outKey, lsKey] of pares) {
@@ -792,11 +1016,11 @@ export const api = {
       const CHAVES_VALIDAS = new Set<string>([
         "lojas", "categorias", "fornecedores", "produtos", "usuarios",
         "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos",
-        "pedido_itens", "alertas",
+        "pedido_itens", "alertas", "transferencias", "transferencia_itens", "estoque_loja",
         // variantes com prefixo almox_
         ...["lojas", "categorias", "fornecedores", "produtos", "usuarios",
           "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos",
-          "pedido_itens", "alertas"].map(k => `almox_${k}`),
+          "pedido_itens", "alertas", "transferencias", "transferencia_itens", "estoque_loja"].map(k => `almox_${k}`),
       ]);
       let dados: any;
       try {
@@ -838,6 +1062,9 @@ export const api = {
         ["pedidos", "almox_pedidos"],
         ["pedido_itens", "almox_pedido_itens"],
         ["alertas", "almox_alertas"],
+        ["transferencias", "almox_transferencias"],
+        ["transferencia_itens", "almox_transferencia_itens"],
+        ["estoque_loja", "almox_estoque_loja"],
       ];
       for (const [srcKey, lsKey] of pares) {
         const dadosArr = dados[srcKey] || dados[lsKey];
@@ -1141,6 +1368,7 @@ export async function syncAllFromBackend() {
     { key: "solicitacoes", cmd: "list_solicitacoes", set: (d: any) => store.setSolicitacoes(d) },
     { key: "pedidos", cmd: "list_pedidos", set: (d: any) => store.setPedidos(d) },
     { key: "alertas", cmd: "list_alertas", set: (d: any) => store.setAlertas(d) },
+    { key: "transferencias", cmd: "list_transferencias", set: (d: any) => store.setTransferencias(d) },
   ];
   let ok = 0;
   for (const t of tabelas) {

@@ -9,6 +9,7 @@ import SaidaRegistro from "./pages/SaidaRegistro";
 import Inventario from "./pages/Inventario";
 import Categorias from "./pages/Categorias";
 import Produtos from "./pages/Produtos";
+import Transferencias from "./pages/Transferencias";
 import Relatorios from "./pages/Relatorios";
 import Etiquetas from "./pages/Etiquetas";
 
@@ -89,6 +90,7 @@ function Bootstrap() {
         "almox_produtos", "almox_movimentacoes", "almox_pedidos",
         "almox_pedido_itens", "almox_lojas", "almox_categorias",
         "almox_usuarios", "almox_solicitacoes", "almox_alertas",
+        "almox_transferencias", "almox_transferencia_itens", "almox_estoque_loja",
       ];
       for (const chave of chaves) {
         try {
@@ -149,6 +151,7 @@ function AppRoutes() {
       <Route path="/inventario" element={<ProtectedRoute><Inventario /></ProtectedRoute>} />
       <Route path="/categorias" element={<ProtectedRoute><Categorias /></ProtectedRoute>} />
       <Route path="/produtos" element={<ProtectedRoute><Produtos /></ProtectedRoute>} />
+      <Route path="/transferencias" element={<ProtectedRoute><Transferencias /></ProtectedRoute>} />
       <Route path="/relatorios" element={<ProtectedRoute><Relatorios /></ProtectedRoute>} />
       <Route path="/etiquetas" element={<ProtectedRoute><Etiquetas /></ProtectedRoute>} />
 

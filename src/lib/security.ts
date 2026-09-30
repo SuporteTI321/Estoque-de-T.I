@@ -175,10 +175,11 @@ const IMPORT_KEYS = new Set([
   "almox_lojas", "almox_categorias", "almox_fornecedores", "almox_produtos",
   "almox_usuarios", "almox_movimentacoes", "almox_solicitacoes",
   "almox_solicitacao_itens", "almox_pedidos", "almox_pedido_itens", "almox_alertas",
+  "almox_transferencias", "almox_transferencia_itens", "almox_estoque_loja",
   // Variantes sem prefixo
   "lojas", "categorias", "fornecedores", "produtos", "usuarios",
   "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos",
-  "pedido_itens", "alertas",
+  "pedido_itens", "alertas", "transferencias", "transferencia_itens", "estoque_loja",
 ]);
 
 /**

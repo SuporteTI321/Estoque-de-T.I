@@ -64,6 +64,52 @@ export interface Movimentacao {
   unidade?: number;
 }
 
+export type TransferenciaStatus = "pendente" | "em_transito" | "concluida" | "cancelada";
+
+export interface Transferencia {
+  id: number;
+  loja_origem_id: number;
+  loja_origem_nome: string | null;
+  loja_destino_id: number;
+  loja_destino_nome: string | null;
+  usuario_id: number | null;
+  usuario_nome: string | null;
+  observacao: string | null;
+  status: TransferenciaStatus | string;
+  total_itens: number;
+  total_quantidade: number;
+  data_criacao: string;
+  data_atualizacao: string | null;
+}
+
+export interface TransferenciaItem {
+  id: number;
+  transferencia_id: number;
+  produto_id: number;
+  produto_nome: string | null;
+  produto_codigo: string | null;
+  unidade: string | null;
+  quantidade: number;
+}
+
+/** Item de entrada na criação de transferência (produto + quantidade). */
+export interface TransferenciaItemInput {
+  produto_id: number;
+  quantidade: number;
+}
+
+/** Saldo de um produto em uma loja específica. */
+export interface EstoqueLojaItem {
+  produto_id: number;
+  produto_nome: string;
+  produto_codigo: string | null;
+  unidade: string | null;
+  estoque_minimo: number;
+  loja_id: number;
+  loja_nome: string | null;
+  quantidade: number;
+}
+
 export interface Solicitacao {
   id: number;
   loja_id: number;
