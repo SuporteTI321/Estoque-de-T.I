@@ -1,4 +1,5 @@
 mod db;
+mod transferencias;
 
 use rusqlite::params;
 use serde::{Deserialize, Serialize};
@@ -6,6 +7,10 @@ use base64::Engine;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2, Algorithm, Version, Params,
+};
+use transferencias::{
+    aplicar_efeito_estoque, reverter_efeito_estoque,
+    Transferencia, TransferenciaItem,
 };
 
 // ============================================================================
@@ -390,6 +395,10 @@ fn delete_all_produtos(usuario_id: i64) -> Result<(), String> {
         .map_err(|e| e.to_string())?;
     tx.execute("DELETE FROM solicitacao_itens WHERE produto_id IN (SELECT id FROM produtos)", [])
         .map_err(|e| e.to_string())?;
+    tx.execute("DELETE FROM transferencia_itens WHERE produto_id IN (SELECT id FROM produtos)", [])
+        .map_err(|e| e.to_string())?;
+    tx.execute("DELETE FROM estoque_loja WHERE produto_id IN (SELECT id FROM produtos)", [])
+        .map_err(|e| e.to_string())?;
     tx.execute("DELETE FROM produtos", []).map_err(|e| e.to_string())?;
     tx.commit().map_err(|e| e.to_string())?;
     Ok(())
@@ -420,73 +429,9 @@ fn delete_produto(id: i64) -> Result<(), String> {
             .map_err(|e| e.to_string())?;
     }
     conn.execute("DELETE FROM movimentacoes WHERE produto_id=?1", params![id]).map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM transferencia_itens WHERE produto_id=?1", params![id]).map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM estoque_loja WHERE produto_id=?1", params![id]).map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM produtos WHERE id=?1", params![id]).map_err(|e| e.to_string())?;
-    Ok(())
-}
-
-/// Aplica o efeito de uma movimentação no estoque/custo do produto.
-fn aplicar_efeito_estoque(
-    conn: &rusqlite::Connection,
-    tipo: &str,
-    produto_id: i64,
-    quantidade: i64,
-    preco_compra: Option<f64>,
-) -> Result<(), String> {
-    if produto_id <= 0 {
-        return Ok(());
-    }
-    match tipo {
-        "entrada" => {
-            let preco = preco_compra.unwrap_or(0.0);
-            let qty = quantidade as f64;
-            conn.execute(
-                "UPDATE produtos SET estoque = estoque + ?1, custo_total = custo_total + (?2 * ?3) WHERE id=?4",
-                params![quantidade, preco, qty, produto_id],
-            )
-            .map_err(|e| e.to_string())?;
-        }
-        "saida" | "transferencia" => {
-            conn.execute(
-                "UPDATE produtos SET estoque = MAX(0, estoque - ?1) WHERE id=?2",
-                params![quantidade, produto_id],
-            )
-            .map_err(|e| e.to_string())?;
-        }
-        _ => {}
-    }
-    Ok(())
-}
-
-/// Reverte o efeito de uma movimentação no estoque/custo do produto.
-fn reverter_efeito_estoque(
-    conn: &rusqlite::Connection,
-    tipo: &str,
-    produto_id: i64,
-    quantidade: i64,
-    preco_compra: Option<f64>,
-) -> Result<(), String> {
-    if produto_id <= 0 {
-        return Ok(());
-    }
-    match tipo {
-        "entrada" => {
-            let preco = preco_compra.unwrap_or(0.0);
-            let qty = quantidade as f64;
-            conn.execute(
-                "UPDATE produtos SET estoque = MAX(0, estoque - ?1), custo_total = MAX(0, custo_total - (?2 * ?3)) WHERE id=?4",
-                params![quantidade, preco, qty, produto_id],
-            )
-            .map_err(|e| e.to_string())?;
-        }
-        "saida" | "transferencia" => {
-            conn.execute(
-                "UPDATE produtos SET estoque = estoque + ?1 WHERE id=?2",
-                params![quantidade, produto_id],
-            )
-            .map_err(|e| e.to_string())?;
-        }
-        _ => {}
-    }
     Ok(())
 }
 
@@ -501,11 +446,11 @@ fn update_movimentacao(
     let mut conn = db::open_conn().map_err(|e| e.to_string())?;
     let tx = conn.transaction().map_err(|e| e.to_string())?;
     // Estado antigo para reverter o efeito no estoque
-    let (tipo_antigo, prod_antigo, qtd_antiga, preco_antigo): (String, i64, i64, Option<f64>) = tx
+    let (tipo_antigo, prod_antigo, qtd_antiga, preco_antigo, loja_o, loja_d): (String, i64, i64, Option<f64>, Option<i64>, Option<i64>) = tx
         .query_row(
-            "SELECT tipo, produto_id, quantidade, preco_compra FROM movimentacoes WHERE id=?1",
+            "SELECT tipo, produto_id, quantidade, preco_compra, loja_origem_id, loja_destino_id FROM movimentacoes WHERE id=?1",
             params![id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?)),
         )
         .map_err(|_| "Movimentação não encontrada".to_string())?;
     if let Some(q) = quantidade {
@@ -528,9 +473,9 @@ fn update_movimentacao(
             |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
         )
         .map_err(|e| e.to_string())?;
-    // Reverter efeito antigo e aplicar o novo
-    reverter_efeito_estoque(&tx, &tipo_antigo, prod_antigo, qtd_antiga, preco_antigo)?;
-    aplicar_efeito_estoque(&tx, &tipo_novo, prod_novo, qtd_nova, preco_novo)?;
+    // Reverter efeito antigo e aplicar o novo (lojas inalteradas nesta edição)
+    reverter_efeito_estoque(&tx, &tipo_antigo, prod_antigo, qtd_antiga, preco_antigo, loja_o, loja_d)?;
+    aplicar_efeito_estoque(&tx, &tipo_novo, prod_novo, qtd_nova, preco_novo, loja_o, loja_d)?;
     tx.commit().map_err(|e| e.to_string())?;
     // Retornar movimentação atualizada
     let mov = conn.query_row(
@@ -552,15 +497,15 @@ fn delete_movimentacao(id: i64) -> Result<(), String> {
     let mut conn = db::open_conn().map_err(|e| e.to_string())?;
     let tx = conn.transaction().map_err(|e| e.to_string())?;
     // Buscar dados da movimentação antes de deletar
-    let mov: Option<(String, i64, i64, Option<f64>)> = tx
+    let mov: Option<(String, i64, i64, Option<f64>, Option<i64>, Option<i64>)> = tx
         .query_row(
-            "SELECT tipo, produto_id, quantidade, preco_compra FROM movimentacoes WHERE id=?1",
+            "SELECT tipo, produto_id, quantidade, preco_compra, loja_origem_id, loja_destino_id FROM movimentacoes WHERE id=?1",
             params![id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?)),
         )
         .ok();
-    if let Some((tipo, produto_id, quantidade, preco)) = mov {
-        reverter_efeito_estoque(&tx, &tipo, produto_id, quantidade, preco)?;
+    if let Some((tipo, produto_id, quantidade, preco, loja_o, loja_d)) = mov {
+        reverter_efeito_estoque(&tx, &tipo, produto_id, quantidade, preco, loja_o, loja_d)?;
     }
     tx.execute("DELETE FROM movimentacoes WHERE id=?1", params![id]).map_err(|e| e.to_string())?;
     tx.commit().map_err(|e| e.to_string())?;
@@ -702,6 +647,8 @@ fn create_loja(nome: String, codigo: String, endereco: Option<String>) -> Result
     )
     .map_err(|e| e.to_string())?;
     let id = conn.last_insert_rowid();
+    // A loja NÃO recebe estoque automaticamente: o saldo por loja é definido
+    // pelas Entradas (loja de destino), Saídas (loja de origem) e Transferências.
     Ok(Loja {
         id,
         nome,
@@ -754,6 +701,19 @@ fn delete_loja(id: i64) -> Result<(), String> {
     conn.execute("UPDATE movimentacoes SET loja_destino_id=NULL WHERE loja_destino_id=?1", params![id])
         .map_err(|e| e.to_string())?;
     conn.execute("UPDATE usuarios SET loja_id=NULL WHERE loja_id=?1", params![id])
+        .map_err(|e| e.to_string())?;
+    // Transferências da loja removida (itens caem em cascata) e saldo por loja
+    conn.execute(
+        "DELETE FROM transferencia_itens WHERE transferencia_id IN (SELECT id FROM transferencias WHERE loja_origem_id=?1 OR loja_destino_id=?1)",
+        params![id],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute(
+        "DELETE FROM transferencias WHERE loja_origem_id=?1 OR loja_destino_id=?1",
+        params![id],
+    )
+    .map_err(|e| e.to_string())?;
+    conn.execute("DELETE FROM estoque_loja WHERE loja_id=?1", params![id])
         .map_err(|e| e.to_string())?;
     conn.execute("DELETE FROM lojas WHERE id=?1", params![id])
         .map_err(|e| e.to_string())?;
@@ -987,6 +947,10 @@ fn create_produto(
     )
     .map_err(|e| e.to_string())?;
     let id = conn.last_insert_rowid();
+    // O estoque inicial NÃO é creditado em nenhuma loja: não existe mais loja
+    // "principal" recebendo saldo automático. O saldo por loja passa a ser
+    // definido pelas Entradas (loja de destino), Saídas (loja de origem) e
+    // Transferências. Uma criação com estoque > 0 fica como estoque global.
     let cat_nome: Option<String> = conn
         .query_row(
             "SELECT nome FROM categorias WHERE id = ?1",
@@ -1045,6 +1009,9 @@ fn update_produto(
         params![codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total, id],
     )
     .map_err(|e| e.to_string())?;
+    // O estoque global é apenas o valor informado pelo usuário — a distribuição
+    // entre as lojas é mantida por Entradas, Saídas e Transferências (não há
+    // mais conciliação automática com uma loja "principal").
     let cat_nome: Option<String> = conn
         .query_row(
             "SELECT nome FROM categorias WHERE id = ?1",
@@ -1341,32 +1308,18 @@ fn create_movimentacao(
         let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
 
         // Atualizar estoque apenas se produto existe no catálogo.
-        // Nota: o estoque do produto é único/global (não há estoque por loja no schema),
-        // portanto "transferencia" registra a saída da loja de origem; a loja de destino
-        // fica registrada na própria movimentação (loja_destino_id/nome) para rastreio,
-        // sem gerar movimentação de entrada (o que dobraria a contagem de entradas).
-        if tipo == "entrada" && produto_id > 0 {
-            let preco = preco_compra.unwrap_or(0.0);
-            let qty = quantidade as f64;
-            tx.execute(
-                "UPDATE produtos SET estoque = estoque + ?1, custo_total = custo_total + (?2 * ?3) WHERE id=?4",
-                params![quantidade, preco, qty, produto_id],
-            )
-            .map_err(|e| e.to_string())?;
-        } else if tipo == "saida" && produto_id > 0 {
-            tx.execute(
-                "UPDATE produtos SET estoque = MAX(0, estoque - ?1) WHERE id=?2",
-                params![quantidade, produto_id],
-            )
-            .map_err(|e| e.to_string())?;
-        } else if tipo == "transferencia" && produto_id > 0 {
-            // Saída global: origem → destino registrados nos campos da movimentação
-            tx.execute(
-                "UPDATE produtos SET estoque = MAX(0, estoque - ?1) WHERE id=?2",
-                params![quantidade, produto_id],
-            )
-            .map_err(|e| e.to_string())?;
-        }
+        // - "entrada": soma no global e credita na loja de destino (ou loja principal)
+        // - "saida": subtrai do global e debita na loja de origem (ou loja principal)
+        // - "transferencia": apenas move o saldo entre lojas (estoque global inalterado)
+        aplicar_efeito_estoque(
+            &tx,
+            &tipo,
+            produto_id,
+            quantidade,
+            preco_compra,
+            loja_origem_id,
+            loja_destino_id,
+        )?;
 
         tx.execute(
             "INSERT INTO movimentacoes (tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, preco_compra, unidade, data_movimento) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
@@ -1988,6 +1941,8 @@ fn init_database() -> Result<(), String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     db::init_schema(&conn).map_err(|e| e.to_string())?;
     db::seed_data(&conn).map_err(|e| e.to_string())?;
+    // Sem backfill automático: o estoque por loja é definido pelas Entradas,
+    // Saídas e Transferências (o estoque do produto é único).
     Ok(())
 }
 
@@ -2027,6 +1982,13 @@ pub fn run() {
             verify_password,
             list_movimentacoes,
             create_movimentacao,
+            transferencias::list_transferencias,
+            transferencias::list_transferencia_itens,
+            transferencias::create_transferencia,
+            transferencias::update_transferencia_status,
+            transferencias::delete_transferencia,
+            transferencias::list_estoque_loja,
+            transferencias::definir_saldo_inicial_loja,
             list_solicitacoes,
             create_solicitacao,
             update_solicitacao_status,
@@ -2287,6 +2249,20 @@ pub struct ExportData {
     pub pedido_itens: Vec<PedidoItem>,
     #[serde(default)]
     pub alertas: Vec<Alerta>,
+    #[serde(default)]
+    pub transferencias: Vec<Transferencia>,
+    #[serde(default)]
+    pub transferencia_itens: Vec<TransferenciaItem>,
+    #[serde(default)]
+    pub estoque_loja: Vec<EstoqueLojaRow>,
+}
+
+/// Linha simples do estoque por loja para exportação/importação de sync.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct EstoqueLojaRow {
+    pub loja_id: i64,
+    pub produto_id: i64,
+    pub quantidade: i64,
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -2363,12 +2339,35 @@ fn export_all_data() -> Result<ExportData, String> {
         data_alerta: r.get(4)?, lido: r.get::<_, i64>(5)? != 0,
     })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
+    // Transferências entre lojas (totais recalculados no list local)
+    let mut stmt_trf = conn.prepare("SELECT t.id, t.loja_origem_id, lo.nome, t.loja_destino_id, ld.nome, t.usuario_id, u.nome, t.observacao, t.status, t.data_criacao, t.data_atualizacao FROM transferencias t LEFT JOIN lojas lo ON t.loja_origem_id = lo.id LEFT JOIN lojas ld ON t.loja_destino_id = ld.id LEFT JOIN usuarios u ON t.usuario_id = u.id").map_err(|e| e.to_string())?;
+    let transferencias: Vec<Transferencia> = stmt_trf.query_map([], |r| Ok(Transferencia {
+        id: r.get(0)?, loja_origem_id: r.get(1)?, loja_origem_nome: r.get(2)?,
+        loja_destino_id: r.get(3)?, loja_destino_nome: r.get(4)?,
+        usuario_id: r.get(5)?, usuario_nome: r.get(6)?, observacao: r.get(7)?,
+        status: r.get(8)?, total_itens: 0, total_quantidade: 0,
+        data_criacao: r.get(9)?, data_atualizacao: r.get(10)?,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_ti = conn.prepare("SELECT id, transferencia_id, produto_id, produto_nome, produto_codigo, unidade, quantidade FROM transferencia_itens").map_err(|e| e.to_string())?;
+    let transferencia_itens: Vec<TransferenciaItem> = stmt_ti.query_map([], |r| Ok(TransferenciaItem {
+        id: r.get(0)?, transferencia_id: r.get(1)?, produto_id: r.get(2)?,
+        produto_nome: r.get(3)?, produto_codigo: r.get(4)?, unidade: r.get(5)?,
+        quantidade: r.get(6)?,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
+    let mut stmt_el = conn.prepare("SELECT loja_id, produto_id, quantidade FROM estoque_loja").map_err(|e| e.to_string())?;
+    let estoque_loja: Vec<EstoqueLojaRow> = stmt_el.query_map([], |r| Ok(EstoqueLojaRow {
+        loja_id: r.get(0)?, produto_id: r.get(1)?, quantidade: r.get(2)?,
+    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+
     Ok(ExportData {
         versao: "1.0".to_string(),
         data_exportacao: now,
         lojas, categorias, fornecedores, produtos, usuarios,
         movimentacoes, solicitacoes, solicitacao_itens,
         pedidos, pedido_itens, alertas,
+        transferencias, transferencia_itens, estoque_loja,
     })
 }
 
@@ -2376,7 +2375,8 @@ fn export_all_data() -> Result<ExportData, String> {
 fn import_all_data(dados: ExportData) -> Result<String, String> {
     // Se todos os arrays estiverem vazios, nao sobrescrever dados locais
     let total = dados.lojas.len() + dados.categorias.len() + dados.produtos.len()
-        + dados.usuarios.len() + dados.movimentacoes.len() + dados.pedidos.len();
+        + dados.usuarios.len() + dados.movimentacoes.len() + dados.pedidos.len()
+        + dados.transferencias.len();
     if total == 0 {
         return Ok("Nada para importar — dados remotos estao vazios".to_string());
     }
@@ -2390,7 +2390,7 @@ fn import_all_data(dados: ExportData) -> Result<String, String> {
         let mut stats = std::collections::HashMap::new();
 
         // DELETE ordenado (filhas antes de mães) para importação limpa
-        for tabela in &["pedido_itens", "pedidos", "solicitacao_itens", "solicitacoes", "movimentacoes", "alertas", "usuarios", "produtos", "fornecedores", "categorias", "lojas"] {
+        for tabela in &["transferencia_itens", "transferencias", "estoque_loja", "pedido_itens", "pedidos", "solicitacao_itens", "solicitacoes", "movimentacoes", "alertas", "usuarios", "produtos", "fornecedores", "categorias", "lojas"] {
             tx.execute(&format!("DELETE FROM {}", tabela), []).map_err(|e| e.to_string())?;
         }
 
@@ -2481,9 +2481,30 @@ fn import_all_data(dados: ExportData) -> Result<String, String> {
         *stats.entry("alertas".to_string()).or_insert(0) += 1;
     }
 
+    // Transferências entre lojas
+    for item in &dados.transferencias {
+        tx.execute("INSERT OR REPLACE INTO transferencias (id, loja_origem_id, loja_destino_id, usuario_id, observacao, status, data_criacao, data_atualizacao) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8)",
+            params![item.id, item.loja_origem_id, item.loja_destino_id, item.usuario_id, item.observacao, item.status, item.data_criacao, item.data_atualizacao]).map_err(|e| e.to_string())?;
+        *stats.entry("transferencias".to_string()).or_insert(0) += 1;
+    }
+
+    // Itens das transferências
+    for item in &dados.transferencia_itens {
+        tx.execute("INSERT OR REPLACE INTO transferencia_itens (id, transferencia_id, produto_id, produto_nome, produto_codigo, unidade, quantidade) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![item.id, item.transferencia_id, item.produto_id, item.produto_nome, item.produto_codigo, item.unidade, item.quantidade]).map_err(|e| e.to_string())?;
+        *stats.entry("transferencia_itens".to_string()).or_insert(0) += 1;
+    }
+
+    // Estoque por loja
+    for item in &dados.estoque_loja {
+        tx.execute("INSERT OR REPLACE INTO estoque_loja (loja_id, produto_id, quantidade) VALUES (?1, ?2, ?3)",
+            params![item.loja_id, item.produto_id, item.quantidade]).map_err(|e| e.to_string())?;
+        *stats.entry("estoque_loja".to_string()).or_insert(0) += 1;
+    }
+
     // Resetar sequences para evitar conflitos de ID futuro
     // SEGURANÇA: Usa allowlist de tabelas conhecidas em vez de format! direto
-    const TABELAS_VALIDAS: &[&str] = &["lojas", "categorias", "fornecedores", "produtos", "usuarios", "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos", "pedido_itens", "alertas"];
+    const TABELAS_VALIDAS: &[&str] = &["lojas", "categorias", "fornecedores", "produtos", "usuarios", "movimentacoes", "solicitacoes", "solicitacao_itens", "pedidos", "pedido_itens", "alertas", "transferencias", "transferencia_itens"];
     for tabela in TABELAS_VALIDAS {
         // Validação extra: só aceita nomes alfanuméricos + underscore
         if !tabela.chars().all(|c| c.is_alphanumeric() || c == '_') {

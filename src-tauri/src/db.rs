@@ -182,6 +182,44 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
             lido INTEGER NOT NULL DEFAULT 0
         );
 
+        -- TRANSFERENCIAS ENTRE LOJAS (base de produtos interligada)
+        CREATE TABLE IF NOT EXISTS transferencias (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            loja_origem_id INTEGER NOT NULL,
+            loja_destino_id INTEGER NOT NULL,
+            usuario_id INTEGER,
+            observacao TEXT,
+            status TEXT NOT NULL DEFAULT 'pendente',
+            data_criacao TEXT NOT NULL,
+            data_atualizacao TEXT,
+            FOREIGN KEY (loja_origem_id) REFERENCES lojas(id),
+            FOREIGN KEY (loja_destino_id) REFERENCES lojas(id),
+            FOREIGN KEY (usuario_id) REFERENCES usuarios(id)
+        );
+
+        CREATE TABLE IF NOT EXISTS transferencia_itens (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            transferencia_id INTEGER NOT NULL,
+            produto_id INTEGER NOT NULL,
+            produto_nome TEXT,
+            produto_codigo TEXT,
+            unidade TEXT,
+            quantidade INTEGER NOT NULL,
+            FOREIGN KEY (transferencia_id) REFERENCES transferencias(id) ON DELETE CASCADE,
+            FOREIGN KEY (produto_id) REFERENCES produtos(id)
+        );
+
+        -- ESTOQUE POR LOJA: saldo de cada produto em cada loja.
+        -- O estoque global de `produtos` continua existindo (soma de todas as lojas).
+        CREATE TABLE IF NOT EXISTS estoque_loja (
+            loja_id INTEGER NOT NULL,
+            produto_id INTEGER NOT NULL,
+            quantidade INTEGER NOT NULL DEFAULT 0,
+            PRIMARY KEY (loja_id, produto_id),
+            FOREIGN KEY (loja_id) REFERENCES lojas(id),
+            FOREIGN KEY (produto_id) REFERENCES produtos(id)
+        );
+
         CREATE TABLE IF NOT EXISTS app_config (
             chave TEXT PRIMARY KEY,
             valor TEXT NOT NULL
