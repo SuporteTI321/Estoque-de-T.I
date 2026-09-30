@@ -143,6 +143,14 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
     setItensAdicionais(relacionados.map(p => ({ produto_id: String(p.id), cod_produto: p.codigo || "", quantidade: 1 })));
   }, [form.produto_id, editing, lote]);
 
+  /**
+   * A janela do Cad. Produto, quando aberta pela saída de um item, mostra só o
+   * código do produto que já está aberto no formulário. Lote e produto adicional
+   * continuam com a lista toda, porque lá o produto ainda não foi escolhido.
+   */
+  const filtrarPeloProdutoAberto =
+    codPickerOpen && !!form.produto_id && codLoteIdx === null && adicionalIdx === null;
+
   const gruposCod = useMemo(() => {
     type ItemCod = { codigo: string; produto: Produto; mov: Movimentacao | null };
     const map = new Map<string, ItemCod[]>();
@@ -176,12 +184,21 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
       map.get(key)!.push({ codigo: p.codigo, produto: p, mov: null });
     }
     let entries = Array.from(map.entries());
+    // Na saída de um item só, a janela do Cad. Produto mostra APENAS o código do
+    // produto que já está aberto — evita escolher o código de outro equipamento.
+    // Em lote e em produto adicional, a lista continua completa.
+    if (filtrarPeloProdutoAberto) {
+      const pid = Number(form.produto_id);
+      entries = entries
+        .map(([k, arr]) => [k, arr.filter(x => x.produto.id === pid)] as [string, ItemCod[]])
+        .filter(([, arr]) => arr.length > 0);
+    }
     const term = codPickerSearch.trim().toLowerCase();
     if (term) {
       entries = entries.map(([k, arr]) => [k, arr.filter(x => x.codigo.toLowerCase().includes(term) || x.produto.nome.toLowerCase().includes(term) || (x.produto.marca || '').toLowerCase().includes(term) || (x.produto.modelo || '').toLowerCase().includes(term) || k.toLowerCase().includes(term))] as [string, ItemCod[]]).filter(([, arr]) => arr.length > 0);
     }
     return entries;
-  }, [produtos, entradasCod, codPickerSearch]);
+  }, [produtos, entradasCod, codPickerSearch, filtrarPeloProdutoAberto, form.produto_id]);
 
   function selecionarCod(item: { codigo: string; produto: Produto }, loteIdx: number | null = null, adicIdx: number | null = null) {
     if (loteIdx !== null) {
@@ -593,7 +610,17 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
           </div>
           <div className="max-h-80 overflow-y-auto space-y-3">
             {gruposCod.length === 0 ? (
-              <div className="py-8 text-center text-sm text-gray-400">Nenhum produto encontrado<br/><span className="text-xs">Cadastre produtos com codigo primeiro</span></div>
+              filtrarPeloProdutoAberto ? (
+                <div className="py-8 text-center text-sm text-gray-500">
+                  O produto aberto ainda não tem código cadastrado
+                  <br />
+                  <span className="text-xs">
+                    {produtos.find(p => p.id === Number(form.produto_id))?.nome || "Este produto"}
+                  </span>
+                </div>
+              ) : (
+                <div className="py-8 text-center text-sm text-gray-400">Nenhum produto encontrado<br /><span className="text-xs">Cadastre produtos com codigo primeiro</span></div>
+              )
             ) : gruposCod.map(([grupo, arr]) => (
               <div key={grupo} className="rounded-lg border border-gray-200 overflow-hidden">
                 <div className="bg-gray-50 px-3 py-1.5 text-xs font-semibold text-gray-700 border-b border-gray-200 flex items-center gap-2">
