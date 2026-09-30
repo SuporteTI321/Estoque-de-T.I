@@ -18,7 +18,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowLeftRight, Plus, Eye, Send, CheckCircle2, XCircle, Trash2,
-  Package, AlertTriangle,
+  Package, AlertTriangle, Warehouse,
 } from "lucide-react";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
@@ -166,6 +166,24 @@ export default function Transferencias() {
   }, [saldoOrigemLista]);
 
   const temDuasLojas = lojas.length >= 2;
+
+  /**
+   * Catálogo de produtos QUE TÊM SALDO na loja de origem. É o estoque próprio
+   * da Transferência, separado do menu Produtos (que traz o catálogo inteiro e o
+   * total geral): só o que existe na origem pode ser transferido.
+   */
+  const produtosComSaldoNaOrigem = useMemo(() => {
+    if (!origemId) return [] as Produto[];
+    return produtos
+      .filter((p) => p.ativo && (saldoOrigem.get(p.id) ?? 0) > 0)
+      .sort((a, b) => a.nome.localeCompare(b.nome, "pt-BR"));
+  }, [produtos, saldoOrigem, origemId]);
+
+  /** Total de unidades disponíveis na origem (para o resumo do modal). */
+  const totalUnidadesNaOrigem = useMemo(
+    () => produtosComSaldoNaOrigem.reduce((s, p) => s + (saldoOrigem.get(p.id) ?? 0), 0),
+    [produtosComSaldoNaOrigem, saldoOrigem]
+  );
 
   // ------------------------------------------------------------------------
   //  Nova transferência
@@ -476,7 +494,16 @@ export default function Transferencias() {
   }
 
   async function excluir(t: Transferencia) {
-    if (!confirm(`Excluir transferência #${t.id}?`)) return;
+    // Transferência concluída já moveu o estoque: a exclusão estorna.
+    const aviso = t.status === "concluida"
+      ? `Excluir a transferência #${t.id}?\n\n` +
+        `Ela JÁ CONCLUÍU e o estoque foi movido. Ao excluir, o sistema vai:\n` +
+        `• devolver os itens à loja de origem\n` +
+        `• debitar da loja de destino\n` +
+        `• apagar a baixa registrada no histórico\n\n` +
+        `As duas lojas voltam ao saldo anterior.`
+      : `Excluir a transferência #${t.id}?\n\nEla ainda não moveu o estoque, então nada é alterado nas lojas.`;
+    if (!confirm(aviso)) return;
     try {
       await api.transferencias.delete(t.id);
       recarregar();
@@ -543,12 +570,15 @@ export default function Transferencias() {
                 </button>
               </>
             )}
-            {(r.status === "pendente" || r.status === "cancelada") && (
-              <button onClick={(e) => { e.stopPropagation(); excluir(r); }}
-                className="rounded p-1.5 text-red-600 hover:bg-red-50 transition" title="Excluir">
-                <Trash2 className="h-3.5 w-3.5" />
-              </button>
-            )}
+            {/* Lixeira em todos os status. Em "concluída" a exclusão estorna o
+                estoque (devolve à origem, debita do destino) e apaga a baixa. */}
+            <button onClick={(e) => { e.stopPropagation(); excluir(r); }}
+              className={`rounded p-1.5 transition ${r.status === "concluida"
+                ? "text-red-600 hover:bg-red-50"
+                : "text-gray-500 hover:bg-red-50 hover:text-red-600"}`}
+              title={r.status === "concluida" ? "Excluir e estornar o estoque" : "Excluir"}>
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
           </div>
         )}
       />
@@ -666,6 +696,26 @@ export default function Transferencias() {
           {/* ── Itens da transferência (modelo "Itens da Solicitação") ── */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-700">Itens da transferência *</label>
+
+            {/* Estoque da própria Transferência: o saldo da loja de origem,
+                separado do menu Produtos (que mostra o total geral). */}
+            <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-600">
+              <Warehouse className="h-3.5 w-3.5 shrink-0 text-slate-500" />
+              {origemId ? (
+                saldoCarregando ? (
+                  <span>Carregando o estoque da loja de origem...</span>
+                ) : (
+                  <span>
+                    Estoque da origem (<b>{lojas.find(l => String(l.id) === origemId)?.nome}</b>):{" "}
+                    <b>{produtosComSaldoNaOrigem.length}</b> produto(s) ·{" "}
+                    <b>{totalUnidadesNaOrigem}</b> unidades
+                  </span>
+                )
+              ) : (
+                <span>Escolha a <b>loja de origem</b> para ver o estoque que pode ser transferido.</span>
+              )}
+            </div>
+
             <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
               {itensForm.length === 0 ? (
                 <div className="rounded-md border border-dashed border-gray-300 bg-white p-3 text-center text-xs text-gray-500">
@@ -714,11 +764,17 @@ export default function Transferencias() {
                   className="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm"
                 >
                   <option value="">Selecionar produto...</option>
-                  {produtos.filter(p => p.ativo).map(p => (
+                  {/* Lista só o que TEM estoque na loja de origem: a
+                      transferência trabalha com o saldo da loja, não com o
+                      catálogo geral do menu Produtos. */}
+                  {produtosComSaldoNaOrigem.map(p => (
                     <option key={p.id} value={p.id}>
-                      {p.codigo ? `${p.codigo} — ` : ""}{p.nome}
+                      {p.codigo ? `${p.codigo} — ` : ""}{p.nome} ({saldoBruto(p.id) ?? 0} {p.unidade || "un"})
                     </option>
                   ))}
+                  {origemId && produtosComSaldoNaOrigem.length === 0 && !saldoCarregando && (
+                    <option value="" disabled>A loja de origem está sem estoque</option>
+                  )}
                   <option value="__novo_equipamento__" className="text-blue-600 font-medium">
                     ＋ Cadastrar equipamento...
                   </option>

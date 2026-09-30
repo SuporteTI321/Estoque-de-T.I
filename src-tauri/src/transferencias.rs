@@ -538,21 +538,76 @@ pub fn update_transferencia_status(id: i64, status: String) -> Result<Transferen
     carregar_transferencia(&conn, id)
 }
 
-/// Exclui uma transferência (apenas pendente ou cancelada; concluídas são histórico).
+/// Exclui uma transferência.
+///
+/// - `pendente`, `em_transito` e `cancelada`: nada foi movido, então é só
+///   apagar o registro.
+/// - `concluida`: ESTORNA — devolve as unidades à loja de origem, debita da loja
+///   de destino e apaga a baixa registrada no histórico. Tudo em uma transação:
+///   ou volta inteiro, ou nada muda.
 #[tauri::command(rename_all = "snake_case")]
 pub fn delete_transferencia(id: i64) -> Result<(), String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
-    let status: String = conn
-        .query_row("SELECT status FROM transferencias WHERE id=?1", params![id], |r| r.get(0))
-        .map_err(|_| "Transferência não encontrada".to_string())?;
-    if status == "concluida" || status == "em_transito" {
-        return Err("Só é possível excluir transferências pendentes ou canceladas.".to_string());
+    let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
+
+    let (status, origem, destino): (String, i64, i64) = match tx.query_row(
+        "SELECT status, loja_origem_id, loja_destino_id FROM transferencias WHERE id=?1",
+        params![id],
+        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+    ) {
+        Ok(v) => v,
+        Err(_) => {
+            let _ = tx.rollback();
+            return Err("Transferência não encontrada".to_string());
+        }
+    };
+
+    let result: Result<(), String> = (|| {
+        if status == "concluida" {
+            let itens: Vec<(i64, i64)> = {
+                let mut stmt = tx
+                    .prepare(
+                        "SELECT produto_id, COALESCE(SUM(quantidade), 0)
+                         FROM transferencia_itens WHERE transferencia_id=?1 GROUP BY produto_id",
+                    )
+                    .map_err(|e| e.to_string())?;
+                let rows = stmt
+                    .query_map(params![id], |r| Ok((r.get(0)?, r.get(1)?)))
+                    .map_err(|e| e.to_string())?;
+                rows.filter_map(|r| r.ok()).collect()
+            };
+            for (produto_id, qtd) in &itens {
+                // Devolve à origem e debita do destino (nunca fica negativo).
+                ajustar_estoque_loja(&tx, origem, *produto_id, *qtd)?;
+                ajustar_estoque_loja(&tx, destino, *produto_id, -*qtd)?;
+            }
+            // Apaga a baixa que a conclusão gravou, para o histórico não ficar
+            // com uma saída que não aconteceu mais.
+            tx.execute(
+                "DELETE FROM movimentacoes
+                 WHERE tipo = 'transferencia' AND observacao LIKE ?1",
+                params![format!("Transferência #{} concluída%", id)],
+            )
+            .map_err(|e| e.to_string())?;
+        }
+
+        tx.execute("DELETE FROM transferencia_itens WHERE transferencia_id=?1", params![id])
+            .map_err(|e| e.to_string())?;
+        tx.execute("DELETE FROM transferencias WHERE id=?1", params![id])
+            .map_err(|e| e.to_string())?;
+        Ok(())
+    })();
+
+    match result {
+        Ok(()) => {
+            tx.commit().map_err(|e| e.to_string())?;
+            Ok(())
+        }
+        Err(e) => {
+            let _ = tx.rollback();
+            Err(e)
+        }
     }
-    conn.execute("DELETE FROM transferencia_itens WHERE transferencia_id=?1", params![id])
-        .map_err(|e| e.to_string())?;
-    conn.execute("DELETE FROM transferencias WHERE id=?1", params![id])
-        .map_err(|e| e.to_string())?;
-    Ok(())
 }
 
 /// Define o saldo de um produto numa loja e mantém o estoque global
