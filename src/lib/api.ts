@@ -759,6 +759,24 @@ export const api = {
     /** Define o saldo do produto na loja e recalcula o estoque global. */
     definirSaldoInicial: (produto_id: number, loja_id: number, quantidade: number) =>
       writeCall<void>("definir_saldo_inicial_loja", { produto_id, loja_id, quantidade }, () => undefined),
+    /**
+     * Saldo de todos os produtos em todas as lojas. Serve para mostrar ONDE o
+     * item está: numa transferência o total global não muda, então é esta
+     * leitura que prova que o item saiu da origem e chegou no destino.
+     */
+    saldos: () => apiCall<{ produto_id: number; loja_id: number; loja_nome: string; quantidade: number }[]>(
+      "list_saldos_produto_loja", {}, () => {
+        store.garantirEstoqueLojaInicial();
+        return store.estoqueLoja
+          .filter((e) => e.quantidade > 0)
+          .map((e) => ({
+            produto_id: e.produto_id,
+            loja_id: e.loja_id,
+            loja_nome: store.getLojas().find((l) => l.id === e.loja_id)?.nome || `Loja #${e.loja_id}`,
+            quantidade: e.quantidade,
+          }));
+      }
+    ),
   },
 
   // ---- Solicitacoes ----

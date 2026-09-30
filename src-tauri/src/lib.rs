@@ -1988,6 +1988,7 @@ pub fn run() {
             transferencias::update_transferencia_status,
             transferencias::delete_transferencia,
             transferencias::list_estoque_loja,
+            transferencias::list_saldos_produto_loja,
             transferencias::definir_saldo_inicial_loja,
             list_solicitacoes,
             create_solicitacao,

@@ -72,6 +72,8 @@ export default function Produtos() {
   const [unidadesQtd, setUnidadesQtd] = useState<Record<string, number>>({});
   const [selectedIds, setSelectedIds] = useState<Set<number | string>>(new Set());
   const [bulkOpen, setBulkOpen] = useState(false);
+  /** Saldo de cada produto em cada loja — mostra ONDE o item está. */
+  const [saldos, setSaldos] = useState<{ produto_id: number; loja_id: number; loja_nome: string; quantidade: number }[]>([]);
   const [bulkForm, setBulkForm] = useState<{ categoria_id: number | null; unidade: string }>({ categoria_id: null, unidade: "" });
 
   // ── Retorno de saída (devolução de produtos que já saíram) ──
@@ -120,8 +122,9 @@ export default function Produtos() {
   }
 
   function load() {
-    Promise.all([api.produtos.list(), api.categorias.list()])
-      .then(async ([p, c]) => {
+    Promise.all([api.produtos.list(), api.categorias.list(), api.estoqueLoja.saldos()])
+      .then(async ([p, c, saldosLoja]) => {
+        setSaldos(Array.isArray(saldosLoja) ? saldosLoja : []);
         // 1. Renumera produtos sem código
         const renum = renumerar(p);
         // 2. Migra siglas antigas para oficiais
@@ -435,6 +438,30 @@ export default function Produtos() {
     { key: "categoria_nome", label: "CATEGORIA", width: "150px", render: (r) => r.categoria_nome ? String(r.categoria_nome).toUpperCase() : <span className="text-gray-300">—</span> },
     { key: "estoque_minimo", label: "ESTOQUE MÍNIMO", width: "120px", align: "center" },
     { key: "estoque", label: "ESTOQUE", width: "100px", align: "center" },
+    {
+      key: "saldo_lojas", label: "ONDE ESTÁ O ESTOQUE", width: "230px", align: "left",
+      render: (r) => {
+        const doProduto = saldos.filter((s) => s.produto_id === r.id);
+        if (doProduto.length === 0) return <span className="text-gray-300">sem saldo em loja</span>;
+        return (
+          <div className="flex flex-wrap gap-1">
+            {doProduto.map((s) => (
+              <span
+                key={s.loja_id}
+                title={`${s.loja_nome}: ${s.quantidade}`}
+                className={`rounded px-1.5 py-0.5 text-[11px] font-semibold ${
+                  user?.loja_id === s.loja_id
+                    ? "bg-emerald-100 text-emerald-700 ring-1 ring-emerald-200"
+                    : "bg-gray-100 text-gray-600"
+                }`}
+              >
+                {s.loja_nome.length > 16 ? `${s.loja_nome.slice(0, 15)}…` : s.loja_nome}: {s.quantidade}
+              </span>
+            ))}
+          </div>
+        );
+      },
+    },
     { key: "acoes", label: "Ação", align: "center", width: "140px", render: (r) => (
       <div className="flex justify-center gap-1">
         <button onClick={() => navigate("/entradas?novo=true&produto=" + r.id)} title="Nova Entrada" className="rounded p-1.5 text-green-600 hover:bg-green-50"><ArrowDownToLine className="h-3.5 w-3.5" /></button>

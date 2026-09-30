@@ -616,3 +616,42 @@ pub fn list_estoque_loja(loja_id: i64) -> Result<Vec<EstoqueLojaItem>, String> {
         .map_err(|e| e.to_string())?;
     rows.collect::<rusqlite::Result<Vec<_>>>().map_err(|e| e.to_string())
 }
+
+/// Saldo de um produto em uma loja, para a listagem "onde está o estoque".
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SaldoProdutoLoja {
+    pub produto_id: i64,
+    pub loja_id: i64,
+    pub loja_nome: String,
+    pub quantidade: i64,
+}
+
+/// Saldo de TODOS os produtos em TODAS as lojas (somente o que tem saldo).
+///
+/// Usado pela tela de Produtos para mostrar onde o item está: em transferência o
+/// total global não muda, então sem esta leitura não dá para ver que o item
+/// saiu da loja de origem e chegou na de destino.
+#[tauri::command(rename_all = "snake_case")]
+pub fn list_saldos_produto_loja() -> Result<Vec<SaldoProdutoLoja>, String> {
+    let conn = db::open_conn().map_err(|e| e.to_string())?;
+    let mut stmt = conn
+        .prepare(
+            "SELECT e.produto_id, e.loja_id, l.nome, e.quantidade
+             FROM estoque_loja e
+             JOIN lojas l ON l.id = e.loja_id
+             WHERE COALESCE(e.quantidade, 0) > 0
+             ORDER BY l.nome, e.produto_id",
+        )
+        .map_err(|e| e.to_string())?;
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(SaldoProdutoLoja {
+                produto_id: row.get(0)?,
+                loja_id: row.get(1)?,
+                loja_nome: row.get(2)?,
+                quantidade: row.get(3)?,
+            })
+        })
+        .map_err(|e| e.to_string())?;
+    rows.collect::<rusqlite::Result<Vec<_>>>().map_err(|e| e.to_string())
+}
