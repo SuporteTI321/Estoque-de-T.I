@@ -26,12 +26,10 @@ import DataTable, { type Column } from "../components/DataTable";
 import Button from "../components/Button";
 import Window from "../components/Window";
 import type {
-  Loja, Produto, Categoria, Transferencia, TransferenciaItem, EstoqueLojaItem,
+  Loja, Produto, Transferencia, TransferenciaItem, EstoqueLojaItem,
 } from "../lib/types";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/useAuth";
-import { siglaCategoria } from "../lib/utils";
-import { previewCodigo } from "../lib/regrasCodigo";
 
 // ============================================================================
 //  AUXILIARES
@@ -96,23 +94,6 @@ export default function Transferencias() {
   const [novaLojaNome, setNovaLojaNome] = useState("");
   const [novaLojaCodigo, setNovaLojaCodigo] = useState("");
   const [salvandoLoja, setSalvandoLoja] = useState(false);
-
-  // ---- Cadastro de equipamento (produto) dentro da transferência ----
-  //  Formulário no mesmo modelo do "Novo Produto" (Produtos), porém
-  //  independente do campo Produtos: ao salvar, o equipamento já fica
-  //  selecionado no item da transferência.
-  const [eqAberto, setEqAberto] = useState(false);
-  const [eqForm, setEqForm] = useState<Partial<Produto>>({});
-  const [eqCats, setEqCats] = useState<Categoria[]>([]);
-  const [eqNovaCat, setEqNovaCat] = useState(false);
-  const [eqNomeCat, setEqNomeCat] = useState("");
-  const [eqSalvando, setEqSalvando] = useState(false);
-  /** Unidades padrão do formulário "Novo Produto". */
-  const UNIDADES_PADRAO = [
-    "UNIDADE / 1", "CAIXA / 12", "PACOTE / 100", "ROLO / 50", "QUILOGRAMA / 1",
-    "LITRO / 1", "METRO / 1", "DÚZIA / 12", "RESMA / 500", "PAR / 2",
-    "PEÇA / 1", "JOGO / 1",
-  ];
 
   // ---- Saldo das lojas (usado só pelo modal de nova transferência) ----
   /** Saldo da loja de origem escolhida no modal. */
@@ -240,110 +221,6 @@ export default function Transferencias() {
   }
 
   // ------------------------------------------------------------------------
-  //  Cadastro de equipamento (produto) — mesmo modelo do "Novo Produto"
-  // ------------------------------------------------------------------------
-
-  /** Nome legível da unidade (mesma regra do formulário "Novo Produto"). */
-  function unidadeLabel(u?: string): string {
-    if (!u) return "";
-    if (u.includes(" / ")) return u;
-    const nomes: Record<string, string> = {
-      un: "UNIDADE", cx: "CAIXA", pct: "PACOTE", rl: "ROLO", kg: "QUILOGRAMA",
-      lt: "LITRO", mt: "METRO", dz: "DÚZIA", resma: "RESMA", par: "PAR",
-      pc: "PEÇA", jogo: "JOGO", ct: "CARTUCHO",
-    };
-    return nomes[u.toLowerCase()] || u;
-  }
-
-  /** Próximo número sequencial do código (maior número já usado + 1). */
-  function proximoNumero(): number {
-    let max = 0;
-    for (const p of produtos) {
-      const m = p.codigo?.match(/^(\d+)-/);
-      if (m) {
-        const n = parseInt(m[1], 10);
-        if (n > max) max = n;
-      }
-    }
-    return max + 1;
-  }
-
-  /** Abre o cadastro de equipamento já com o código automático preenchido. */
-  function abrirNovoEquipamento() {
-    setEqForm({
-      codigo: previewCodigo(proximoNumero(), "PROD"),
-      unidade: "un",
-      estoque: 0,
-      estoque_minimo: 0,
-      ativo: true,
-      preco_compra: 0,
-      preco_venda: 0,
-      custo_total: 0,
-    });
-    setEqNovaCat(false);
-    setEqNomeCat("");
-    setEqAberto(true);
-    api.categorias.list().then(setEqCats).catch(() => setEqCats([]));
-  }
-
-  /** Ao trocar a categoria, troca só a sigla do código (preserva o número). */
-  function trocarCategoriaEquipamento(catId: number | null) {
-    const cat = eqCats.find(c => c.id === catId);
-    const sigla = siglaCategoria(cat?.nome, catId);
-    const m = eqForm.codigo?.match(/^(\d+)-/);
-    const num = m ? m[1] : String(proximoNumero()).padStart(5, "0");
-    setEqForm(f => ({ ...f, categoria_id: catId, codigo: `${num}-${sigla}` }));
-  }
-
-  /** Cria a categoria digitada e já a aplica no equipamento. */
-  async function salvarCategoriaEquipamento() {
-    const nome = eqNomeCat.trim();
-    if (!nome) return;
-    try {
-      const c = await api.categorias.create({ nome: nome.toUpperCase(), descricao: null, ativa: true });
-      if (c) {
-        setEqCats(prev => [...prev, c]);
-        const sigla = siglaCategoria(c.nome, c.id);
-        const m = eqForm.codigo?.match(/^(\d+)-/);
-        const num = m ? m[1] : String(proximoNumero()).padStart(5, "0");
-        setEqForm(f => ({ ...f, categoria_id: c.id, codigo: `${num}-${sigla}` }));
-      }
-      setEqNovaCat(false);
-      setEqNomeCat("");
-    } catch (e) {
-      alert("Erro ao criar categoria: " + (e instanceof Error ? e.message : String(e)));
-    }
-  }
-
-  /** Salva o equipamento no catálogo e já o seleciona no item da transferência. */
-  async function salvarEquipamento() {
-    const nome = (eqForm.nome || "").trim();
-    if (!nome) { alert("Informe o nome do equipamento."); return; }
-    const catNome = eqCats.find(c => c.id === eqForm.categoria_id)?.nome ?? null;
-    let codigo = (eqForm.codigo || "").trim();
-    if (!codigo) codigo = previewCodigo(proximoNumero(), siglaCategoria(catNome, eqForm.categoria_id ?? undefined));
-    try {
-      setEqSalvando(true);
-      const criado = await api.produtos.create({
-        ...eqForm,
-        codigo,
-        nome: nome.toUpperCase(),
-        marca: eqForm.marca ? eqForm.marca : null,
-        modelo: eqForm.modelo ? eqForm.modelo : null,
-        categoria_nome: catNome,
-        estoque: 0,
-      } as Omit<Produto, "id">);
-      // Recarrega o catálogo para o select já listar o equipamento novo
-      setProdutos(await api.produtos.list());
-      if (criado?.id) setNovoItem(prev => ({ ...prev, produto_id: String(criado.id) }));
-      setEqAberto(false);
-    } catch (e) {
-      alert("Erro ao cadastrar equipamento: " + (e instanceof Error ? e.message : String(e)));
-    } finally {
-      setEqSalvando(false);
-    }
-  }
-
   // ------------------------------------------------------------------------
   //  Itens do formulário (modelo "Itens da Solicitação" de Solicitações)
   // ------------------------------------------------------------------------
@@ -713,16 +590,7 @@ export default function Transferencias() {
               <div className="mt-2 flex items-center gap-2">
                 <select
                   value={novoItem.produto_id}
-                  onChange={(e) => {
-                    // "＋ Cadastrar equipamento" abre o formulário do
-                    // "Novo Produto" e volta o select para vazio.
-                    if (e.target.value === "__novo_equipamento__") {
-                      setNovoItem(prev => ({ ...prev, produto_id: "" }));
-                      abrirNovoEquipamento();
-                    } else {
-                      setNovoItem({ ...novoItem, produto_id: e.target.value });
-                    }
-                  }}
+                  onChange={(e) => setNovoItem({ ...novoItem, produto_id: e.target.value })}
                   className="flex-1 rounded-md border border-gray-300 px-2 py-1.5 text-sm"
                 >
                   <option value="">Selecionar produto...</option>
@@ -733,9 +601,6 @@ export default function Transferencias() {
                       {p.codigo ? `${p.codigo} — ` : ""}{p.nome} ({p.estoque || 0} {p.unidade || "un"})
                     </option>
                   ))}
-                  <option value="__novo_equipamento__" className="text-blue-600 font-medium">
-                    ＋ Cadastrar equipamento...
-                  </option>
                 </select>
                 <input
                   type="number"
@@ -865,115 +730,6 @@ export default function Transferencias() {
         )}
       </Window>
 
-      {/* ================================================================ */}
-      {/*  Cadastro de equipamento que será transferido                    */}
-      {/*  Formulário no mesmo modelo do "Novo Produto" (Produtos),         */}
-      {/*  independente do campo Produtos.                                    */}
-      {/* ================================================================ */}
-      <Window
-        open={eqAberto}
-        onClose={() => setEqAberto(false)}
-        title="Cadastrar Equipamento"
-        size="lg"
-        footer={<>
-          <Button variant="secondary" onClick={() => setEqAberto(false)} disabled={eqSalvando}>Cancelar</Button>
-          <Button onClick={salvarEquipamento} disabled={eqSalvando}>
-            {eqSalvando ? "Salvando..." : "Salvar"}
-          </Button>
-        </>}
-      >
-        <div className="space-y-3">
-          <div className="grid grid-cols-[120px_1fr] gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Código <span className="ml-1 rounded bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">AUTO</span></label>
-              <input value={eqForm.codigo || ""} onChange={(e) => setEqForm(f => ({ ...f, codigo: e.target.value.toUpperCase() }))}
-                className="mt-1 w-full rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm uppercase font-mono font-semibold text-slate-700"
-                placeholder="00001-PROD"
-                title="Código gerado automaticamente (número + sigla da categoria). Pode editar se precisar." />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Produto</label>
-              <input value={eqForm.nome || ""} onChange={(e) => { const v = e.target.value.toUpperCase(); setEqForm(f => ({ ...f, nome: v })); }}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-uppercase text-sm" spellCheck
-                placeholder="NOME DO EQUIPAMENTO" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Marca</label>
-              <input value={eqForm.marca || ""} onChange={(e) => { const v = e.target.value.toUpperCase(); setEqForm(f => ({ ...f, marca: v })); }}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-uppercase text-sm" placeholder="Ex: DELL" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Modelo</label>
-              <input value={eqForm.modelo || ""} onChange={(e) => { const v = e.target.value.toUpperCase(); setEqForm(f => ({ ...f, modelo: v })); }}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-uppercase text-sm" placeholder="Ex: LATITUDE 5420" />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Categoria</label>
-              {eqNovaCat ? (
-                <div className="mt-1 flex gap-1">
-                  <input value={eqNomeCat} onChange={(e) => setEqNomeCat(e.target.value.toUpperCase())}
-                    placeholder="NOME DA CATEGORIA" autoFocus spellCheck
-                    onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); salvarCategoriaEquipamento(); } }}
-                    className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-uppercase text-sm" />
-                  <Button size="sm" onClick={salvarCategoriaEquipamento} disabled={!eqNomeCat.trim()}>Salvar</Button>
-                  <Button size="sm" variant="secondary" onClick={() => { setEqNovaCat(false); setEqNomeCat(""); }}>Cancelar</Button>
-                </div>
-              ) : (
-                <select value={String(eqForm.categoria_id || "")}
-                  onChange={(e) => {
-                    if (e.target.value === "new") { setEqNovaCat(true); setEqNomeCat(""); }
-                    else trocarCategoriaEquipamento(e.target.value ? Number(e.target.value) : null);
-                  }}
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                  <option value="">Selecione...</option>
-                  {eqCats.map(c => <option key={c.id} value={c.id}>{c.nome.toUpperCase()}</option>)}
-                  <option value="new" className="text-blue-600 font-medium">+ NOVA CATEGORIA</option>
-                </select>
-              )}
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Unidade Padrão</label>
-              {UNIDADES_PADRAO.includes(unidadeLabel(eqForm.unidade || "")) ? (
-                <select value={unidadeLabel(eqForm.unidade || "") || "UNIDADE / 1"}
-                  onChange={(e) => setEqForm(f => ({ ...f, unidade: e.target.value }))}
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm">
-                  {UNIDADES_PADRAO.map(u => <option key={u} value={u}>{u}</option>)}
-                </select>
-              ) : (
-                <div className="mt-1 flex gap-1">
-                  <input value={unidadeLabel(eqForm.unidade || "") || "—"} readOnly
-                    className="flex-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700" />
-                  <Button size="sm" variant="secondary" onClick={() => setEqForm(f => ({ ...f, unidade: "UNIDADE / 1" }))}>Alterar</Button>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Estoque Mínimo</label>
-              <input type="number" value={eqForm.estoque_minimo ?? 0}
-                onChange={(e) => setEqForm(f => ({ ...f, estoque_minimo: Number(e.target.value) }))}
-                className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-center" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Saldo inicial na origem</label>
-              <input type="number" min="0" value={0} readOnly
-                className="mt-1 w-full cursor-not-allowed rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 text-center"
-                title="Campo bloqueado — o saldo do equipamento é controlado pelo estoque da loja de origem" />
-              <p className="mt-1 text-[11px] text-gray-400">
-                Campo bloqueado: o saldo é controlado pelo estoque da loja de origem.
-              </p>
-            </div>
-          </div>
-        </div>
-      </Window>
     </Layout>
   );
 }
