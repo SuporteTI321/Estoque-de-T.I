@@ -741,8 +741,21 @@ export const api = {
     delete: (id: number) => writeCall<void>("delete_transferencia", { id }, () => {
       const atual = store.getTransferencias().find(t => t.id === id);
       if (!atual) throw new Error("Transferência não encontrada");
-      if (atual.status === "concluida" || atual.status === "em_transito") {
-        throw new Error("Só é possível excluir transferências pendentes ou canceladas.");
+      // Mesma regra do backend: excluída concluída estorna o estoque, em vez de
+      // recusar a exclusão.
+      if (atual.status === "concluida") {
+        const itens = store.getTransferenciaItens(id);
+        for (const item of itens) {
+          store.ajustarEstoqueLoja(atual.loja_origem_id, item.produto_id, item.quantidade);
+          store.ajustarEstoqueLoja(atual.loja_destino_id, item.produto_id, -item.quantidade);
+        }
+        // Apaga a baixa registrada pela conclusão.
+        const baixa = `Transferência #${id} concluída`;
+        for (const m of store.getMovimentacoes()) {
+          if (m.tipo === "transferencia" && (m.observacao || "").startsWith(baixa)) {
+            store.removeMovimentacao(m.id);
+          }
+        }
       }
       store.removeTransferencia(id);
     }).then(() => {
