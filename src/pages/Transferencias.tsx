@@ -383,15 +383,17 @@ export default function Transferencias() {
           };
     }
     const t = acao.t;
-    const mapa: Record<string, { texto: string; rotulo: string; perigo: boolean }> = {
+    const mapa: Record<string, { titulo: string; texto: string; rotulo: string; perigo: boolean }> = {
       em_transito: {
-        texto: `A transferência #${t.id} passa para EM TRÂNSITO. O estoque só sai da origem quando ela for concluída.`,
+        titulo: `Marcar a transferência #${t.id} como em trânsito`,
+        texto: `O status passa para EM TRÂNSITO.\n\nO estoque só sai da loja de origem quando a transferência for concluída.`,
         rotulo: "Marcar em trânsito",
         perigo: false,
       },
       concluida: {
+        titulo: `Concluir a transferência #${t.id}?`,
         texto:
-          `A transferência #${t.id} será CONCLUÍDA e o estoque será movido:\n\n` +
+          `O estoque será movido entre as lojas:\n\n` +
           `• sai de ${t.loja_origem_nome ?? `#${t.loja_origem_id}`}\n` +
           `• entra em ${t.loja_destino_nome ?? `#${t.loja_destino_id}`}\n` +
           `• a baixa é registrada no histórico\n\n` +
@@ -400,14 +402,15 @@ export default function Transferencias() {
         perigo: false,
       },
       cancelada: {
-        texto: `A transferência #${t.id} será CANCELADA. Como ela não moveu o estoque, os saldos das lojas não mudam.`,
+        titulo: `Cancelar a transferência #${t.id}?`,
+        texto: `O status passa para CANCELADA.\n\nComo ela não moveu o estoque, os saldos das lojas não mudam.`,
         rotulo: "Cancelar transferência",
         perigo: true,
       },
     };
     const info = mapa[acao.status];
     if (!info) return null;
-    return { titulo: info.texto.split("\n")[0].slice(0, 80), ...info };
+    return info;
   }
 
   /** Executa a ação escolhida na janela de confirmação. */
