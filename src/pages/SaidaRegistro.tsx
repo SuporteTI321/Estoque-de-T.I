@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowUpFromLine, Plus, Pencil, Trash2, ChevronDown, Check, Layers, X, Search } from "lucide-react";
+import { ArrowUpFromLine, Plus, Pencil, Trash2, ChevronDown, Check, Layers, X, Search, MapPin } from "lucide-react";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
 import DataTable, { type Column } from "../components/DataTable";
@@ -24,11 +24,15 @@ export default function SaidaRegistro() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Movimentacao | null>(null);
-  const [form, setForm] = useState<{ produto_id: string; quantidade: number; preco_compra: number; unidade: number; solicitante: string; data: string; cod_produto: string }>({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "" });
+  const [form, setForm] = useState<{ produto_id: string; quantidade: number; preco_compra: number; unidade: number; solicitante: string; data: string; cod_produto: string; destino: string }>({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "", destino: "" });
   const [lote, setLote] = useState(false);
   const [loteItens, setLoteItens] = useState<LoteItem[]>([{ produto_id: "", cod_produto: "", quantidade: 1 }]);
   const [solicitantes, setSolicitantes] = useState<string[]>([]);
   const [novoSolicitanteOpen, setNovoSolicitanteOpen] = useState(false);
+  /** Janela flutuante de escolha do destino da saída. */
+  const [destinoOpen, setDestinoOpen] = useState(false);
+  /** Texto digitado na janela de destino (permite destino fora das lojas). */
+  const [destinoTexto, setDestinoTexto] = useState("");
   const [novoSolicitanteNome, setNovoSolicitanteNome] = useState("");
   const [codProdutosComSaida, setCodProdutosComSaida] = useState<Set<string>>(new Set());
   const [codPickerOpen, setCodPickerOpen] = useState(false);
@@ -41,7 +45,7 @@ export default function SaidaRegistro() {
   const [erro, setErro] = useState<string | null>(null);
 
   function resetForm() {
-    setForm({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "" });
+    setForm({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "", destino: "" });
     setLote(false);
     setLoteItens([{ produto_id: "", cod_produto: "", quantidade: 1 }]);
     setItensAdicionais([]);
@@ -63,6 +67,7 @@ export default function SaidaRegistro() {
       solicitante: m.observacao?.match(/por ([^-]+) - /)?.[1]?.trim() || "",
       data: String(m.data_movimento).slice(0, 10) || hojeInput(),
       cod_produto: codManual,
+      destino: m.observacao?.match(/destino:(.+)/)?.[1]?.trim() || m.loja_destino_nome || "",
     });
     setOpen(true);
   }
@@ -246,7 +251,7 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
               loja_destino_id: null,
               loja_destino_nome: null,
               usuario_id: user?.id ?? null,
-              observacao: `Saida manual por ${form.solicitante || "desconhecido"} - ${p.nome}\ncod_produto:${item.cod_produto.trim()}`,
+              observacao: `Saida manual por ${form.solicitante || "desconhecido"} - ${p.nome}\ncod_produto:${item.cod_produto.trim()}\ndestino:${form.destino.trim()}`,
               preco_compra: p.preco_compra,
               unidade: Number(p.unidade) || 1,
               data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
@@ -273,6 +278,7 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
       if (!Number.isFinite(qtdNum) || qtdNum <= 0) { alert("Informe uma quantidade valida."); return; }
       const obsParts = [`Saida manual por ${form.solicitante || "desconhecido"} - ${p.nome}`];
       if (form.cod_produto.trim()) obsParts.push(`cod_produto:${form.cod_produto.trim()}`);
+      if (form.destino.trim()) obsParts.push(`destino:${form.destino.trim()}`);
       const obs = obsParts.join("\n");
       if (editing?.id) {
         await api.movimentacoes.update(editing.id, {
@@ -316,7 +322,7 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
               loja_destino_id: null,
               loja_destino_nome: null,
               usuario_id: user?.id ?? null,
-              observacao: `Saida manual por ${form.solicitante || "desconhecido"} - ${pa.nome}\ncod_produto:${item.cod_produto.trim()}\nvia:${p.nome}`,
+              observacao: `Saida manual por ${form.solicitante || "desconhecido"} - ${pa.nome}\ncod_produto:${item.cod_produto.trim()}\nvia:${p.nome}\ndestino:${form.destino.trim()}`,
               preco_compra: pa.preco_compra,
               unidade: Number(pa.unidade) || 1,
               data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
@@ -359,9 +365,15 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
       return m?.[1] || "—";
     }},
     { key: "quantidade", label: "Quantidade", width: "100px", align: "center" },
-    { key: "observacao", label: "Pessoa / Loja", width: "150px", align: "center", render: (r) => {
+    { key: "observacao", label: "Solicitante", width: "140px", align: "center", render: (r) => {
       const match = r.observacao?.match(/por ([^-]+) - /);
       return match?.[1]?.trim() || "—";
+    } },
+    { key: "loja_destino_nome", label: "Destino", width: "130px", align: "center", render: (r) => {
+      // Destino informado na saída; sem destino, tenta o que está gravado na
+      // observação (movimentações antigas) e, por último, mostra a loja de origem.
+      const doForm = r.observacao?.match(/destino:(.+)/)?.[1]?.trim();
+      return doForm || r.loja_destino_nome || r.loja_origem_nome || "—";
     } },
     { key: "data_movimento", label: "Data Saida", width: "100px", align: "center", render: (r) => new Date(r.data_movimento).toLocaleDateString("pt-BR") },
     { key: "acoes", label: "Acao", align: "center", width: "100px", render: (r) => (
@@ -586,15 +598,29 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
 
           <div className="grid grid-cols-1 gap-3">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Pessoa / Loja</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Solicitante</label>
               <button type="button" onClick={() => setNovoSolicitanteOpen(true)}
                 className={`w-full rounded-lg border px-3 py-2.5 text-sm text-left transition flex items-center gap-2 overflow-visible ${form.solicitante ? "border-gray-300 text-gray-900" : "border-gray-300 text-gray-400"} hover:border-blue-400`}>
                 {form.solicitante && (
                   <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-700 shrink-0">{form.solicitante.charAt(0).toUpperCase()}</span>
                 )}
-                <span className="flex-1 whitespace-nowrap overflow-visible">{form.solicitante || "Selecione um solicitante..."}</span>
+                <span className="flex-1 whitespace-nowrap overflow-visible">{form.solicitante || "Selecione o solicitante..."}</span>
                 <ChevronDown className="h-4 w-4 text-gray-400 shrink-0" />
               </button>
+            </div>
+            <div>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Destino</label>
+              <button type="button" onClick={() => setDestinoOpen(true)}
+                title="Para onde vai o item — clique para escolher"
+                className={`w-full rounded-lg border px-3 py-2.5 text-sm text-left transition flex items-center gap-2 overflow-visible ${form.destino ? "border-gray-300 text-gray-900" : "border-gray-300 text-gray-400"} hover:border-blue-400`}>
+                <MapPin className="h-4 w-4 shrink-0 text-gray-400" />
+                <span className="flex-1 whitespace-nowrap overflow-visible">{form.destino || "Selecione o destino..."}</span>
+                <ChevronDown className="h-4 w-4 text-gray-400 shrink-0" />
+              </button>
+              <p className="mt-1 text-[11px] text-gray-400">
+                Registra para onde o item saiu. A baixa no estoque continua saindo da
+                loja do seu usuário.
+              </p>
             </div>
           </div>
         </div>
@@ -647,6 +673,48 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </Window>
+
+      {/* Window: Destino da saída */}
+      <Window open={destinoOpen} onClose={() => setDestinoOpen(false)} title="Destino da saída" size="sm"
+        footer={<><Button variant="secondary" onClick={() => setDestinoOpen(false)}>Fechar</Button></>}>
+        <div className="space-y-3">
+          <div className="flex gap-2">
+            <input type="text" value={destinoTexto} onChange={(e) => setDestinoTexto(e.target.value)}
+              placeholder="Digite o destino..."
+              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-400 focus:ring-2 focus:ring-blue-50 outline-none" autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && destinoTexto.trim()) {
+                  setForm({ ...form, destino: destinoTexto.trim() });
+                  setDestinoTexto("");
+                  setDestinoOpen(false);
+                }
+              }} />
+            <Button disabled={!destinoTexto.trim()}
+              onClick={() => {
+                setForm({ ...form, destino: destinoTexto.trim() });
+                setDestinoTexto("");
+                setDestinoOpen(false);
+              }}>Usar</Button>
+          </div>
+          <div className="max-h-64 overflow-y-auto space-y-1">
+            {lojas.filter(l => l.ativo !== false).map((l) => (
+              <div key={l.id} onClick={() => { setForm({ ...form, destino: l.nome }); setDestinoOpen(false); }}
+                className={`flex items-center justify-between rounded-lg px-3 py-2 cursor-pointer transition ${form.destino === l.nome ? "bg-blue-50 border border-blue-200" : "border border-gray-200 hover:bg-gray-50"}`}>
+                <div className="flex items-center gap-2 min-w-0">
+                  <MapPin className="h-4 w-4 text-blue-500 shrink-0" />
+                  <span className="text-sm text-gray-700 truncate">{l.nome}</span>
+                </div>
+                {form.destino === l.nome && <Check className="h-4 w-4 text-blue-600" />}
+              </div>
+            ))}
+            {lojas.length === 0 && (
+              <p className="py-4 text-center text-xs text-gray-400">
+                Nenhuma loja cadastrada — digite o destino acima.
+              </p>
+            )}
           </div>
         </div>
       </Window>
