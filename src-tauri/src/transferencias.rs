@@ -439,14 +439,21 @@ pub fn update_transferencia_status(id: i64, status: String) -> Result<Transferen
     // Ao concluir: mover saldo no estoque por loja (revalida saldo da origem)
     // e REGISTRAR A BAIXA no histórico de movimentações.
     if status == "concluida" && atual != "concluida" {
+        // Os nomes das lojas vêm por JOIN: a tabela `transferencias` guarda
+        // apenas os IDs (não tem colunas de nome). Consultar `loja_origem_nome`
+        // aqui quebrava com "no such column" e o erro era mascarado como
+        // "Transferência não encontrada" — por isso Concluir não funcionava.
         let (origem, destino, nome_origem, nome_destino, usuario_id): (i64, i64, Option<String>, Option<String>, Option<i64>) = tx
             .query_row(
-                "SELECT loja_origem_id, loja_destino_id, loja_origem_nome, loja_destino_nome, usuario_id
-                 FROM transferencias WHERE id=?1",
+                "SELECT t.loja_origem_id, t.loja_destino_id, lo.nome, ld.nome, t.usuario_id
+                 FROM transferencias t
+                 LEFT JOIN lojas lo ON lo.id = t.loja_origem_id
+                 LEFT JOIN lojas ld ON ld.id = t.loja_destino_id
+                 WHERE t.id = ?1",
                 params![id],
                 |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
             )
-            .map_err(|_| "Transferência não encontrada".to_string())?;
+            .map_err(|e| format!("Falha ao ler a transferência #{}: {}", id, e))?;
 
         // Traz nome e unidade (snapshot do item) para a movimentação ficar legível
         let itens: Vec<(i64, i64, Option<String>, Option<String>)> = {
