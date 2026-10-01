@@ -87,6 +87,11 @@ export default function Transferencias() {
   const [detalhe, setDetalhe] = useState<Transferencia | null>(null);
   const [detalheItens, setDetalheItens] = useState<TransferenciaItem[]>([]);
   const [carregandoDetalhe, setCarregandoDetalhe] = useState(false);
+  /** Ação aguardando confirmação na janela do app (substitui o window.confirm). */
+  const [acao, setAcao] = useState<
+    { tipo: "status"; t: Transferencia; status: string } | { tipo: "excluir"; t: Transferencia } | null
+  >(null);
+  const [executando, setExecutando] = useState(false);
 
   // ---- Cadastro rápido de loja dentro do modal (Origem/Destino) ----
   /** Qual campo pediu a nova loja (sistema "＋ Novo" replicado nas duas colunas). */
@@ -335,39 +340,95 @@ export default function Transferencias() {
     }
   }
 
-  async function mudarStatus(t: Transferencia, novoStatus: string) {
-    const rotulos: Record<string, string> = {
-      em_transito: "marcar como EM TRÂNSITO",
-      concluida: "CONCLUIR (move o estoque entre as lojas)",
-      cancelada: "CANCELAR",
-      pendente: "voltar para PENDENTE",
-    };
-    if (!confirm(`Deseja ${rotulos[novoStatus] ?? novoStatus} a transferência #${t.id}?`)) return;
-    try {
-      await api.transferencias.updateStatus(t.id, novoStatus);
-      setDetalhe(null);
-      recarregar();
-    } catch (e) {
-      alert("Erro: " + (e instanceof Error ? e.message : String(e)));
-    }
+  /**
+   * Confirmação dentro do app.
+   *
+   * Não usamos `window.confirm`: dentro do WebView do Tauri ele responde
+   * sozinho, sem mostrar a pergunta — o clique executava a ação na hora, sem
+   * o usuário ver nada. Aqui a confirmação é uma janela do próprio sistema,
+   * que mostra exatamente o que vai acontecer com o estoque.
+   */
+  function pedirStatus(t: Transferencia, novoStatus: string) {
+    setAcao({ tipo: "status", t, status: novoStatus });
   }
 
-  async function excluir(t: Transferencia) {
-    // Transferência concluída já moveu o estoque: a exclusão estorna.
-    const aviso = t.status === "concluida"
-      ? `Excluir a transferência #${t.id}?\n\n` +
-        `Ela JÁ CONCLUÍU e o estoque foi movido. Ao excluir, o sistema vai:\n` +
-        `• devolver os itens à loja de origem\n` +
-        `• debitar da loja de destino\n` +
-        `• apagar a baixa registrada no histórico\n\n` +
-        `As duas lojas voltam ao saldo anterior.`
-      : `Excluir a transferência #${t.id}?\n\nEla ainda não moveu o estoque, então nada é alterado nas lojas.`;
-    if (!confirm(aviso)) return;
+  function pedirExclusao(t: Transferencia) {
+    setAcao({ tipo: "excluir", t });
+  }
+
+  /** Texto da confirmação, montado conforme a ação escolhida. */
+  function textoConfirmacao(): { titulo: string; texto: string; rotulo: string; perigo: boolean } | null {
+    if (!acao) return null;
+    if (acao.tipo === "excluir") {
+      const t = acao.t;
+      return t.status === "concluida"
+        ? {
+            titulo: `Excluir a transferência #${t.id}?`,
+            texto:
+              `Esta transferência JÁ CONCLUÍU e o estoque já foi movido. Ao excluir, o sistema vai:\n\n` +
+              `• devolver os itens à loja de origem (${t.loja_origem_nome ?? `#${t.loja_origem_id}`})\n` +
+              `• debitar da loja de destino (${t.loja_destino_nome ?? `#${t.loja_destino_id}`})\n` +
+              `• apagar a baixa registrada no histórico\n\n` +
+              `As duas lojas voltam ao saldo anterior.`,
+            rotulo: "Excluir e estornar estoque",
+            perigo: true,
+          }
+        : {
+            titulo: `Excluir a transferência #${t.id}?`,
+            texto:
+              `Esta transferência ainda não moveu o estoque, então nada é alterado nas lojas.\n\n` +
+              `O registro e os itens serão apagados definitivamente.`,
+            rotulo: "Excluir",
+            perigo: true,
+          };
+    }
+    const t = acao.t;
+    const mapa: Record<string, { texto: string; rotulo: string; perigo: boolean }> = {
+      em_transito: {
+        texto: `A transferência #${t.id} passa para EM TRÂNSITO. O estoque só sai da origem quando ela for concluída.`,
+        rotulo: "Marcar em trânsito",
+        perigo: false,
+      },
+      concluida: {
+        texto:
+          `A transferência #${t.id} será CONCLUÍDA e o estoque será movido:\n\n` +
+          `• sai de ${t.loja_origem_nome ?? `#${t.loja_origem_id}`}\n` +
+          `• entra em ${t.loja_destino_nome ?? `#${t.loja_destino_id}`}\n` +
+          `• a baixa é registrada no histórico\n\n` +
+          `O saldo da origem é conferido antes de mover.`,
+        rotulo: "Concluir e mover estoque",
+        perigo: false,
+      },
+      cancelada: {
+        texto: `A transferência #${t.id} será CANCELADA. Como ela não moveu o estoque, os saldos das lojas não mudam.`,
+        rotulo: "Cancelar transferência",
+        perigo: true,
+      },
+    };
+    const info = mapa[acao.status];
+    if (!info) return null;
+    return { titulo: info.texto.split("\n")[0].slice(0, 80), ...info };
+  }
+
+  /** Executa a ação escolhida na janela de confirmação. */
+  async function executarAcao() {
+    if (!acao) return;
+    setExecutando(true);
     try {
-      await api.transferencias.delete(t.id);
+      if (acao.tipo === "status") {
+        await api.transferencias.updateStatus(acao.t.id, acao.status);
+        setDetalhe(null);
+      } else {
+        await api.transferencias.delete(acao.t.id);
+        setDetalhe(null);
+      }
+      setAcao(null);
       recarregar();
     } catch (e) {
-      alert("Erro ao excluir: " + (e instanceof Error ? e.message : String(e)));
+      alert("Não foi possível concluir a ação:\n\n" + (e instanceof Error ? e.message : String(e)));
+      setAcao(null);
+    } finally {
+      setExecutando(false);
     }
   }
 
@@ -412,18 +473,18 @@ export default function Transferencias() {
               <Eye className="h-3.5 w-3.5" />
             </button>
             {r.status === "pendente" && (
-              <button onClick={(e) => { e.stopPropagation(); mudarStatus(r, "em_transito"); }}
+              <button onClick={(e) => { e.stopPropagation(); pedirStatus(r, "em_transito"); }}
                 className="rounded p-1.5 text-blue-600 hover:bg-blue-50 transition" title="Enviar (em trânsito)">
                 <Send className="h-3.5 w-3.5" />
               </button>
             )}
             {(r.status === "pendente" || r.status === "em_transito") && (
               <>
-                <button onClick={(e) => { e.stopPropagation(); mudarStatus(r, "concluida"); }}
+                <button onClick={(e) => { e.stopPropagation(); pedirStatus(r, "concluida"); }}
                   className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 transition" title="Concluir (move o estoque)">
                   <CheckCircle2 className="h-3.5 w-3.5" />
                 </button>
-                <button onClick={(e) => { e.stopPropagation(); mudarStatus(r, "cancelada"); }}
+                <button onClick={(e) => { e.stopPropagation(); pedirStatus(r, "cancelada"); }}
                   className="rounded p-1.5 text-orange-500 hover:bg-orange-50 transition" title="Cancelar">
                   <XCircle className="h-3.5 w-3.5" />
                 </button>
@@ -431,7 +492,7 @@ export default function Transferencias() {
             )}
             {/* Lixeira em todos os status. Em "concluída" a exclusão estorna o
                 estoque (devolve à origem, debita do destino) e apaga a baixa. */}
-            <button onClick={(e) => { e.stopPropagation(); excluir(r); }}
+            <button onClick={(e) => { e.stopPropagation(); pedirExclusao(r); }}
               className={`rounded p-1.5 transition ${r.status === "concluida"
                 ? "text-red-600 hover:bg-red-50"
                 : "text-gray-500 hover:bg-red-50 hover:text-red-600"}`}
@@ -644,16 +705,16 @@ export default function Transferencias() {
             <>
               <Button variant="secondary" onClick={() => setDetalhe(null)}>Fechar</Button>
               {detalhe.status === "pendente" && (
-                <Button variant="secondary" onClick={() => mudarStatus(detalhe, "em_transito")} icon={<Send className="h-4 w-4" />}>
+                <Button variant="secondary" onClick={() => pedirStatus(detalhe, "em_transito")} icon={<Send className="h-4 w-4" />}>
                   Enviar
                 </Button>
               )}
               {(detalhe.status === "pendente" || detalhe.status === "em_transito") && (
                 <>
-                  <Button variant="danger" onClick={() => mudarStatus(detalhe, "cancelada")} icon={<XCircle className="h-4 w-4" />}>
+                  <Button variant="danger" onClick={() => pedirStatus(detalhe, "cancelada")} icon={<XCircle className="h-4 w-4" />}>
                     Cancelar
                   </Button>
-                  <Button variant="success" onClick={() => mudarStatus(detalhe, "concluida")} icon={<CheckCircle2 className="h-4 w-4" />}>
+                  <Button variant="success" onClick={() => pedirStatus(detalhe, "concluida")} icon={<CheckCircle2 className="h-4 w-4" />}>
                     Concluir
                   </Button>
                 </>
@@ -728,6 +789,27 @@ export default function Transferencias() {
             </p>
           </div>
         )}
+      </Window>
+
+      {/* Confirmação da ação — janela do app, não o confirm() do navegador,
+          que no WebView do Tauri responde sozinho sem perguntar nada. */}
+      <Window
+        open={!!acao}
+        onClose={() => { if (!executando) setAcao(null); }}
+        title={textoConfirmacao()?.titulo || "Confirmar"}
+        size="sm"
+        footer={<>
+          <Button variant="secondary" onClick={() => setAcao(null)} disabled={executando}>
+            Voltar sem fazer nada
+          </Button>
+          <Button variant={textoConfirmacao()?.perigo ? "danger" : "primary"} onClick={executarAcao} disabled={executando}>
+            {executando ? "Processando..." : textoConfirmacao()?.rotulo || "Confirmar"}
+          </Button>
+        </>}
+      >
+        <p className="whitespace-pre-line text-sm leading-relaxed text-gray-700">
+          {textoConfirmacao()?.texto}
+        </p>
       </Window>
 
     </Layout>
