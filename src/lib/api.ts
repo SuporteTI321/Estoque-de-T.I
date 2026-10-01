@@ -241,6 +241,20 @@ export class BrowserStore {
     }
     persist("almox_estoque_loja", this.estoqueLoja);
   }
+  /**
+   * Desconta (ou devolve, com delta negativo) do estoque GLOBAL dos produtos —
+   * a coluna ESTOQUE do menu Produtos. `delta` negativo devolve.
+   */
+  descontarEstoqueGlobal(itens: { produto_id: number; quantidade: number }[]) {
+    if (!itens.length) return;
+    const produtos = this.getProdutos();
+    for (const it of itens) {
+      const p = produtos.find(x => x.id === it.produto_id);
+      if (!p) continue;
+      p.estoque = Math.max(0, (p.estoque || 0) + it.quantidade);
+    }
+    persist("almox_produtos", produtos);
+  }
   /** Lista o estoque de todos os produtos ativos em uma loja (base interligada). */
   getEstoqueLoja(lojaId: number): EstoqueLojaItem[] {
     this.garantirEstoqueLojaInicial();
@@ -731,24 +745,31 @@ export const api = {
             throw new Error(`Não foi possível concluir: saldo da origem em "${nome}" ficou insuficiente (${saldo}).`);
           }
         }
+        // Mesma regra do backend: a transferência SAI do estoque — debita a loja de
+        // origem e o estoque global cadastrado; o destino só registra para onde
+        // foi, sem acumular saldo.
         for (const item of itens) {
           store.ajustarEstoqueLoja(atual.loja_origem_id, item.produto_id, -item.quantidade);
-          store.ajustarEstoqueLoja(atual.loja_destino_id, item.produto_id, item.quantidade);
         }
+        store.descontarEstoqueGlobal(
+          itens.map((i) => ({ produto_id: i.produto_id, quantidade: i.quantidade }))
+        );
       }
       return store.updateTransferencia(id, { status, data_atualizacao: todayISO() }) as Transferencia;
     }),
     delete: (id: number) => writeCall<void>("delete_transferencia", { id }, () => {
       const atual = store.getTransferencias().find(t => t.id === id);
       if (!atual) throw new Error("Transferência não encontrada");
-      // Mesma regra do backend: excluída concluída estorna o estoque, em vez de
-      // recusar a exclusão.
+      // Mesma regra do backend: excluída concluída devolve o item à origem e ao
+      // estoque global.
       if (atual.status === "concluida") {
         const itens = store.getTransferenciaItens(id);
         for (const item of itens) {
           store.ajustarEstoqueLoja(atual.loja_origem_id, item.produto_id, item.quantidade);
-          store.ajustarEstoqueLoja(atual.loja_destino_id, item.produto_id, -item.quantidade);
         }
+        store.descontarEstoqueGlobal(
+          itens.map((i) => ({ produto_id: i.produto_id, quantidade: -i.quantidade }))
+        );
         // Apaga a baixa registrada pela conclusão.
         const baixa = `Transferência #${id} concluída`;
         for (const m of store.getMovimentacoes()) {

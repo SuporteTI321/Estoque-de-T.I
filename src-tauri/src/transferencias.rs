@@ -489,8 +489,16 @@ pub fn update_transferencia_status(id: i64, status: String) -> Result<Transferen
                     if saldo == 1 { "unidade" } else { "unidades" }
                 ));
             }
+            // A transferência SAI do estoque: debita a loja de origem E o estoque global
+            // cadastrado (a coluna ESTOQUE do menu Produtos). A loja de destino
+            // fica registrada como "para onde foi" e não acumula saldo — é o que
+            // mantém a regra: estoque global = soma do estoque das lojas.
             ajustar_estoque_loja(&tx, origem, *produto_id, -*qtd)?;
-            ajustar_estoque_loja(&tx, destino, *produto_id, *qtd)?;
+            tx.execute(
+                "UPDATE produtos SET estoque = MAX(0, estoque - ?1) WHERE id = ?2",
+                params![qtd, produto_id],
+            )
+            .map_err(|e| format!("Erro ao dar baixa no estoque do produto: {}", e))?;
         }
 
         // Baixa no histórico: uma movimentação do tipo "transferencia" por item.
@@ -557,10 +565,12 @@ pub fn delete_transferencia(id: i64) -> Result<(), String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     let tx = conn.unchecked_transaction().map_err(|e| e.to_string())?;
 
-    let (status, origem, destino): (String, i64, i64) = match tx.query_row(
-        "SELECT status, loja_origem_id, loja_destino_id FROM transferencias WHERE id=?1",
+    // O destino não é usado no estorno: pela nova regra a conclusão não credita
+    // saldo na loja de destino, só registra para onde o item foi.
+    let (status, origem): (String, i64) = match tx.query_row(
+        "SELECT status, loja_origem_id FROM transferencias WHERE id=?1",
         params![id],
-        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        |r| Ok((r.get(0)?, r.get(1)?)),
     ) {
         Ok(v) => v,
         Err(_) => {
@@ -585,8 +595,14 @@ pub fn delete_transferencia(id: i64) -> Result<(), String> {
             };
             for (produto_id, qtd) in &itens {
                 // Devolve à origem e debita do destino (nunca fica negativo).
+                // Desfaz a regra da conclusão: devolve o item à loja de origem e ao
+                // estoque global cadastrado.
                 ajustar_estoque_loja(&tx, origem, *produto_id, *qtd)?;
-                ajustar_estoque_loja(&tx, destino, *produto_id, -*qtd)?;
+                tx.execute(
+                    "UPDATE produtos SET estoque = estoque + ?1 WHERE id = ?2",
+                    params![qtd, produto_id],
+                )
+                .map_err(|e| format!("Erro ao devolver o item ao estoque: {}", e))?;
             }
             // Apaga a baixa que a conclusão gravou, para o histórico não ficar
             // com uma saída que não aconteceu mais.

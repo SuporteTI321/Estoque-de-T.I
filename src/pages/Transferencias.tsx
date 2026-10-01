@@ -386,16 +386,16 @@ export default function Transferencias() {
     const mapa: Record<string, { titulo: string; texto: string; rotulo: string; perigo: boolean }> = {
       em_transito: {
         titulo: `Marcar a transferência #${t.id} como em trânsito`,
-        texto: `O status passa para EM TRÂNSITO.\n\nO estoque só sai da loja de origem quando a transferência for concluída.`,
+        texto: `O status passa para EM TRÂNSITO.\n\nO estoque sai do almoxarifado quando a transferência for concluída.`,
         rotulo: "Marcar em trânsito",
         perigo: false,
       },
       concluida: {
         titulo: `Concluir a transferência #${t.id}?`,
         texto:
-          `O estoque será movido entre as lojas:\n\n` +
-          `• sai de ${t.loja_origem_nome ?? `#${t.loja_origem_id}`}\n` +
-          `• entra em ${t.loja_destino_nome ?? `#${t.loja_destino_id}`}\n` +
+          `O item SAI do estoque:\n\n` +
+          `• baixa de ${t.loja_origem_nome ?? `#${t.loja_origem_id}`} no estoque do produto\n` +
+          `• destino: ${t.loja_destino_nome ?? `#${t.loja_destino_id}`} (fica registrado, sem saldo)\n` +
           `• a baixa é registrada no histórico\n\n` +
           `O saldo da origem é conferido antes de mover.`,
         rotulo: "Concluir e mover estoque",
@@ -787,8 +787,8 @@ export default function Transferencias() {
 
             <p className="text-[11px] text-gray-400">
               {detalhe.status === "concluida"
-                ? "Transferência concluída: o estoque já foi movido da origem para o destino."
-                : "O estoque só é movido ao concluir a transferência."}
+                ? `Transferência concluída: o item já deu baixa no estoque (${detalhe.loja_origem_nome ?? `#${detalhe.loja_origem_id}`}) e o destino ${detalhe.loja_destino_nome ?? `#${detalhe.loja_destino_id}`} ficou registrado.`
+                : "O estoque só dá baixa ao concluir a transferência."}
             </p>
           </div>
         )}
