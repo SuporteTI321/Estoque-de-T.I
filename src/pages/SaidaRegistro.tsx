@@ -67,7 +67,7 @@ export default function SaidaRegistro() {
       solicitante: m.observacao?.match(/por ([^-]+) - /)?.[1]?.trim() || "",
       data: String(m.data_movimento).slice(0, 10) || hojeInput(),
       cod_produto: codManual,
-      destino: m.observacao?.match(/destino:(.+)/)?.[1]?.trim() || m.loja_destino_nome || "",
+      destino: m.observacao?.match(/destino:(.+)/)?.[1]?.trim() || "",
     });
     setOpen(true);
   }
@@ -370,10 +370,10 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
       return match?.[1]?.trim() || "—";
     } },
     { key: "loja_destino_nome", label: "Destino", width: "130px", align: "center", render: (r) => {
-      // Destino informado na saída; sem destino, tenta o que está gravado na
-      // observação (movimentações antigas) e, por último, mostra a loja de origem.
-      const doForm = r.observacao?.match(/destino:(.+)/)?.[1]?.trim();
-      return doForm || r.loja_destino_nome || r.loja_origem_nome || "—";
+      // Mostra SOMENTE o destino registrado na saída. O que não foi
+      // preenchido fica em branco, sem completa com a loja de origem/destino.
+      const registrado = r.observacao?.match(/destino:(.+)/)?.[1]?.trim();
+      return registrado || "";
     } },
     { key: "data_movimento", label: "Data Saida", width: "100px", align: "center", render: (r) => new Date(r.data_movimento).toLocaleDateString("pt-BR") },
     { key: "acoes", label: "Acao", align: "center", width: "100px", render: (r) => (
