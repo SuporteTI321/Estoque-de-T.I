@@ -407,6 +407,7 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
         searchKeys={["produto_nome", "produto_codigo"]}
         searchPlaceholder="Buscar por produto ou codigo..."
         emptyMessage="Nenhuma saida registrada"
+        pageSize={16}
       />
 
       <Window
