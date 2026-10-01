@@ -3,6 +3,7 @@ import { useAuth } from "../lib/useAuth";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "./Sidebar";
 import Header from "./Header";
+import AvisoApi from "./AvisoApi";
 import Login from "../pages/Login";
 
 interface LayoutProps {
@@ -42,6 +43,7 @@ export default function Layout({ title, subtitle, children }: LayoutProps) {
         />
         <main className="flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-hide">{children}</main>
       </div>
+      <AvisoApi />
     </div>
   );
 }
