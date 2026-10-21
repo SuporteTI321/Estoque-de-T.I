@@ -199,9 +199,25 @@ export default function Produtos() {
 
   async function save() {
     try {
+      // Payload montado explicitamente: o form pode vir de dados antigos em cache
+      // (localStorage) e mandar campos que não existem mais no banco.
+      const payload = {
+        codigo: form.codigo ?? "",
+        nome: form.nome ?? "",
+        marca: form.marca ?? null,
+        modelo: form.modelo ?? null,
+        descricao: form.descricao ?? null,
+        categoria_id: form.categoria_id ?? null,
+        fornecedor_id: form.fornecedor_id ?? null,
+        unidade: form.unidade || "un",
+        localizacao: form.localizacao ?? null,
+        estoque: form.estoque ?? 0,
+        estoque_minimo: form.estoque_minimo ?? 0,
+        ativo: form.ativo ?? true,
+      };
       if (editing?.id) {
         const catNome = form.categoria_id ? (cats.find(c => c.id === form.categoria_id)?.nome || null) : editing.categoria_nome;
-        const u = await api.produtos.update(editing.id, { ...form, categoria_nome: catNome });
+        const u = await api.produtos.update(editing.id, { ...payload, categoria_nome: catNome });
         setItems((p) => p.map((x) => (x.id === editing.id ? { ...x, ...u } : x)));
         setOpen(false);
         setTimeout(() => load(), 300);
@@ -214,7 +230,7 @@ export default function Produtos() {
           const sigla = siglaCategoria(catNome, form.categoria_id ?? undefined);
           codigo = previewCodigo(proximoNumero(), sigla);
         }
-        const n = await api.produtos.create({ ...form, codigo, categoria_nome: catNome } as Omit<Produto, "id">);
+        const n = await api.produtos.create({ ...payload, codigo, categoria_nome: catNome } as Omit<Produto, "id">);
         if (n) {
             const novaLista = renumerar([...items, n]);
             setItems(novaLista);
