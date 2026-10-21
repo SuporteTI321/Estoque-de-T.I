@@ -161,7 +161,7 @@ export default function Pedidos() {
         await api.movimentacoes.create({
           tipo: "saida", produto_id: prod.id, produto_nome: item.produto_nome||item.produto, quantidade: qtd,
           loja_origem_id: p.loja_id, loja_origem_nome: p.loja_nome, loja_destino_id: null, loja_destino_nome: null,
-          usuario_id: null, observacao: `Pedido ${p.numero} - ${item.produto_nome}`, preco_compra: prod?.preco_compra || 0, unidade: undefined,
+          usuario_id: null, observacao: `Pedido ${p.numero} - ${item.produto_nome}`, unidade: undefined,
         });
       }
 

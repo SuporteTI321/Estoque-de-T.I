@@ -213,11 +213,8 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 42,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -230,11 +227,8 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -247,11 +241,8 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 11,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -264,11 +255,8 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 1,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -281,11 +269,8 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 1,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -298,11 +283,8 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 1,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -315,11 +297,8 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 2,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -332,11 +311,8 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 1,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -349,11 +325,8 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 1,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -366,11 +339,8 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 1,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -383,11 +353,8 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 1,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -400,11 +367,8 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 12,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -417,11 +381,8 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 16,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     },
     {
@@ -434,11 +395,8 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 12,
       "estoque_minimo": 0,
-      "custo_total": 0.0,
       "ativo": true
     }
   ],
@@ -467,7 +425,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:273950349084",
       "data_movimento": "2026-08-22T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -483,7 +440,6 @@
       "usuario_id": null,
       "observacao": "Saida manual por GUAJARA - NOBREAK\ncod_produto:273950349084",
       "data_movimento": "2026-08-22T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -499,7 +455,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1008530D2",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -515,7 +470,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1008527U0",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -531,7 +485,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1321726XP",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -547,7 +500,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1714730NS",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -563,7 +515,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1718849Y8",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -579,7 +530,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J0703196P8",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -595,7 +545,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1009488R3",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -611,7 +560,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1718850E4",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -627,7 +575,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1321911A0",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -643,7 +590,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J0703198GQ",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -659,7 +605,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1321914CF",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -675,7 +620,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1718468W",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -691,7 +635,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J21273001J",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -707,7 +650,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1315531HH",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -723,7 +665,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J0703194MI",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -739,7 +680,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1321725TX",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -755,7 +695,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J0701885PL",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -771,7 +710,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1704561PB",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -787,7 +725,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J0709984QT",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -803,7 +740,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J070188700",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -819,7 +755,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J0754628WS",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -835,7 +770,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1321728F0",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -851,7 +785,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J0703195J0",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -867,7 +800,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1008529BY",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -883,7 +815,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J0709986XB",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -899,7 +830,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J0701889H7",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -915,7 +845,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J10085335K",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -931,7 +860,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J0701882G4",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -947,7 +875,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1008534G3",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -963,7 +890,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J07099931R",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -979,7 +905,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1321732AG",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -995,7 +920,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J131548600",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1011,7 +935,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J13217310A",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1027,7 +950,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J07546257P",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1043,7 +965,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1321730LP",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1059,7 +980,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J13217295R",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1075,7 +995,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J13236441V",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1091,7 +1010,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J132173443",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1107,7 +1025,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1315201FY",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1123,7 +1040,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1321733D3",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1139,7 +1055,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J1330946ST",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1155,7 +1070,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:R48J132187401",
       "data_movimento": "2026-08-24T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1171,7 +1085,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK37104405H",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1187,7 +1100,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK3603869WW",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1203,7 +1115,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK3703989UW",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1219,7 +1130,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK3429665KH",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1235,7 +1145,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK3609588XE",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1251,7 +1160,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK3710439JI",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1267,7 +1175,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK3603876T9",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1283,7 +1190,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK3710441XA",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1299,7 +1205,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK37039864G",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1315,7 +1220,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK371043546",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1331,7 +1235,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:K1TK3808306VN",
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1347,7 +1250,6 @@
       "usuario_id": 1,
       "observacao": null,
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1363,7 +1265,6 @@
       "usuario_id": 1,
       "observacao": null,
       "data_movimento": "2026-08-25T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1379,7 +1280,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:LB-CA561",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1395,7 +1295,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:071J04008211G",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1411,7 +1310,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:071J0904848JV",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1427,7 +1325,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:WKUJ1101430A2",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1443,7 +1340,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:Y9KJ1000073DX",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1459,7 +1355,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:7891234560087",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1475,7 +1370,6 @@
       "usuario_id": 1,
       "observacao": null,
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1491,7 +1385,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M433548",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1507,7 +1400,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M433541",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1523,7 +1415,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M471189",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1539,7 +1430,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M441472",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1555,7 +1445,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M452441",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1571,7 +1460,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M492663",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1587,7 +1475,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M448872",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1603,7 +1490,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M448675",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1619,7 +1505,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M471193",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1635,7 +1520,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M443703",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1651,7 +1535,6 @@
       "usuario_id": 1,
       "observacao": null,
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1667,7 +1550,6 @@
       "usuario_id": 1,
       "observacao": null,
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1683,7 +1565,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M471161",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1699,7 +1580,6 @@
       "usuario_id": 1,
       "observacao": null,
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1715,7 +1595,6 @@
       "usuario_id": 1,
       "observacao": null,
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1731,7 +1610,6 @@
       "usuario_id": 1,
       "observacao": "cod_produto:RV2M448940",
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1747,7 +1625,6 @@
       "usuario_id": 1,
       "observacao": null,
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     },
     {
@@ -1763,7 +1640,6 @@
       "usuario_id": 1,
       "observacao": null,
       "data_movimento": "2026-08-26T12:00:00",
-      "preco_compra": 0.0,
       "unidade": 1
     }
   ],

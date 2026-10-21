@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowUpFromLine, Plus, Pencil, Trash2, ChevronDown, Check, Layers, X, Search, MapPin } from "lucide-react";
+import { ArrowUpFromLine, Plus, Pencil, Trash2, ChevronDown, Check, Layers, X, Search, MapPin, RotateCcw } from "lucide-react";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
 import DataTable, { type Column } from "../components/DataTable";
 import Button from "../components/Button";
 import Window from "../components/Window";
+import JanelaRetornoSaida from "../components/JanelaRetornoSaida";
 import type { Movimentacao, Produto, Loja, Usuario } from "../lib/types";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/useAuth";
@@ -24,7 +25,7 @@ export default function SaidaRegistro() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Movimentacao | null>(null);
-  const [form, setForm] = useState<{ produto_id: string; quantidade: number; preco_compra: number; unidade: number; solicitante: string; data: string; cod_produto: string; destino: string }>({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "", destino: "" });
+  const [form, setForm] = useState<{ produto_id: string; quantidade: number; unidade: number; solicitante: string; data: string; cod_produto: string; destino: string }>({ produto_id: "", quantidade: 1, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "", destino: "" });
   const [lote, setLote] = useState(false);
   const [loteItens, setLoteItens] = useState<LoteItem[]>([{ produto_id: "", cod_produto: "", quantidade: 1 }]);
   const [solicitantes, setSolicitantes] = useState<string[]>([]);
@@ -40,12 +41,16 @@ export default function SaidaRegistro() {
   const [codLoteIdx, setCodLoteIdx] = useState<number | null>(null);
   const [itensAdicionais, setItensAdicionais] = useState<{ produto_id: string; cod_produto: string; quantidade: number }[]>([]);
   const [adicionalIdx, setAdicionalIdx] = useState<number | null>(null);
+  /** Janela de "Retorno de Saída" (devolver ao estoque o que já saiu). */
+  const [retornoOpen, setRetornoOpen] = useState(false);
+  /** Produto cujos retornos estão sendo exibidos (null = todas as saídas). */
+  const [retornoProduto, setRetornoProduto] = useState<number | null>(null);
   // A loja que sofre a saída é sempre a do usuário logado (user.loja_id): o
   // campo de escolha saiu do formulário.
   const [erro, setErro] = useState<string | null>(null);
 
   function resetForm() {
-    setForm({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "", destino: "" });
+    setForm({ produto_id: "", quantidade: 1, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "", destino: "" });
     setLote(false);
     setLoteItens([{ produto_id: "", cod_produto: "", quantidade: 1 }]);
     setItensAdicionais([]);
@@ -62,7 +67,6 @@ export default function SaidaRegistro() {
     setForm({
       produto_id: String(m.produto_id ?? ""),
       quantidade: m.quantidade,
-      preco_compra: (m as any).preco_compra ?? 0,
       unidade: (m as any).unidade ?? 1,
       solicitante: m.observacao?.match(/por ([^-]+) - /)?.[1]?.trim() || "",
       data: String(m.data_movimento).slice(0, 10) || hojeInput(),
@@ -252,7 +256,6 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
               loja_destino_nome: null,
               usuario_id: user?.id ?? null,
               observacao: `Saida manual por ${form.solicitante || "desconhecido"} - ${p.nome}\ncod_produto:${item.cod_produto.trim()}\ndestino:${form.destino.trim()}`,
-              preco_compra: p.preco_compra,
               unidade: Number(p.unidade) || 1,
               data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
             });
@@ -285,7 +288,6 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
           produto_id: Number(form.produto_id),
           produto_nome: p.nome,
           quantidade: qtdNum,
-          preco_compra: form.preco_compra,
           unidade: form.unidade,
           observacao: obs,
         });
@@ -301,7 +303,6 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
           loja_destino_nome: null,
           usuario_id: user?.id ?? null,
           observacao: obs,
-          preco_compra: form.preco_compra,
           unidade: form.unidade,
           data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
         });
@@ -323,7 +324,6 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
               loja_destino_nome: null,
               usuario_id: user?.id ?? null,
               observacao: `Saida manual por ${form.solicitante || "desconhecido"} - ${pa.nome}\ncod_produto:${item.cod_produto.trim()}\nvia:${p.nome}\ndestino:${form.destino.trim()}`,
-              preco_compra: pa.preco_compra,
               unidade: Number(pa.unidade) || 1,
               data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
             });
@@ -376,8 +376,12 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
       return registrado || "";
     } },
     { key: "data_movimento", label: "Data Saida", width: "100px", align: "center", render: (r) => new Date(r.data_movimento).toLocaleDateString("pt-BR") },
-    { key: "acoes", label: "Acao", align: "center", width: "100px", render: (r) => (
+    { key: "acoes", label: "Acao", align: "center", width: "140px", render: (r) => (
       <div className="flex items-center justify-center gap-1">
+        <button onClick={(e) => { e.stopPropagation(); setRetornoProduto(r.produto_id > 0 ? r.produto_id : null); setRetornoOpen(true); }}
+          className="rounded p-1.5 text-teal-600 hover:bg-teal-50 transition" title="Retorno de Saída (devolver ao estoque)">
+          <RotateCcw className="h-3.5 w-3.5" />
+        </button>
         <button onClick={(e) => { e.stopPropagation(); openEdit(r); }}
           className="rounded p-1.5 text-blue-600 hover:bg-blue-50 transition" title="Editar saida">
           <Pencil className="h-3.5 w-3.5" />
@@ -766,6 +770,17 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
           </div>
         </div>
       </Window>
+
+      {/* Janela flutuante: Retorno de Saída (devolução de produtos que já saíram) */}
+      <JanelaRetornoSaida
+        open={retornoOpen}
+        onClose={() => setRetornoOpen(false)}
+        produtoFiltro={retornoProduto}
+        produtoNome={retornoProduto !== null
+          ? (produtos.find(p => p.id === retornoProduto)?.nome || null)
+          : null}
+        onDevolver={loadData}
+      />
     </Layout>
   );
 }

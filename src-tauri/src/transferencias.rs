@@ -132,7 +132,6 @@ pub(crate) fn aplicar_efeito_estoque(
     tipo: &str,
     produto_id: i64,
     quantidade: i64,
-    preco_compra: Option<f64>,
     loja_origem_id: Option<i64>,
     loja_destino_id: Option<i64>,
 ) -> Result<(), String> {
@@ -141,10 +140,9 @@ pub(crate) fn aplicar_efeito_estoque(
     }
     match tipo {
         "entrada" => {
-            let preco = preco_compra.unwrap_or(0.0);
             conn.execute(
-                "UPDATE produtos SET estoque = estoque + ?1, custo_total = custo_total + (?2 * ?3) WHERE id=?4",
-                params![quantidade, preco, quantidade as f64, produto_id],
+                "UPDATE produtos SET estoque = estoque + ?1 WHERE id=?2",
+                params![quantidade, produto_id],
             )
             .map_err(|e| e.to_string())?;
             if let Some(loja) = loja_destino_id {
@@ -175,7 +173,6 @@ pub(crate) fn reverter_efeito_estoque(
     tipo: &str,
     produto_id: i64,
     quantidade: i64,
-    preco_compra: Option<f64>,
     loja_origem_id: Option<i64>,
     loja_destino_id: Option<i64>,
 ) -> Result<(), String> {
@@ -184,10 +181,9 @@ pub(crate) fn reverter_efeito_estoque(
     }
     match tipo {
         "entrada" => {
-            let preco = preco_compra.unwrap_or(0.0);
             conn.execute(
-                "UPDATE produtos SET estoque = MAX(0, estoque - ?1), custo_total = MAX(0, custo_total - (?2 * ?3)) WHERE id=?4",
-                params![quantidade, preco, quantidade as f64, produto_id],
+                "UPDATE produtos SET estoque = MAX(0, estoque - ?1) WHERE id=?2",
+                params![quantidade, produto_id],
             )
             .map_err(|e| e.to_string())?;
             if let Some(loja) = loja_destino_id {
@@ -512,9 +508,6 @@ pub fn update_transferencia_status(id: i64, status: String) -> Result<Transferen
                     .query_row("SELECT nome FROM produtos WHERE id=?1", params![produto_id], |r| r.get(0))
                     .ok(),
             };
-            let preco: Option<f64> = tx
-                .query_row("SELECT preco_compra FROM produtos WHERE id=?1", params![produto_id], |r| r.get(0))
-                .unwrap_or(None);
             // A unidade do item é texto ("CX / 12"); o campo `unidade` da
             // movimentação é multiplicador, então fica nulo e a unidade vai no
             // texto da observação, para a leitura não ficar ambígua.
@@ -523,8 +516,8 @@ pub fn update_transferencia_status(id: i64, status: String) -> Result<Transferen
                 _ => String::new(),
             };
             tx.execute(
-                "INSERT INTO movimentacoes (tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, preco_compra, unidade, data_movimento)
-                 VALUES ('transferencia', ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, NULL, ?11)",
+                "INSERT INTO movimentacoes (tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, unidade, data_movimento)
+                 VALUES ('transferencia', ?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, NULL, ?10)",
                 params![
                     produto_id,
                     nome_produto,
@@ -535,7 +528,6 @@ pub fn update_transferencia_status(id: i64, status: String) -> Result<Transferen
                     nome_destino,
                     usuario_id,
                     format!("Transferência #{} concluída{}", id, unid_txt),
-                    preco,
                     now,
                 ],
             )

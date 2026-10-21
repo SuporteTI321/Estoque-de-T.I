@@ -3,15 +3,19 @@
 vault.py — Cofre local para API keys (desktop).
 Criptografa %APPDATA%/EstoqueTI/sync_config.json e chaves Supabase.
 Uso:
-  py vault.py init                 # cria cofre com senha mestra
-  py vault.py set <chave> <valor>  # ex: py vault.py set supabase_anon eyJ...
-  py vault.py set <chave> --stdin  # lê o valor sem expor no histórico do shell
-  py vault.py get <chave>
-  py vault.py list
-  py vault.py encrypt-file <arquivo>
-  py vault.py decrypt-file <arquivo.enc>
+  python vault.py init                 # cria cofre com senha mestra
+  python vault.py set <chave> <valor>  # ex: python vault.py set supabase_anon eyJ...
+  python vault.py set <chave> --stdin  # lê o valor sem expor no histórico do shell
+  python vault.py get <chave>
+  python vault.py list
+  python vault.py encrypt-file <arquivo>
+  python vault.py decrypt-file <arquivo.enc>
+
+  --dpapi  usa a senha do arquivo vault.pw (protegido pelo DPAPI do Windows)
+           em vez de perguntar. Permite uso em scripts/automação sem que a
+           senha apareça no código, no histórico do shell ou no prompt.
 """
-import os, sys, json, base64, getpass, hashlib
+import os, sys, json, base64, getpass, hashlib, subprocess
 from pathlib import Path
 
 try:
@@ -29,6 +33,37 @@ else:
     VAULT = Path(".") / "EstoqueTI" / "vault.enc"
     print(f"AVISO: APPDATA ausente — cofre sendo criado/lido em {VAULT.resolve()}")
 SALT_SIZE, IV_SIZE, ITER = 16, 12, 100000
+
+def dpapi_password() -> str:
+    """Lê a senha mestra do arquivo vault.pw (protegido pelo DPAPI).
+
+    A senha nunca fica em texto puro: o vault.pw guarda um blob do DPAPI que
+    só o usuário logado consegue converter de volta.
+    """
+    if "APPDATA" not in os.environ:
+        raise RuntimeError("APPDATA ausente")
+    pw_file = Path(os.environ["APPDATA"]) / "EstoqueTI" / "vault.pw"
+    if not pw_file.exists():
+        raise RuntimeError(f"vault.pw nao encontrado: {pw_file}")
+    ps = (
+        f"$s = Get-Content '{pw_file}' | ConvertTo-SecureString; "
+        "$p=[Runtime.InteropServices.Marshal]::PtrToStringAuto("
+        "[Runtime.InteropServices.Marshal]::SecureStringToBSTR($s)); Write-Output $p"
+    )
+    out = subprocess.run(
+        ["powershell", "-NoProfile", "-Command", ps],
+        capture_output=True, text=True,
+    )
+    if out.returncode != 0 or not out.stdout.strip():
+        raise RuntimeError("falha ao ler a senha do cofre via DPAPI")
+    return out.stdout.strip()
+
+def ask_password(dpapi: bool) -> str:
+    """Senha mestra: do DPAPI (--dpapi) ou digitada no prompt."""
+    if dpapi:
+        return dpapi_password()
+    return getpass.getpass("Senha mestra: ")
+
 
 def derive_key(pw: str, salt: bytes) -> bytes:
     kdf = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=salt, iterations=ITER)
@@ -70,18 +105,33 @@ def save_vault(obj: dict, pw: str):
     VAULT.parent.mkdir(parents=True, exist_ok=True)
     VAULT.write_text(encrypt_obj(obj, pw))
 
-def cmd_init():
-    if not HAS_CRYPTO:
+def cmd_init(dpapi=False):
+    if not HAS_CRYPTO: 
         print("Instale: pip install cryptography"); sys.exit(1)
-    pw = getpass.getpass("Senha mestra (só você saberá): ")
-    pw2 = getpass.getpass("Confirme: ")
-    if pw != pw2:
-        print("Senhas não conferem"); sys.exit(1)
+    if dpapi:
+        # Senha vinda do DPAPI: grava tambem o vault.pw para uso em automacao
+        pw = dpapi_password()
+    else:
+        pw = getpass.getpass("Senha mestra (só você saberá): ")
+        pw2 = getpass.getpass("Confirme: ")
+        if pw != pw2:
+            print("Senhas não conferem"); sys.exit(1)
+        if "APPDATA" in os.environ:
+            pw_file = Path(os.environ["APPDATA"]) / "EstoqueTI" / "vault.pw"
+            pw_file.parent.mkdir(parents=True, exist_ok=True)
+            ps = (
+                f"$s = ConvertTo-SecureString '{pw}' -AsPlainText -Force; "
+                f"ConvertFrom-SecureString -SecureString $s | Set-Content '{pw_file}'"
+            )
+            subprocess.run(["powershell", "-NoProfile", "-Command", ps], capture_output=True)
+            print(f"Senha protegida por DPAPI em: {pw_file}")
     save_vault({}, pw)
     print(f"Cofre criado em {VAULT}")
 
-def cmd_set(key, val):
-    pw = getpass.getpass("Senha mestra: ")
+def cmd_set(key, val, dpapi=False):
+    if not HAS_CRYPTO: 
+        print("Instale: pip install cryptography"); sys.exit(1)
+    pw = ask_password(dpapi)
     obj = load_vault(pw)
     obj[key] = val
     save_vault(obj, pw)
@@ -91,13 +141,13 @@ def cmd_set(key, val):
             print(f"AVISO: segredo em texto puro encontrado (remova manualmente): {legacy.resolve()}")
     print(f"{key} salvo no cofre (criptografado)")
 
-def cmd_get(key):
-    pw = getpass.getpass("Senha mestra: ")
+def cmd_get(key, dpapi=False):
+    pw = ask_password(dpapi)
     obj = load_vault(pw)
     print(obj.get(key, "(não encontrado)"))
 
-def cmd_list():
-    pw = getpass.getpass("Senha mestra: ")
+def cmd_list(dpapi=False):
+    pw = ask_password(dpapi)
     obj = load_vault(pw)
     for k in obj:
         print(f"  {k}: ({len(str(obj[k]))} caracteres)")
@@ -139,13 +189,16 @@ if __name__ == "__main__":
         print("pip install cryptography"); sys.exit(1)
     if len(sys.argv) < 2:
         print(__doc__); sys.exit(0)
-    c = sys.argv[1]
-    if c == "init": cmd_init()
-    elif c == "set" and len(sys.argv)==4 and sys.argv[3]=="--stdin":
-        cmd_set(sys.argv[2], getpass.getpass(f"Valor de '{sys.argv[2]}': "))
-    elif c == "set" and len(sys.argv)==4: cmd_set(sys.argv[2], sys.argv[3])
-    elif c == "get" and len(sys.argv)==3: cmd_get(sys.argv[2])
-    elif c == "list": cmd_list()
-    elif c == "encrypt-file" and len(sys.argv)==3: cmd_encrypt_file(sys.argv[2])
-    elif c == "decrypt-file" and len(sys.argv)==3: cmd_decrypt_file(sys.argv[2])
+    args = sys.argv[1:]
+    dpapi = "--dpapi" in args
+    args = [a for a in args if a != "--dpapi"]
+    c = args[0]
+    if c == "init": cmd_init(dpapi)
+    elif c == "set" and len(args)==3 and args[2]=="--stdin":
+        cmd_set(args[1], getpass.getpass(f"Valor de '{args[1]}': "), dpapi)
+    elif c == "set" and len(args)==3: cmd_set(args[1], args[2], dpapi)
+    elif c == "get" and len(args)==2: cmd_get(args[1], dpapi)
+    elif c == "list": cmd_list(dpapi)
+    elif c == "encrypt-file" and len(args)==2: cmd_encrypt_file(args[1])
+    elif c == "decrypt-file" and len(args)==2: cmd_decrypt_file(args[1])
     else: print(__doc__)

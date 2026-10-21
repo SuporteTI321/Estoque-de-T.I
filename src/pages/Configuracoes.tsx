@@ -252,7 +252,6 @@ export default function Configuracoes() {
         { header: "produto", key: "nome" },
         { header: "categoria_nome", key: "categoria_nome" },
         { header: "unidade", key: "unidade" },
-        { header: "preco_compra", key: "preco_compra" },
         { header: "estoque", key: "estoque" },
         { header: "estoque_minimo", key: "estoque_minimo" },
       ];
@@ -294,7 +293,6 @@ export default function Configuracoes() {
           { key: "nome", aliases: ["produto", "nome", "descricao", "descrição", "prod"] },
           { key: "categoria_nome", aliases: ["categoria_nome", "categoria", "cat"] },
           { key: "unidade", aliases: ["unidade", "un", "und"] },
-          { key: "preco_compra", aliases: ["preco_compra", "preco", "preço", "preço compra", "preco compra", "valor", "custo"] },
           { key: "estoque", aliases: ["estoque", "qtd", "quantidade", "saldo"] },
           { key: "estoque_minimo", aliases: ["estoque_minimo", "estoque minimo", "estoque mínimo", "min", "minimo", "mínimo"] },
         ];
@@ -318,7 +316,7 @@ export default function Configuracoes() {
           const prod: any = {};
           colMap.forEach(c => {
             let v: any = parts[c.idx] || "";
-            if (["preco_compra","estoque","estoque_minimo"].includes(c.key)) v = Number(v) || 0;
+            if (["estoque","estoque_minimo"].includes(c.key)) v = Number(v) || 0;
             if (c.key === "ativo") v = v === "true" || v === "1" || v === true;
             if (c.key === "codigo" && !v) v = null;
             prod[c.key] = v;
@@ -371,11 +369,8 @@ export default function Configuracoes() {
               fornecedor_id: null,
               fornecedor_nome: null,
               unidade: p.unidade || "un",
-              preco_compra: Number(p.preco_compra) || 0,
-              preco_venda: 0,
               estoque: Number(p.estoque) || 0,
               estoque_minimo: Number(p.estoque_minimo) || 0,
-              custo_total: 0,
               ativo: true,
             } as any);
             criados++;
@@ -844,9 +839,8 @@ function RegrasTab() {
               codigo: prod.codigo, nome: prod.nome, marca: prod.marca ?? null,
               modelo: prod.modelo ?? null, descricao: prod.descricao ?? null,
               categoria_id: prod.categoria_id ?? null, fornecedor_id: prod.fornecedor_id ?? null,
-              unidade: prod.unidade, preco_compra: prod.preco_compra || 0,
-              preco_venda: prod.preco_venda || 0, estoque: prod.estoque || 0,
-              estoque_minimo: prod.estoque_minimo || 0, custo_total: prod.custo_total ?? 0,
+              unidade: prod.unidade, estoque: prod.estoque || 0,
+              estoque_minimo: prod.estoque_minimo || 0,
             });
             gravados++;
           } catch {}

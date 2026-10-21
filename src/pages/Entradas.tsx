@@ -20,13 +20,13 @@ export default function Entradas() {
   const [lojas, setLojas] = useState<Loja[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Movimentacao | null>(null);
-  const [form, setForm] = useState<{ produto_id: string; quantidade: number; preco_compra: number; unidade: number; data: string; cod_produto: string }>({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, data: hojeInput(), cod_produto: "" });
+  const [form, setForm] = useState<{ produto_id: string; quantidade: number; unidade: number; data: string; cod_produto: string }>({ produto_id: "", quantidade: 1, unidade: 1, data: hojeInput(), cod_produto: "" });
   const [lote, setLote] = useState(false);
   const [loteItens, setLoteItens] = useState<{ cod_produto: string; quantidade: number }[]>([{ cod_produto: "", quantidade: 1 }]);
   const [erro, setErro] = useState<string | null>(null);
 
   function resetForm() {
-    setForm({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, data: hojeInput(), cod_produto: "" });
+    setForm({ produto_id: "", quantidade: 1, unidade: 1, data: hojeInput(), cod_produto: "" });
     setLote(false);
     setLoteItens([{ cod_produto: "", quantidade: 1 }]);
   }
@@ -96,7 +96,6 @@ export default function Entradas() {
               usuario_id: user?.id ?? null,
               observacao: `cod_produto:${item.cod_produto.trim()}`,
               produto_nome: p?.nome ?? null,
-              preco_compra: form.preco_compra,
               unidade: form.unidade,
               data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
               loja_origem_nome: null, loja_destino_nome: lojaDestino.nome,
@@ -145,7 +144,6 @@ export default function Entradas() {
         usuario_id: user?.id ?? null,
         observacao: obsCod,
         produto_nome: p?.nome ?? null,
-        preco_compra: form.preco_compra,
         unidade: form.unidade,
         data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
         loja_origem_nome: null, loja_destino_nome: lojaDestino.nome,
@@ -186,7 +184,7 @@ export default function Entradas() {
     { key: "data_movimento", label: "Data", width: "120px", align: "center", render: (r) => new Date(r.data_movimento).toLocaleDateString("pt-BR") },
     { key: "id", label: "Acao", align: "center", width: "100px", render: (r) => (
       <div className="flex items-center justify-center gap-1">
-        <button onClick={(e) => { e.stopPropagation(); setEditing(r); const codManual = r.observacao?.match(/^cod_produto:(.+)$/m)?.[1]?.trim() || ""; setForm({ produto_id: String(r.produto_id), quantidade: r.quantidade, preco_compra: (r as any).preco_compra || 0, unidade: (r as any).unidade || 1, data: (r as any).data_movimento ? String((r as any).data_movimento).slice(0, 10) : hojeInput(), cod_produto: codManual }); setOpen(true); }}
+        <button onClick={(e) => { e.stopPropagation(); setEditing(r); const codManual = r.observacao?.match(/^cod_produto:(.+)$/m)?.[1]?.trim() || ""; setForm({ produto_id: String(r.produto_id), quantidade: r.quantidade, unidade: (r as any).unidade || 1, data: (r as any).data_movimento ? String((r as any).data_movimento).slice(0, 10) : hojeInput(), cod_produto: codManual }); setOpen(true); }}
           className="rounded p-1.5 text-blue-600 hover:bg-blue-50 transition" title="Editar entrada">
           <Pencil className="h-3.5 w-3.5" />
         </button>

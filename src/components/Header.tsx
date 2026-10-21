@@ -110,40 +110,49 @@ export default function Header({ user, title, subtitle, onLogout, onMenu }: Head
 
   const totalNotificacoes = alertas.length + alertasEstoque.length;
 
-  function dispensarEstoque(id: number) {
-    const atuais: number[] = JSON.parse(localStorage.getItem(LS_DISMISS) || "[]");
-    const lista = Array.isArray(atuais) ? atuais.filter(x => typeof x === "number") : [];
-    if (!lista.includes(id)) lista.push(id);
-    localStorage.setItem(LS_DISMISS, JSON.stringify(lista));
-    setAlertasEstoque(prev => prev.filter(a => a.id !== id));
-  }
-
-  async function dispensarSistema(id: number) {
-    if (id < 0) {
-      // Virtual (calculado): dispensa local; volta sozinho se a condição persistir após normalizar
-      let disp: number[] = [];
-      try { disp = JSON.parse(localStorage.getItem(LS_SYS_DISMISS) || "[]"); if (!Array.isArray(disp)) disp = []; } catch { disp = []; }
-      if (!disp.includes(id)) disp.push(id);
-      localStorage.setItem(LS_SYS_DISMISS, JSON.stringify(disp));
-    } else {
-      try { await api.alertas.markLido(id); } catch {}
+  function lerIds(key: string): number[] {
+      try {
+        const raw = JSON.parse(localStorage.getItem(key) || "[]");
+        return Array.isArray(raw) ? raw.filter((x): x is number => typeof x === "number") : [];
+      } catch { return []; }
     }
-    setAlertas(prev => prev.filter(a => a.id !== id));
-  }
 
-  async function limparNotificacoes() {
-    // Sistema: marca como lido no backend (não só esconde local)
-    const virtuais = alertas.filter(a => a.id < 0).map(a => a.id);
-    if (virtuais.length > 0) localStorage.setItem(LS_SYS_DISMISS, JSON.stringify(virtuais));
-    for (const a of alertas) { if (a.id >= 0) { try { await api.alertas.markLido(a.id); } catch {} } }
-    setAlertas([]);
-    localStorage.setItem("almox_alertas", "[]");
-    // Estoque: dispensa por ID (reativa sozinho quando o estoque normalizar)
-    const ids = alertasEstoque.map(a => a.id);
-    localStorage.setItem(LS_DISMISS, JSON.stringify(ids));
-    setAlertasEstoque([]);
-    setNotifOpen(false);
-  }
+    // Une IDs à lista de dispensados (nunca sobrescreve: dispensas anteriores são mantidas)
+    function unirIds(key: string, ids: number[]) {
+      const lista = lerIds(key);
+      for (const id of ids) if (!lista.includes(id)) lista.push(id);
+      localStorage.setItem(key, JSON.stringify(lista));
+    }
+
+    function dispensarEstoque(id: number) {
+      unirIds(LS_DISMISS, [id]);
+      setAlertasEstoque(prev => prev.filter(a => a.id !== id));
+    }
+
+    async function dispensarSistema(id: number) {
+      // Dispensa local por ID primeiro: mesmo se o backend falhar ao marcar
+      // como lido, o alerta não volta ao reabrir o sino. Virtuais (id < 0)
+      // reativam sozinhos quando a condição normalizar (poda no loadSistema).
+      unirIds(LS_SYS_DISMISS, [id]);
+      if (id >= 0) {
+        try { await api.alertas.markLido(id); } catch {}
+      }
+      setAlertas(prev => prev.filter(a => a.id !== id));
+    }
+
+    async function limparNotificacoes() {
+      // Sistema: dispensa local por ID (união — robusto a falha do backend)
+      // + marca como lido no backend para as demais sessões/dispositivos
+      unirIds(LS_SYS_DISMISS, alertas.map(a => a.id));
+      for (const a of alertas) { if (a.id >= 0) { try { await api.alertas.markLido(a.id); } catch {} } }
+      setAlertas([]);
+      localStorage.setItem("almox_alertas", "[]");
+      // Estoque: dispensa por ID com união (não perde dispensas anteriores;
+      // reativa sozinho quando o estoque normalizar e cair de novo)
+      unirIds(LS_DISMISS, alertasEstoque.map(a => a.id));
+      setAlertasEstoque([]);
+      setNotifOpen(false);
+    }
 
   const initials = user.nome
     .split(" ")

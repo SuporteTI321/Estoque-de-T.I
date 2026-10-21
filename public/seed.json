@@ -8,12 +8,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 2,
@@ -23,12 +20,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 3,
@@ -38,12 +32,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 4,
@@ -53,12 +44,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 5,
@@ -68,12 +56,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 6,
@@ -83,12 +68,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 7,
@@ -98,12 +80,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 8,
@@ -113,12 +92,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 9,
@@ -128,12 +104,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 10,
@@ -143,12 +116,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 11,
@@ -158,12 +128,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 12,
@@ -173,12 +140,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 13,
@@ -188,12 +152,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 14,
@@ -203,12 +164,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 15,
@@ -218,12 +176,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 16,
@@ -233,12 +188,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 17,
@@ -248,12 +200,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 18,
@@ -263,12 +212,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 19,
@@ -278,12 +224,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 20,
@@ -293,12 +236,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 21,
@@ -308,12 +248,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 22,
@@ -323,12 +260,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 23,
@@ -338,12 +272,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 24,
@@ -353,12 +284,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 25,
@@ -368,12 +296,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 26,
@@ -383,12 +308,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 27,
@@ -398,12 +320,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 28,
@@ -413,12 +332,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 29,
@@ -428,12 +344,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 30,
@@ -443,12 +356,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 31,
@@ -458,12 +368,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 32,
@@ -473,12 +380,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 33,
@@ -488,12 +392,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 34,
@@ -503,12 +404,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 35,
@@ -518,12 +416,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 36,
@@ -533,12 +428,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 37,
@@ -548,12 +440,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 38,
@@ -563,12 +452,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 39,
@@ -578,12 +464,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 40,
@@ -593,12 +476,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 41,
@@ -608,12 +488,9 @@
       "categoria_id": 5,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 42,
@@ -623,12 +500,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 43,
@@ -638,12 +512,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 44,
@@ -653,12 +524,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 45,
@@ -668,12 +536,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 46,
@@ -683,12 +548,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 47,
@@ -698,12 +560,9 @@
       "categoria_id": 32,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 48,
@@ -713,12 +572,9 @@
       "categoria_id": 16,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 49,
@@ -728,12 +584,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 50,
@@ -743,12 +596,9 @@
       "categoria_id": 58,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 51,
@@ -758,12 +608,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 52,
@@ -773,12 +620,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 53,
@@ -788,12 +632,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 54,
@@ -803,12 +644,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 55,
@@ -818,12 +656,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 56,
@@ -833,12 +668,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 57,
@@ -848,12 +680,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 58,
@@ -863,12 +692,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 59,
@@ -878,12 +704,9 @@
       "categoria_id": 60,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 60,
@@ -893,12 +716,9 @@
       "categoria_id": 60,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 61,
@@ -908,12 +728,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 62,
@@ -923,12 +740,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 63,
@@ -938,12 +752,9 @@
       "categoria_id": 22,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 64,
@@ -953,12 +764,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 65,
@@ -968,12 +776,9 @@
       "categoria_id": 40,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 66,
@@ -983,12 +788,9 @@
       "categoria_id": 31,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 67,
@@ -998,12 +800,9 @@
       "categoria_id": 31,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 68,
@@ -1013,12 +812,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 69,
@@ -1028,12 +824,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 70,
@@ -1043,12 +836,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 71,
@@ -1058,12 +848,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 72,
@@ -1073,12 +860,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 73,
@@ -1088,12 +872,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 74,
@@ -1103,12 +884,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 75,
@@ -1118,12 +896,9 @@
       "categoria_id": 13,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 76,
@@ -1133,12 +908,9 @@
       "categoria_id": 59,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 77,
@@ -1148,12 +920,9 @@
       "categoria_id": 59,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 78,
@@ -1163,12 +932,9 @@
       "categoria_id": 21,
       "fornecedor_id": null,
       "unidade": "Cartela / 5",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 79,
@@ -1178,12 +944,9 @@
       "categoria_id": 21,
       "fornecedor_id": null,
       "unidade": "Cartela / 1",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 80,
@@ -1193,12 +956,9 @@
       "categoria_id": 21,
       "fornecedor_id": null,
       "unidade": "Cartela / 10",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 81,
@@ -1208,12 +968,9 @@
       "categoria_id": 21,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 82,
@@ -1223,12 +980,9 @@
       "categoria_id": 21,
       "fornecedor_id": null,
       "unidade": "Cartela / 5",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 83,
@@ -1238,12 +992,9 @@
       "categoria_id": 21,
       "fornecedor_id": null,
       "unidade": "Cartela / 100",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 84,
@@ -1253,12 +1004,9 @@
       "categoria_id": 32,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 85,
@@ -1268,12 +1016,9 @@
       "categoria_id": 31,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 86,
@@ -1283,12 +1028,9 @@
       "categoria_id": 31,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 87,
@@ -1298,12 +1040,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 88,
@@ -1313,12 +1052,9 @@
       "categoria_id": 32,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 89,
@@ -1328,12 +1064,9 @@
       "categoria_id": 32,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 90,
@@ -1343,12 +1076,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 91,
@@ -1358,12 +1088,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 92,
@@ -1373,12 +1100,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 93,
@@ -1388,12 +1112,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 94,
@@ -1403,12 +1124,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 95,
@@ -1418,12 +1136,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 96,
@@ -1433,12 +1148,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 97,
@@ -1448,12 +1160,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 98,
@@ -1463,12 +1172,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 99,
@@ -1478,12 +1184,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 100,
@@ -1493,12 +1196,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 101,
@@ -1508,12 +1208,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 102,
@@ -1523,12 +1220,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 103,
@@ -1538,12 +1232,9 @@
       "categoria_id": 24,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 104,
@@ -1553,12 +1244,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 105,
@@ -1568,12 +1256,9 @@
       "categoria_id": 20,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 106,
@@ -1583,12 +1268,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 107,
@@ -1598,12 +1280,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 108,
@@ -1613,12 +1292,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 109,
@@ -1628,12 +1304,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 110,
@@ -1643,12 +1316,9 @@
       "categoria_id": 5,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 111,
@@ -1658,12 +1328,9 @@
       "categoria_id": 5,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 112,
@@ -1673,12 +1340,9 @@
       "categoria_id": 5,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 113,
@@ -1688,12 +1352,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 114,
@@ -1703,12 +1364,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 115,
@@ -1718,12 +1376,9 @@
       "categoria_id": 10,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 116,
@@ -1733,12 +1388,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 117,
@@ -1748,12 +1400,9 @@
       "categoria_id": 19,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 118,
@@ -1763,12 +1412,9 @@
       "categoria_id": 19,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 119,
@@ -1778,12 +1424,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 120,
@@ -1793,12 +1436,9 @@
       "categoria_id": 24,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 121,
@@ -1808,12 +1448,9 @@
       "categoria_id": 24,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 122,
@@ -1823,12 +1460,9 @@
       "categoria_id": 24,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 123,
@@ -1838,12 +1472,9 @@
       "categoria_id": 24,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 124,
@@ -1853,12 +1484,9 @@
       "categoria_id": 24,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 125,
@@ -1868,12 +1496,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 126,
@@ -1883,12 +1508,9 @@
       "categoria_id": 13,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 127,
@@ -1898,12 +1520,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 128,
@@ -1913,12 +1532,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 129,
@@ -1928,12 +1544,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 130,
@@ -1943,12 +1556,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 131,
@@ -1958,12 +1568,9 @@
       "categoria_id": 56,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 132,
@@ -1973,12 +1580,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 133,
@@ -1988,12 +1592,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 134,
@@ -2003,12 +1604,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 135,
@@ -2018,12 +1616,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 136,
@@ -2033,12 +1628,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 137,
@@ -2048,12 +1640,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 138,
@@ -2063,12 +1652,9 @@
       "categoria_id": 60,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 139,
@@ -2078,12 +1664,9 @@
       "categoria_id": 60,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 140,
@@ -2093,12 +1676,9 @@
       "categoria_id": 61,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 141,
@@ -2108,12 +1688,9 @@
       "categoria_id": 6,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 142,
@@ -2123,12 +1700,9 @@
       "categoria_id": 16,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 143,
@@ -2138,12 +1712,9 @@
       "categoria_id": 35,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 144,
@@ -2153,12 +1724,9 @@
       "categoria_id": 35,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 145,
@@ -2168,12 +1736,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 146,
@@ -2183,12 +1748,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 147,
@@ -2198,12 +1760,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 148,
@@ -2213,12 +1772,9 @@
       "categoria_id": 24,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 149,
@@ -2228,12 +1784,9 @@
       "categoria_id": 24,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 150,
@@ -2243,12 +1796,9 @@
       "categoria_id": 5,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 151,
@@ -2258,12 +1808,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 152,
@@ -2273,12 +1820,9 @@
       "categoria_id": 61,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 153,
@@ -2288,12 +1832,9 @@
       "categoria_id": 61,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 154,
@@ -2303,12 +1844,9 @@
       "categoria_id": 61,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 155,
@@ -2318,12 +1856,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 156,
@@ -2333,12 +1868,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 157,
@@ -2348,12 +1880,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 158,
@@ -2363,12 +1892,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 159,
@@ -2378,12 +1904,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 160,
@@ -2393,12 +1916,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 161,
@@ -2408,12 +1928,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 162,
@@ -2423,12 +1940,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 163,
@@ -2438,12 +1952,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 164,
@@ -2453,12 +1964,9 @@
       "categoria_id": 57,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 165,
@@ -2468,12 +1976,9 @@
       "categoria_id": 24,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 166,
@@ -2483,12 +1988,9 @@
       "categoria_id": 32,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 167,
@@ -2498,12 +2000,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 168,
@@ -2513,12 +2012,9 @@
       "categoria_id": 10,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 169,
@@ -2528,12 +2024,9 @@
       "categoria_id": 11,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 170,
@@ -2543,12 +2036,9 @@
       "categoria_id": 35,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 171,
@@ -2558,12 +2048,9 @@
       "categoria_id": 35,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 172,
@@ -2573,12 +2060,9 @@
       "categoria_id": 11,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 173,
@@ -2588,12 +2072,9 @@
       "categoria_id": 23,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 174,
@@ -2603,12 +2084,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 175,
@@ -2618,12 +2096,9 @@
       "categoria_id": 19,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 176,
@@ -2633,12 +2108,9 @@
       "categoria_id": 19,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 177,
@@ -2648,12 +2120,9 @@
       "categoria_id": 19,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 178,
@@ -2663,12 +2132,9 @@
       "categoria_id": 25,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 179,
@@ -2678,12 +2144,9 @@
       "categoria_id": 19,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 180,
@@ -2693,12 +2156,9 @@
       "categoria_id": 19,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 181,
@@ -2708,12 +2168,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 182,
@@ -2723,12 +2180,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 183,
@@ -2738,12 +2192,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 184,
@@ -2753,12 +2204,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 185,
@@ -2768,12 +2216,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 186,
@@ -2783,12 +2228,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 187,
@@ -2798,12 +2240,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 188,
@@ -2813,12 +2252,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 189,
@@ -2828,12 +2264,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 190,
@@ -2843,12 +2276,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 191,
@@ -2858,12 +2288,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 192,
@@ -2873,12 +2300,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 193,
@@ -2888,12 +2312,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 194,
@@ -2903,12 +2324,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 195,
@@ -2918,12 +2336,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 196,
@@ -2933,12 +2348,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 197,
@@ -2948,12 +2360,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 198,
@@ -2963,12 +2372,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 199,
@@ -2978,12 +2384,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 200,
@@ -2993,12 +2396,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 201,
@@ -3008,12 +2408,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 202,
@@ -3023,12 +2420,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 203,
@@ -3038,12 +2432,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 204,
@@ -3053,12 +2444,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 205,
@@ -3068,12 +2456,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 206,
@@ -3083,12 +2468,9 @@
       "categoria_id": 23,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 207,
@@ -3098,12 +2480,9 @@
       "categoria_id": 23,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 208,
@@ -3113,12 +2492,9 @@
       "categoria_id": 30,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 209,
@@ -3128,12 +2504,9 @@
       "categoria_id": 11,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 210,
@@ -3143,12 +2516,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 211,
@@ -3158,12 +2528,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 212,
@@ -3173,12 +2540,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 213,
@@ -3188,12 +2552,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 214,
@@ -3203,12 +2564,9 @@
       "categoria_id": 29,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 215,
@@ -3218,12 +2576,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 216,
@@ -3233,12 +2588,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 217,
@@ -3248,12 +2600,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 218,
@@ -3263,12 +2612,9 @@
       "categoria_id": 16,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 219,
@@ -3278,12 +2624,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 220,
@@ -3293,12 +2636,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 221,
@@ -3308,12 +2648,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 222,
@@ -3323,12 +2660,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 223,
@@ -3338,12 +2672,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 224,
@@ -3353,12 +2684,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 225,
@@ -3368,12 +2696,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 226,
@@ -3383,12 +2708,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 227,
@@ -3398,12 +2720,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 228,
@@ -3413,12 +2732,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 229,
@@ -3428,12 +2744,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 230,
@@ -3443,12 +2756,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 231,
@@ -3458,12 +2768,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 232,
@@ -3473,12 +2780,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 233,
@@ -3488,12 +2792,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 234,
@@ -3503,12 +2804,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 235,
@@ -3518,12 +2816,9 @@
       "categoria_id": 29,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 236,
@@ -3533,12 +2828,9 @@
       "categoria_id": 29,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 237,
@@ -3548,12 +2840,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 238,
@@ -3563,12 +2852,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 239,
@@ -3578,12 +2864,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 240,
@@ -3593,12 +2876,9 @@
       "categoria_id": 12,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 241,
@@ -3608,12 +2888,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 242,
@@ -3623,12 +2900,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 243,
@@ -3638,12 +2912,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 244,
@@ -3653,12 +2924,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 245,
@@ -3668,12 +2936,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 246,
@@ -3683,12 +2948,9 @@
       "categoria_id": 59,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 247,
@@ -3698,12 +2960,9 @@
       "categoria_id": 25,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 248,
@@ -3713,12 +2972,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 249,
@@ -3728,12 +2984,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 250,
@@ -3743,12 +2996,9 @@
       "categoria_id": 19,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 251,
@@ -3758,12 +3008,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 252,
@@ -3773,12 +3020,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 253,
@@ -3788,12 +3032,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 254,
@@ -3803,12 +3044,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 255,
@@ -3818,12 +3056,9 @@
       "categoria_id": 56,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 256,
@@ -3833,12 +3068,9 @@
       "categoria_id": 56,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 257,
@@ -3848,12 +3080,9 @@
       "categoria_id": 56,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 258,
@@ -3863,12 +3092,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 259,
@@ -3878,12 +3104,9 @@
       "categoria_id": 10,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 260,
@@ -3893,12 +3116,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 261,
@@ -3908,12 +3128,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 262,
@@ -3923,12 +3140,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 263,
@@ -3938,12 +3152,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 264,
@@ -3953,12 +3164,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 265,
@@ -3968,12 +3176,9 @@
       "categoria_id": 11,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 266,
@@ -3983,12 +3188,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 267,
@@ -3998,12 +3200,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 268,
@@ -4013,12 +3212,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 269,
@@ -4028,12 +3224,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 270,
@@ -4043,12 +3236,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 271,
@@ -4058,12 +3248,9 @@
       "categoria_id": 59,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 272,
@@ -4073,12 +3260,9 @@
       "categoria_id": 59,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 273,
@@ -4088,12 +3272,9 @@
       "categoria_id": 59,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 274,
@@ -4103,12 +3284,9 @@
       "categoria_id": 59,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 275,
@@ -4118,12 +3296,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 276,
@@ -4133,12 +3308,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 277,
@@ -4148,12 +3320,9 @@
       "categoria_id": 23,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 278,
@@ -4163,12 +3332,9 @@
       "categoria_id": 10,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 279,
@@ -4178,12 +3344,9 @@
       "categoria_id": 10,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 280,
@@ -4193,12 +3356,9 @@
       "categoria_id": 10,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 281,
@@ -4208,12 +3368,9 @@
       "categoria_id": 10,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 282,
@@ -4223,12 +3380,9 @@
       "categoria_id": 43,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 283,
@@ -4238,12 +3392,9 @@
       "categoria_id": 35,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 284,
@@ -4253,12 +3404,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 285,
@@ -4268,12 +3416,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 286,
@@ -4283,12 +3428,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 287,
@@ -4298,12 +3440,9 @@
       "categoria_id": 16,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 288,
@@ -4313,12 +3452,9 @@
       "categoria_id": 10,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 289,
@@ -4328,12 +3464,9 @@
       "categoria_id": 35,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 290,
@@ -4343,12 +3476,9 @@
       "categoria_id": 31,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 291,
@@ -4358,12 +3488,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 292,
@@ -4373,12 +3500,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 293,
@@ -4388,12 +3512,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 294,
@@ -4403,12 +3524,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 295,
@@ -4418,12 +3536,9 @@
       "categoria_id": 39,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 296,
@@ -4433,12 +3548,9 @@
       "categoria_id": 39,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 297,
@@ -4448,12 +3560,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 298,
@@ -4463,12 +3572,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 299,
@@ -4478,12 +3584,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 300,
@@ -4493,12 +3596,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 301,
@@ -4508,12 +3608,9 @@
       "categoria_id": 19,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 302,
@@ -4523,12 +3620,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 304,
@@ -4538,12 +3632,9 @@
       "categoria_id": 58,
       "fornecedor_id": null,
       "unidade": "Pacote / 600",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 305,
@@ -4553,12 +3644,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 306,
@@ -4568,12 +3656,9 @@
       "categoria_id": 58,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 307,
@@ -4583,12 +3668,9 @@
       "categoria_id": 58,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 308,
@@ -4598,12 +3680,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 309,
@@ -4613,12 +3692,9 @@
       "categoria_id": 34,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 310,
@@ -4628,12 +3704,9 @@
       "categoria_id": 34,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 311,
@@ -4643,12 +3716,9 @@
       "categoria_id": 34,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 312,
@@ -4658,12 +3728,9 @@
       "categoria_id": 34,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 313,
@@ -4673,12 +3740,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 314,
@@ -4688,12 +3752,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 315,
@@ -4703,12 +3764,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 316,
@@ -4718,12 +3776,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 317,
@@ -4733,12 +3788,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 318,
@@ -4748,12 +3800,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 319,
@@ -4763,12 +3812,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 320,
@@ -4778,12 +3824,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 322,
@@ -4793,12 +3836,9 @@
       "categoria_id": 40,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 324,
@@ -4808,12 +3848,9 @@
       "categoria_id": 5,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 325,
@@ -4823,12 +3860,9 @@
       "categoria_id": 5,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 326,
@@ -4838,12 +3872,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 327,
@@ -4853,12 +3884,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 328,
@@ -4868,12 +3896,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 329,
@@ -4883,12 +3908,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 330,
@@ -4898,12 +3920,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 331,
@@ -4913,12 +3932,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 332,
@@ -4928,12 +3944,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 333,
@@ -4943,12 +3956,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 334,
@@ -4958,12 +3968,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 335,
@@ -4973,12 +3980,9 @@
       "categoria_id": 5,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 336,
@@ -4988,12 +3992,9 @@
       "categoria_id": 40,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 337,
@@ -5003,12 +4004,9 @@
       "categoria_id": 12,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 338,
@@ -5018,12 +4016,9 @@
       "categoria_id": 60,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 339,
@@ -5033,12 +4028,9 @@
       "categoria_id": 60,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 340,
@@ -5048,12 +4040,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 341,
@@ -5063,12 +4052,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 342,
@@ -5078,12 +4064,9 @@
       "categoria_id": 53,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 343,
@@ -5093,12 +4076,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 344,
@@ -5108,12 +4088,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 345,
@@ -5123,12 +4100,9 @@
       "categoria_id": 56,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 346,
@@ -5138,12 +4112,9 @@
       "categoria_id": 57,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 347,
@@ -5153,12 +4124,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 348,
@@ -5168,12 +4136,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 349,
@@ -5183,12 +4148,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 350,
@@ -5198,12 +4160,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 351,
@@ -5213,12 +4172,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 352,
@@ -5228,12 +4184,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 353,
@@ -5243,12 +4196,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 354,
@@ -5258,12 +4208,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 355,
@@ -5273,12 +4220,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 356,
@@ -5288,12 +4232,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 357,
@@ -5303,12 +4244,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 358,
@@ -5318,12 +4256,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 359,
@@ -5333,12 +4268,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 360,
@@ -5348,12 +4280,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 361,
@@ -5363,12 +4292,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 362,
@@ -5378,12 +4304,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 363,
@@ -5393,12 +4316,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 364,
@@ -5408,12 +4328,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 365,
@@ -5423,12 +4340,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 366,
@@ -5438,12 +4352,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 367,
@@ -5453,12 +4364,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 368,
@@ -5468,12 +4376,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 369,
@@ -5483,12 +4388,9 @@
       "categoria_id": 31,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 370,
@@ -5498,12 +4400,9 @@
       "categoria_id": 31,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 371,
@@ -5513,12 +4412,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 372,
@@ -5528,12 +4424,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 373,
@@ -5543,12 +4436,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 374,
@@ -5558,12 +4448,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 375,
@@ -5573,12 +4460,9 @@
       "categoria_id": 59,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 376,
@@ -5588,12 +4472,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 377,
@@ -5603,12 +4484,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 378,
@@ -5618,12 +4496,9 @@
       "categoria_id": 21,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 379,
@@ -5633,12 +4508,9 @@
       "categoria_id": 21,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 380,
@@ -5648,12 +4520,9 @@
       "categoria_id": 21,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 381,
@@ -5663,12 +4532,9 @@
       "categoria_id": 21,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 382,
@@ -5678,12 +4544,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 383,
@@ -5693,12 +4556,9 @@
       "categoria_id": 39,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 384,
@@ -5708,12 +4568,9 @@
       "categoria_id": 20,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 385,
@@ -5723,12 +4580,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 386,
@@ -5738,12 +4592,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 387,
@@ -5753,12 +4604,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 388,
@@ -5768,12 +4616,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 389,
@@ -5783,12 +4628,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 390,
@@ -5798,12 +4640,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 391,
@@ -5813,12 +4652,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 392,
@@ -5828,12 +4664,9 @@
       "categoria_id": 25,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 393,
@@ -5843,12 +4676,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 394,
@@ -5858,12 +4688,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 395,
@@ -5873,12 +4700,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 396,
@@ -5888,12 +4712,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 397,
@@ -5903,12 +4724,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 398,
@@ -5918,12 +4736,9 @@
       "categoria_id": 33,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 399,
@@ -5933,12 +4748,9 @@
       "categoria_id": null,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 400,
@@ -5948,12 +4760,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 401,
@@ -5963,12 +4772,9 @@
       "categoria_id": 23,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 402,
@@ -5978,12 +4784,9 @@
       "categoria_id": 23,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 403,
@@ -5993,12 +4796,9 @@
       "categoria_id": 23,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 404,
@@ -6008,12 +4808,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 405,
@@ -6023,12 +4820,9 @@
       "categoria_id": 58,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 406,
@@ -6038,12 +4832,9 @@
       "categoria_id": 49,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 407,
@@ -6053,12 +4844,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 408,
@@ -6068,12 +4856,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 409,
@@ -6083,12 +4868,9 @@
       "categoria_id": 32,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 410,
@@ -6098,12 +4880,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 411,
@@ -6113,12 +4892,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 412,
@@ -6128,12 +4904,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 413,
@@ -6143,12 +4916,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 414,
@@ -6158,12 +4928,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 415,
@@ -6173,12 +4940,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 416,
@@ -6188,12 +4952,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 417,
@@ -6203,12 +4964,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 418,
@@ -6218,12 +4976,9 @@
       "categoria_id": 49,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 419,
@@ -6233,12 +4988,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 420,
@@ -6248,12 +5000,9 @@
       "categoria_id": 41,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 421,
@@ -6263,12 +5012,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 422,
@@ -6278,12 +5024,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 423,
@@ -6293,12 +5036,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 424,
@@ -6308,12 +5048,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 425,
@@ -6323,12 +5060,9 @@
       "categoria_id": 56,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 426,
@@ -6338,12 +5072,9 @@
       "categoria_id": 56,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 427,
@@ -6353,12 +5084,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 428,
@@ -6368,12 +5096,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 429,
@@ -6383,12 +5108,9 @@
       "categoria_id": 35,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 430,
@@ -6398,12 +5120,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 431,
@@ -6413,12 +5132,9 @@
       "categoria_id": 37,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 432,
@@ -6428,12 +5144,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 433,
@@ -6443,12 +5156,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 434,
@@ -6458,12 +5168,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 435,
@@ -6473,12 +5180,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 436,
@@ -6488,12 +5192,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 437,
@@ -6503,12 +5204,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 438,
@@ -6518,12 +5216,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 439,
@@ -6533,12 +5228,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 440,
@@ -6548,12 +5240,9 @@
       "categoria_id": 34,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 441,
@@ -6563,12 +5252,9 @@
       "categoria_id": 34,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 442,
@@ -6578,12 +5264,9 @@
       "categoria_id": 34,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 443,
@@ -6593,12 +5276,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 444,
@@ -6608,12 +5288,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 445,
@@ -6623,12 +5300,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 446,
@@ -6638,12 +5312,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 447,
@@ -6653,12 +5324,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 448,
@@ -6668,12 +5336,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 449,
@@ -6683,12 +5348,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 450,
@@ -6698,12 +5360,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 451,
@@ -6713,12 +5372,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 452,
@@ -6728,12 +5384,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 453,
@@ -6743,12 +5396,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 454,
@@ -6758,12 +5408,9 @@
       "categoria_id": 8,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 455,
@@ -6773,12 +5420,9 @@
       "categoria_id": 5,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 456,
@@ -6788,12 +5432,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 457,
@@ -6803,12 +5444,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 458,
@@ -6818,12 +5456,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 459,
@@ -6833,12 +5468,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 460,
@@ -6848,12 +5480,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 461,
@@ -6863,12 +5492,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 462,
@@ -6878,12 +5504,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 463,
@@ -6893,12 +5516,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 464,
@@ -6908,12 +5528,9 @@
       "categoria_id": 39,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 465,
@@ -6923,12 +5540,9 @@
       "categoria_id": 39,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 467,
@@ -6938,12 +5552,9 @@
       "categoria_id": 56,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 468,
@@ -6953,12 +5564,9 @@
       "categoria_id": 56,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 469,
@@ -6968,12 +5576,9 @@
       "categoria_id": 56,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 470,
@@ -6983,12 +5588,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 471,
@@ -6998,12 +5600,9 @@
       "categoria_id": 7,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 472,
@@ -7013,12 +5612,9 @@
       "categoria_id": 1,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 473,
@@ -7028,12 +5624,9 @@
       "categoria_id": 43,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 474,
@@ -7043,12 +5636,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 475,
@@ -7058,12 +5648,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 476,
@@ -7073,12 +5660,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 477,
@@ -7088,12 +5672,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 478,
@@ -7103,12 +5684,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 479,
@@ -7118,12 +5696,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 480,
@@ -7133,12 +5708,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 481,
@@ -7148,12 +5720,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 482,
@@ -7163,12 +5732,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 483,
@@ -7178,12 +5744,9 @@
       "categoria_id": 9,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 484,
@@ -7193,12 +5756,9 @@
       "categoria_id": 12,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 485,
@@ -7208,12 +5768,9 @@
       "categoria_id": 45,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 486,
@@ -7223,12 +5780,9 @@
       "categoria_id": 33,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 487,
@@ -7238,12 +5792,9 @@
       "categoria_id": 33,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 488,
@@ -7253,12 +5804,9 @@
       "categoria_id": 33,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 489,
@@ -7268,12 +5816,9 @@
       "categoria_id": 33,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 490,
@@ -7283,12 +5828,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 491,
@@ -7298,12 +5840,9 @@
       "categoria_id": 4,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 492,
@@ -7313,12 +5852,9 @@
       "categoria_id": 40,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 493,
@@ -7328,12 +5864,9 @@
       "categoria_id": 39,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 494,
@@ -7343,12 +5876,9 @@
       "categoria_id": 39,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 495,
@@ -7358,12 +5888,9 @@
       "categoria_id": 3,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 496,
@@ -7373,12 +5900,9 @@
       "categoria_id": 36,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 497,
@@ -7388,12 +5912,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 498,
@@ -7403,12 +5924,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 499,
@@ -7418,12 +5936,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 500,
@@ -7433,12 +5948,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 501,
@@ -7448,12 +5960,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 502,
@@ -7463,12 +5972,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 503,
@@ -7478,12 +5984,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 504,
@@ -7493,12 +5996,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 505,
@@ -7508,12 +6008,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 506,
@@ -7523,12 +6020,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 507,
@@ -7538,12 +6032,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 508,
@@ -7553,12 +6044,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 509,
@@ -7568,12 +6056,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 510,
@@ -7583,12 +6068,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 511,
@@ -7598,12 +6080,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 512,
@@ -7613,12 +6092,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 513,
@@ -7628,12 +6104,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 514,
@@ -7643,12 +6116,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 515,
@@ -7658,12 +6128,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 516,
@@ -7673,12 +6140,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 517,
@@ -7688,12 +6152,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 518,
@@ -7703,12 +6164,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 519,
@@ -7718,12 +6176,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 520,
@@ -7733,12 +6188,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 521,
@@ -7748,12 +6200,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 522,
@@ -7763,12 +6212,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 523,
@@ -7778,12 +6224,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 524,
@@ -7793,12 +6236,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 525,
@@ -7808,12 +6248,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 526,
@@ -7823,12 +6260,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 527,
@@ -7838,12 +6272,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 528,
@@ -7853,12 +6284,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 529,
@@ -7868,12 +6296,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 530,
@@ -7883,12 +6308,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 531,
@@ -7898,12 +6320,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 532,
@@ -7913,12 +6332,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 533,
@@ -7928,12 +6344,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 534,
@@ -7943,12 +6356,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 535,
@@ -7958,12 +6368,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 536,
@@ -7973,12 +6380,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 537,
@@ -7988,12 +6392,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 538,
@@ -8003,12 +6404,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 539,
@@ -8018,12 +6416,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 540,
@@ -8033,12 +6428,9 @@
       "categoria_id": 14,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 541,
@@ -8048,12 +6440,9 @@
       "categoria_id": 28,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 542,
@@ -8063,12 +6452,9 @@
       "categoria_id": 2,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 543,
@@ -8078,12 +6464,9 @@
       "categoria_id": 32,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 544,
@@ -8093,12 +6476,9 @@
       "categoria_id": 32,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 545,
@@ -8108,12 +6488,9 @@
       "categoria_id": 25,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 546,
@@ -8123,12 +6500,9 @@
       "categoria_id": 25,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 547,
@@ -8138,12 +6512,9 @@
       "categoria_id": 25,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 548,
@@ -8153,12 +6524,9 @@
       "categoria_id": 25,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 549,
@@ -8168,12 +6536,9 @@
       "categoria_id": 11,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 550,
@@ -8183,12 +6548,9 @@
       "categoria_id": 11,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 551,
@@ -8198,12 +6560,9 @@
       "categoria_id": 11,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 552,
@@ -8213,12 +6572,9 @@
       "categoria_id": 11,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     },
     {
       "id": 553,
@@ -8228,12 +6584,9 @@
       "categoria_id": 11,
       "fornecedor_id": null,
       "unidade": "un",
-      "preco_compra": 0.0,
-      "preco_venda": 0.0,
       "estoque": 0,
       "estoque_minimo": 0,
-      "ativo": 1,
-      "custo_total": 0.0
+      "ativo": 1
     }
   ],
   "categorias": [

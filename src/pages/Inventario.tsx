@@ -8,9 +8,9 @@ import { api } from "../lib/api";
 import { csvSafe } from "./shared";
 
 function exportCSV(produtos: Produto[]) {
-  const headers = "Código,Produto,Categoria,Unidade,Estoque,Estoque Mínimo,Preço Compra";
+  const headers = "Código,Produto,Categoria,Unidade,Estoque,Estoque Mínimo";
   const rows = produtos.map(p =>
-    `"${csvSafe(p.codigo)}","${csvSafe(p.nome)}","${csvSafe(p.categoria_nome || "")}","${csvSafe(p.unidade || "")}",${p.estoque},${p.estoque_minimo},"${csvSafe((p.preco_compra || 0).toFixed(2))}"`
+    `"${csvSafe(p.codigo)}","${csvSafe(p.nome)}","${csvSafe(p.categoria_nome || "")}","${csvSafe(p.unidade || "")}",${p.estoque},${p.estoque_minimo}`
   );
   const bom = "\uFEFF";
   const csv = bom + headers + "\n" + rows.join("\n");
