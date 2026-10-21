@@ -8,9 +8,9 @@ import { api } from "../lib/api";
 import { csvSafe } from "./shared";
 
 function exportCSV(produtos: Produto[], title: string) {
-  const headers = "Código,Produto,Categoria,Unidade,Estoque,Estoque Mínimo,Preço Compra";
+  const headers = "Código,Produto,Categoria,Unidade,Estoque,Estoque Mínimo";
   const rows = produtos.map(p =>
-    `"${csvSafe(p.codigo)}","${csvSafe(p.nome)}","${csvSafe(p.categoria_nome || "")}","${csvSafe(p.unidade || "")}",${p.estoque},${p.estoque_minimo},"${csvSafe((p.preco_compra || 0).toFixed(2))}"`
+    `"${csvSafe(p.codigo)}","${csvSafe(p.nome)}","${csvSafe(p.categoria_nome || "")}","${csvSafe(p.unidade || "")}",${p.estoque},${p.estoque_minimo}`
   );
   const bom = "\uFEFF";
   const csv = bom + headers + "\n" + rows.join("\n");
@@ -97,13 +97,12 @@ function exportPDF(produtos: Produto[], title: string) {
     <h1>${title}</h1>
     <div class="sub">Gerado em ${agora} — ${produtos.length} produto(s)</div>
     <table>
-      <tr><th>Código</th><th>Produto</th><th>Categoria</th><th>Unidade</th><th class="r">Estoque</th><th class="r">Mínimo</th><th class="r">Preço</th></tr>`;
+      <tr><th>Código</th><th>Produto</th><th>Categoria</th><th>Unidade</th><th class="r">Estoque</th><th class="r">Mínimo</th></tr>`;
   for (const p of produtos) {
     html += `<tr>
       <td>${p.codigo}</td><td>${p.nome}</td><td>${p.categoria_nome || ""}</td>
       <td>${p.unidade || ""}</td>
       <td class="r">${p.estoque}</td><td class="r">${p.estoque_minimo}</td>
-      <td class="r">R$ ${(p.preco_compra || 0).toFixed(2).replace(".", ",")}</td>
     </tr>`;
   }
   html += `</table></body></html>`;

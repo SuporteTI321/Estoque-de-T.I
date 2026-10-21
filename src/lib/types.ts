@@ -26,12 +26,9 @@ export interface Produto {
   fornecedor_id: number | null;
   fornecedor_nome: string | null;
   unidade: string;
-  preco_compra: number;
-  preco_venda: number;
   estoque: number;
   estoque_minimo: number;
   ativo: boolean;
-  custo_total?: number;
   /** Onde o item é guardado fisicamente (sala, prateleira, armário). */
   localizacao?: string | null;
 }
@@ -62,7 +59,6 @@ export interface Movimentacao {
   usuario_id: number | null;
   observacao: string | null;
   data_movimento: string;
-  preco_compra?: number;
   unidade?: number;
 }
 
@@ -174,5 +170,4 @@ export interface DashboardStats {
   solicitacoes_pendentes: number;
   entradas_mes: number;
   saidas_mes: number;
-  valor_total_estoque: number;
 }

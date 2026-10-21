@@ -45,8 +45,6 @@ create table if not exists public.produtos (
   fornecedor_id bigint,
   fornecedor_nome text,
   unidade text not null default 'UN',
-  preco_compra double precision not null default 0,
-  preco_venda double precision not null default 0,
   estoque double precision not null default 0,
   estoque_minimo double precision not null default 0,
   ativo boolean not null default true
@@ -79,7 +77,6 @@ create table if not exists public.movimentacoes (
   usuario_id bigint,
   observacao text,
   data_movimento timestamptz not null default now(),
-  preco_compra double precision,
   unidade double precision
 );
 
@@ -139,6 +136,33 @@ create table if not exists public.alertas (
   data_alerta timestamptz not null default now(),
   lido boolean not null default false
 );
+
+-- ============================================================================
+--  MIGRAÇÃO: Remoção do módulo de custos
+-- ============================================================================
+--  O Estoque de T.I controla produto, quantidade, localização e histórico.
+--  O controle de preço veio de um template de almoxarifado e nunca foi usado
+--  (nenhum produto tem preço cadastrado). As colunas são removidas para que
+--  o schema reflita o que o app realmente controla.
+--  Idempotente: só remove se a coluna existir.
+-- ============================================================================
+do $$
+declare
+  t text;
+  c text;
+begin
+  foreach t in array array['produtos','movimentacoes'] loop
+    foreach c in array array['preco_compra','preco_venda','custo_total'] loop
+      if exists (
+        select 1 from information_schema.columns
+        where table_schema = 'public' and table_name = t and column_name = c
+      ) then
+        execute format('alter table public.%I drop column if exists %I', t, c);
+        raise notice 'coluna removida: %.%', t, c;
+      end if;
+    end loop;
+  end loop;
+end $$;
 
 -- ============================================================================
 --  RLS — Políticas de segurança por tabela.

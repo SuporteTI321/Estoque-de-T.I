@@ -14,6 +14,22 @@ fn argon2_hash(password: &str) -> String {
         .to_string()
 }
 
+/// Remove uma coluna da tabela se ela existir.
+/// Usado pelas migrations de limpeza do módulo de custos.
+/// Silencia o erro: em SQLite antigo (< 3.35) o DROP COLUMN não existe e o
+/// app precisa abrir mesmo assim — com a coluna inerte.
+fn drop_coluna_se_existir(conn: &Connection, tabela: &str, coluna: &str) {
+    let existe: bool = conn
+        .prepare(&format!("SELECT {} FROM pragma_table_info(?1) LIMIT 1", coluna))
+        .and_then(|mut stmt| stmt.query_row([tabela], |r| r.get::<_, i64>(0)))
+        .map(|_| true)
+        .unwrap_or(false);
+    if !existe {
+        return;
+    }
+    let _ = conn.execute(&format!("ALTER TABLE {} DROP COLUMN {}", tabela, coluna), []);
+}
+
 fn db_path() -> PathBuf {
     // %APPDATA%\EstoqueTI\estoque.db — fora da pasta do projeto
     if let Ok(appdata) = std::env::var("APPDATA") {
@@ -89,11 +105,8 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
             fornecedor_id INTEGER,
             localizacao TEXT,
             unidade TEXT NOT NULL DEFAULT 'un',
-            preco_compra REAL NOT NULL DEFAULT 0,
-            preco_venda REAL NOT NULL DEFAULT 0,
             estoque INTEGER NOT NULL DEFAULT 0,
             estoque_minimo INTEGER NOT NULL DEFAULT 0,
-            custo_total REAL NOT NULL DEFAULT 0,
             ativo INTEGER NOT NULL DEFAULT 1,
             FOREIGN KEY (categoria_id) REFERENCES categorias(id),
             FOREIGN KEY (fornecedor_id) REFERENCES fornecedores(id)
@@ -122,7 +135,6 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
             loja_destino_nome TEXT,
             usuario_id INTEGER,
             observacao TEXT,
-            preco_compra REAL,
             unidade INTEGER,
             data_movimento TEXT NOT NULL,
             FOREIGN KEY (produto_id) REFERENCES produtos(id),
@@ -259,8 +271,19 @@ pub fn init_schema(conn: &Connection) -> Result<()> {
 
         "#,
     )?;
-    // Migration: adiciona coluna custo_total se não existir
-    let _ = conn.execute("ALTER TABLE produtos ADD COLUMN custo_total REAL NOT NULL DEFAULT 0", []);
+    // ==========================================================================
+    //  Migration: REMOÇÃO DO MÓDULO DE CUSTOS
+    // ==========================================================================
+    //  O estoque de T.I controla produto, quantidade, localização e histórico.
+    //  O controle de preço/custo veio de um template de almoxarifado e nunca foi
+    //  usado (nenhum produto tem preço cadastrado). Estes campos são removidos
+    //  para que o schema reflita o que o app realmente controla.
+    //  SQLite exige >= 3.35 para DROP COLUMN; o erro é ignorado para que um
+    //  banco antigo não impeça a abertura do app.
+    drop_coluna_se_existir(conn, "produtos", "custo_total");
+    drop_coluna_se_existir(conn, "produtos", "preco_compra");
+    drop_coluna_se_existir(conn, "produtos", "preco_venda");
+    drop_coluna_se_existir(conn, "movimentacoes", "preco_compra");
     // Migration: adiciona colunas marca e modelo se não existirem (bancos antigos)
     if conn.prepare("SELECT marca FROM produtos LIMIT 1").is_err() {
         let _ = conn.execute("ALTER TABLE produtos ADD COLUMN marca TEXT", []);
@@ -355,24 +378,24 @@ pub fn seed_data(conn: &Connection) -> Result<()> {
         )?;
     }
 
-    let produtos: &[(&str, &str, i64, i64, &str, f64, f64, i64, i64)] = &[
-        ("PRD-001", "Caneta Esferográfica Azul", 1, 1, "un", 0.50, 1.00, 853, 100),
-        ("PRD-002", "Papel A4 75g Resma 500fls", 1, 2, "un", 22.00, 35.00, 156, 50),
-        ("PRD-003", "Detergente Neutro 500ml", 2, 4, "un", 3.50, 6.00, 87, 100),
-        ("PRD-004", "Cabo Flexível 2,5mm 100m", 4, 3, "rl", 180.00, 280.00, 23, 10),
-        ("PRD-005", "Capacete de Segurança Branco", 5, 1, "un", 28.00, 45.00, 47, 20),
-        ("PRD-006", "Martelo Unha 25mm", 3, 1, "un", 35.00, 55.00, 18, 10),
-        ("PRD-007", "Luva de Proteção Nitrilo", 5, 4, "cx", 45.00, 72.00, 12, 30),
-        ("PRD-008", "Furadeira de Bancada 1/2 HP", 3, 1, "un", 580.00, 890.00, 4, 5),
-        ("PRD-009", "Disjuntor 20A Mono", 4, 3, "un", 14.00, 22.00, 67, 30),
-        ("PRD-010", "Álcool em Gel 70% 1L", 2, 4, "un", 12.00, 19.00, 134, 50),
-        ("PRD-011", "Grampeador Metálico", 1, 2, "un", 24.00, 38.00, 56, 20),
-        ("PRD-012", "Óculos de Proteção Ampla Visão", 5, 1, "un", 8.50, 14.00, 89, 30),
+    let produtos: &[(&str, &str, i64, i64, &str, i64, i64)] = &[
+        ("PRD-001", "Caneta Esferográfica Azul", 1, 1, "un", 853, 100),
+        ("PRD-002", "Papel A4 75g Resma 500fls", 1, 2, "un", 156, 50),
+        ("PRD-003", "Detergente Neutro 500ml", 2, 4, "un", 87, 100),
+        ("PRD-004", "Cabo Flexível 2,5mm 100m", 4, 3, "rl", 23, 10),
+        ("PRD-005", "Capacete de Segurança Branco", 5, 1, "un", 47, 20),
+        ("PRD-006", "Martelo Unha 25mm", 3, 1, "un", 18, 10),
+        ("PRD-007", "Luva de Proteção Nitrilo", 5, 4, "cx", 12, 30),
+        ("PRD-008", "Furadeira de Bancada 1/2 HP", 3, 1, "un", 4, 5),
+        ("PRD-009", "Disjuntor 20A Mono", 4, 3, "un", 67, 30),
+        ("PRD-010", "Álcool em Gel 70% 1L", 2, 4, "un", 134, 50),
+        ("PRD-011", "Grampeador Metálico", 1, 2, "un", 56, 20),
+        ("PRD-012", "Óculos de Proteção Ampla Visão", 5, 1, "un", 89, 30),
     ];
     for p in produtos {
         conn.execute(
-            "INSERT OR IGNORE INTO produtos (codigo, nome, categoria_id, fornecedor_id, unidade, preco_compra, preco_venda, estoque, estoque_minimo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-            params![p.0, p.1, p.2, p.3, p.4, p.5, p.6, p.7, p.8],
+            "INSERT OR IGNORE INTO produtos (codigo, nome, categoria_id, fornecedor_id, unidade, estoque, estoque_minimo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+            params![p.0, p.1, p.2, p.3, p.4, p.5, p.6],
         )?;
     }
 

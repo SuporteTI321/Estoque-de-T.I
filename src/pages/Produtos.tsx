@@ -143,11 +143,8 @@ export default function Produtos() {
                   fornecedor_id: prod.fornecedor_id ?? null,
                   unidade: prod.unidade,
                   localizacao: prod.localizacao ?? null,
-                  preco_compra: prod.preco_compra || 0,
-                  preco_venda: prod.preco_venda || 0,
                   estoque: prod.estoque || 0,
                   estoque_minimo: prod.estoque_minimo || 0,
-                  custo_total: prod.custo_total ?? 0,
                 });
               } catch (e) { console.error(`[Migração] Erro ao atualizar produto ${prod.id}:`, e); }
             }
@@ -191,12 +188,12 @@ export default function Produtos() {
   function openNew() {
     setEditing(null);
     // Gera código imediatamente para o usuário VER (número = max+1, sigla PROD até escolher categoria)
-    setForm({ codigo: previewCodigo(proximoNumero(), 'PROD'), unidade: 'un', estoque: 0, estoque_minimo: 0, ativo: true, preco_compra: 0, preco_venda: 0, custo_total: 0, localizacao: "Setor de TI" });
+    setForm({ codigo: previewCodigo(proximoNumero(), 'PROD'), unidade: 'un', estoque: 0, estoque_minimo: 0, ativo: true, localizacao: "Setor de TI" });
     setOpen(true);
   }
   function openEdit(p: Produto) {
     setEditing(p);
-    setForm({ ...p, preco_compra: p.preco_compra ?? 0, preco_venda: p.preco_venda ?? 0, estoque: p.estoque ?? 0, estoque_minimo: p.estoque_minimo ?? 0 });
+    setForm({ ...p, estoque: p.estoque ?? 0, estoque_minimo: p.estoque_minimo ?? 0 });
     setOpen(true);
   }
 
@@ -403,9 +400,6 @@ export default function Produtos() {
             l.codigo ? `cod_produto:${l.codigo}` : null,
             `saida_ref:${l.mov.id}`,
           ].filter(Boolean).join("\n"),
-          // A saída original não reduziu custo_total: o retorno devolve só a quantidade,
-          // para não duplicar o valor em estoque.
-          preco_compra: 0,
           unidade: l.mov.unidade ?? 1,
           data_movimento: `${retData || hojeISO()}T12:00:00`,
         });
@@ -509,11 +503,8 @@ export default function Produtos() {
                   categoria_id: bulkForm.categoria_id !== null ? bulkForm.categoria_id : (prod.categoria_id ?? null),
                   fornecedor_id: prod.fornecedor_id ?? null,
                   unidade: bulkForm.unidade,
-                  preco_compra: prod.preco_compra || 0,
-                  preco_venda: prod.preco_venda || 0,
                   estoque: prod.estoque || 0,
                   estoque_minimo: prod.estoque_minimo || 0,
-                  custo_total: prod.custo_total ?? 0,
                 });
               }
             }

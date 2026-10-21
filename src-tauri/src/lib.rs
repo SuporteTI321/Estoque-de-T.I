@@ -261,11 +261,8 @@ pub struct Produto {
     pub fornecedor_id: Option<i64>,
     pub fornecedor_nome: Option<String>,
     pub unidade: String,
-    pub preco_compra: f64,
-    pub preco_venda: f64,
     pub estoque: i64,
     pub estoque_minimo: i64,
-    pub custo_total: f64,
     pub ativo: bool,
     /// Onde o item é guardado fisicamente (sala, prateleira, armário).
     /// Independe da loja, que controla entrada, saída e transferência.
@@ -301,7 +298,6 @@ pub struct Movimentacao {
     pub usuario_id: Option<i64>,
     pub observacao: Option<String>,
     pub data_movimento: String,
-    pub preco_compra: Option<f64>,
     pub unidade: Option<i64>,
 }
 
@@ -373,7 +369,6 @@ pub struct DashboardStats {
     pub solicitacoes_pendentes: i64,
     pub entradas_mes: i64,
     pub saidas_mes: i64,
-    pub valor_total_estoque: f64,
 }
 
 // ============================================================================
@@ -428,7 +423,7 @@ fn delete_produto(id: i64) -> Result<(), String> {
         .query_row("SELECT COALESCE(estoque, 0) FROM produtos WHERE id=?1", params![id], |r| r.get(0))
         .unwrap_or(0);
     if estoque > 0 {
-        conn.execute("UPDATE produtos SET estoque = 0, custo_total = 0 WHERE id=?1", params![id])
+        conn.execute("UPDATE produtos SET estoque = 0 WHERE id=?1", params![id])
             .map_err(|e| e.to_string())?;
     }
     conn.execute("DELETE FROM movimentacoes WHERE produto_id=?1", params![id]).map_err(|e| e.to_string())?;
@@ -442,25 +437,21 @@ fn delete_produto(id: i64) -> Result<(), String> {
 fn update_movimentacao(
     id: i64,
     quantidade: Option<i64>,
-    preco_compra: Option<f64>,
     unidade: Option<i64>,
     observacao: Option<String>,
 ) -> Result<Movimentacao, String> {
     let mut conn = db::open_conn().map_err(|e| e.to_string())?;
     let tx = conn.transaction().map_err(|e| e.to_string())?;
     // Estado antigo para reverter o efeito no estoque
-    let (tipo_antigo, prod_antigo, qtd_antiga, preco_antigo, loja_o, loja_d): (String, i64, i64, Option<f64>, Option<i64>, Option<i64>) = tx
+    let (tipo_antigo, prod_antigo, qtd_antiga, loja_o, loja_d): (String, i64, i64, Option<i64>, Option<i64>) = tx
         .query_row(
-            "SELECT tipo, produto_id, quantidade, preco_compra, loja_origem_id, loja_destino_id FROM movimentacoes WHERE id=?1",
+            "SELECT tipo, produto_id, quantidade, loja_origem_id, loja_destino_id FROM movimentacoes WHERE id=?1",
             params![id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?)),
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
         )
         .map_err(|_| "Movimentação não encontrada".to_string())?;
     if let Some(q) = quantidade {
         tx.execute("UPDATE movimentacoes SET quantidade=?1 WHERE id=?2", params![q, id]).map_err(|e| e.to_string())?;
-    }
-    if let Some(pc) = preco_compra {
-        tx.execute("UPDATE movimentacoes SET preco_compra=?1 WHERE id=?2", params![pc, id]).map_err(|e| e.to_string())?;
     }
     if let Some(u) = unidade {
         tx.execute("UPDATE movimentacoes SET unidade=?1 WHERE id=?2", params![u, id]).map_err(|e| e.to_string())?;
@@ -469,27 +460,27 @@ fn update_movimentacao(
         tx.execute("UPDATE movimentacoes SET observacao=?1 WHERE id=?2", params![o, id]).map_err(|e| e.to_string())?;
     }
     // Estado novo após as alterações
-    let (tipo_novo, prod_novo, qtd_nova, preco_novo): (String, i64, i64, Option<f64>) = tx
+    let (tipo_novo, prod_novo, qtd_nova): (String, i64, i64) = tx
         .query_row(
-            "SELECT tipo, produto_id, quantidade, preco_compra FROM movimentacoes WHERE id=?1",
+            "SELECT tipo, produto_id, quantidade FROM movimentacoes WHERE id=?1",
             params![id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
         )
         .map_err(|e| e.to_string())?;
     // Reverter efeito antigo e aplicar o novo (lojas inalteradas nesta edição)
-    reverter_efeito_estoque(&tx, &tipo_antigo, prod_antigo, qtd_antiga, preco_antigo, loja_o, loja_d)?;
-    aplicar_efeito_estoque(&tx, &tipo_novo, prod_novo, qtd_nova, preco_novo, loja_o, loja_d)?;
+    reverter_efeito_estoque(&tx, &tipo_antigo, prod_antigo, qtd_antiga, loja_o, loja_d)?;
+    aplicar_efeito_estoque(&tx, &tipo_novo, prod_novo, qtd_nova, loja_o, loja_d)?;
     tx.commit().map_err(|e| e.to_string())?;
     // Retornar movimentação atualizada
     let mov = conn.query_row(
-        "SELECT m.id, m.tipo, m.produto_id, COALESCE(m.produto_nome, p.nome), m.quantidade, m.loja_origem_id, COALESCE(m.loja_origem_nome, lo.nome), m.loja_destino_id, COALESCE(m.loja_destino_nome, ld.nome), m.usuario_id, m.observacao, m.data_movimento, m.preco_compra, m.unidade
+        "SELECT m.id, m.tipo, m.produto_id, COALESCE(m.produto_nome, p.nome), m.quantidade, m.loja_origem_id, COALESCE(m.loja_origem_nome, lo.nome), m.loja_destino_id, COALESCE(m.loja_destino_nome, ld.nome), m.usuario_id, m.observacao, m.data_movimento, m.unidade
          FROM movimentacoes m LEFT JOIN produtos p ON m.produto_id = p.id LEFT JOIN lojas lo ON m.loja_origem_id = lo.id LEFT JOIN lojas ld ON m.loja_destino_id = ld.id WHERE m.id=?1",
         params![id],
         |row| Ok(Movimentacao {
             id: row.get(0)?, tipo: row.get(1)?, produto_id: row.get(2)?, produto_nome: row.get(3)?,
             quantidade: row.get(4)?, loja_origem_id: row.get(5)?, loja_origem_nome: row.get(6)?,
             loja_destino_id: row.get(7)?, loja_destino_nome: row.get(8)?, usuario_id: row.get(9)?,
-            observacao: row.get(10)?, data_movimento: row.get(11)?, preco_compra: row.get(12)?, unidade: row.get(13)?,
+            observacao: row.get(10)?, data_movimento: row.get(11)?, unidade: row.get(12)?,
         }),
     ).map_err(|e| e.to_string())?;
     Ok(mov)
@@ -500,15 +491,15 @@ fn delete_movimentacao(id: i64) -> Result<(), String> {
     let mut conn = db::open_conn().map_err(|e| e.to_string())?;
     let tx = conn.transaction().map_err(|e| e.to_string())?;
     // Buscar dados da movimentação antes de deletar
-    let mov: Option<(String, i64, i64, Option<f64>, Option<i64>, Option<i64>)> = tx
+    let mov: Option<(String, i64, i64, Option<i64>, Option<i64>)> = tx
         .query_row(
-            "SELECT tipo, produto_id, quantidade, preco_compra, loja_origem_id, loja_destino_id FROM movimentacoes WHERE id=?1",
+            "SELECT tipo, produto_id, quantidade, loja_origem_id, loja_destino_id FROM movimentacoes WHERE id=?1",
             params![id],
-            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?, row.get(5)?)),
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?, row.get(4)?)),
         )
         .ok();
-    if let Some((tipo, produto_id, quantidade, preco, loja_o, loja_d)) = mov {
-        reverter_efeito_estoque(&tx, &tipo, produto_id, quantidade, preco, loja_o, loja_d)?;
+    if let Some((tipo, produto_id, quantidade, loja_o, loja_d)) = mov {
+        reverter_efeito_estoque(&tx, &tipo, produto_id, quantidade, loja_o, loja_d)?;
     }
     tx.execute("DELETE FROM movimentacoes WHERE id=?1", params![id]).map_err(|e| e.to_string())?;
     tx.commit().map_err(|e| e.to_string())?;
@@ -593,13 +584,6 @@ fn dashboard_stats() -> Result<DashboardStats, String> {
             |r| r.get(0),
         )
         .map_err(|e| e.to_string())?;
-    let valor_total_estoque: f64 = conn
-        .query_row(
-            "SELECT COALESCE(SUM(estoque * preco_compra),0) FROM produtos WHERE ativo=1",
-            [],
-            |r| r.get(0),
-        )
-        .map_err(|e| e.to_string())?;
 
     Ok(DashboardStats {
         total_produtos,
@@ -609,7 +593,6 @@ fn dashboard_stats() -> Result<DashboardStats, String> {
         solicitacoes_pendentes,
         entradas_mes,
         saidas_mes,
-        valor_total_estoque,
     })
 }
 
@@ -890,7 +873,7 @@ fn list_produtos() -> Result<Vec<Produto>, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare(
-            "SELECT p.id, p.codigo, p.nome, p.marca, p.modelo, p.descricao, p.categoria_id, c.nome, p.fornecedor_id, f.nome, p.unidade, p.preco_compra, p.preco_venda, p.estoque, p.estoque_minimo, p.custo_total, p.ativo, p.localizacao
+            "SELECT p.id, p.codigo, p.nome, p.marca, p.modelo, p.descricao, p.categoria_id, c.nome, p.fornecedor_id, f.nome, p.unidade, p.estoque, p.estoque_minimo, p.ativo, p.localizacao
              FROM produtos p
              LEFT JOIN categorias c ON p.categoria_id = c.id
              LEFT JOIN fornecedores f ON p.fornecedor_id = f.id
@@ -911,12 +894,9 @@ fn list_produtos() -> Result<Vec<Produto>, String> {
                 fornecedor_id: row.get(8)?,
                 fornecedor_nome: row.get(9)?,
                 unidade: row.get(10)?,
-                preco_compra: row.get(11)?,
-                preco_venda: row.get(12)?,
-                estoque: row.get(13)?,
-                estoque_minimo: row.get(14)?,
-                custo_total: row.get(15)?,
-                ativo: row.get::<_, i64>(16)? != 0,
+                estoque: row.get(11)?,
+                estoque_minimo: row.get(12)?,
+                ativo: row.get::<_, i64>(13)? != 0,
                 localizacao: row.get(17)?,
             })
         })
@@ -938,17 +918,14 @@ fn create_produto(
     categoria_id: Option<i64>,
     fornecedor_id: Option<i64>,
     unidade: String,
-    preco_compra: f64,
-    preco_venda: f64,
     estoque: i64,
     estoque_minimo: i64,
-    custo_total: f64,
     localizacao: Option<String>,
 ) -> Result<Produto, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     conn.execute(
-        "INSERT INTO produtos (codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, localizacao, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
-        params![codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, localizacao, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total],
+        "INSERT INTO produtos (codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, localizacao, unidade, estoque, estoque_minimo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+        params![codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, localizacao, unidade, estoque, estoque_minimo],
     )
     .map_err(|e| e.to_string())?;
     let id = conn.last_insert_rowid();
@@ -982,11 +959,8 @@ fn create_produto(
         fornecedor_id,
         fornecedor_nome: forn_nome,
         unidade,
-        preco_compra,
-        preco_venda,
         estoque,
         estoque_minimo,
-        custo_total,
         ativo: true,
         localizacao,
     })
@@ -1003,17 +977,14 @@ fn update_produto(
     categoria_id: Option<i64>,
     fornecedor_id: Option<i64>,
     unidade: String,
-    preco_compra: f64,
-    preco_venda: f64,
     estoque: i64,
     estoque_minimo: i64,
-    custo_total: f64,
     localizacao: Option<String>,
 ) -> Result<Produto, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     conn.execute(
-        "UPDATE produtos SET codigo=?1, nome=?2, marca=?3, modelo=?4, descricao=?5, categoria_id=?6, fornecedor_id=?7, localizacao=?8, unidade=?9, preco_compra=?10, preco_venda=?11, estoque=?12, estoque_minimo=?13, custo_total=?14 WHERE id=?15",
-        params![codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, localizacao, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total, id],
+        "UPDATE produtos SET codigo=?1, nome=?2, marca=?3, modelo=?4, descricao=?5, categoria_id=?6, fornecedor_id=?7, localizacao=?8, unidade=?9, estoque=?10, estoque_minimo=?11 WHERE id=?12",
+        params![codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, localizacao, unidade, estoque, estoque_minimo, id],
     )
     .map_err(|e| e.to_string())?;
     // O estoque global é apenas o valor informado pelo usuário — a distribuição
@@ -1049,11 +1020,8 @@ fn update_produto(
         fornecedor_id,
         fornecedor_nome: forn_nome,
         unidade,
-        preco_compra,
-        preco_venda,
         estoque,
         estoque_minimo,
-        custo_total,
         ativo,
         localizacao,
     })
@@ -1251,7 +1219,7 @@ fn list_movimentacoes() -> Result<Vec<Movimentacao>, String> {
     let conn = db::open_conn().map_err(|e| e.to_string())?;
     let mut stmt = conn
         .prepare(
-            "SELECT m.id, m.tipo, m.produto_id, COALESCE(m.produto_nome, p.nome), m.quantidade, m.loja_origem_id, COALESCE(m.loja_origem_nome, lo.nome), m.loja_destino_id, COALESCE(m.loja_destino_nome, ld.nome), m.usuario_id, m.observacao, m.data_movimento, m.preco_compra, m.unidade
+            "SELECT m.id, m.tipo, m.produto_id, COALESCE(m.produto_nome, p.nome), m.quantidade, m.loja_origem_id, COALESCE(m.loja_origem_nome, lo.nome), m.loja_destino_id, COALESCE(m.loja_destino_nome, ld.nome), m.usuario_id, m.observacao, m.data_movimento, m.unidade
              FROM movimentacoes m
              LEFT JOIN produtos p ON m.produto_id = p.id
              LEFT JOIN lojas lo ON m.loja_origem_id = lo.id
@@ -1274,8 +1242,7 @@ fn list_movimentacoes() -> Result<Vec<Movimentacao>, String> {
                 usuario_id: row.get(9)?,
                 observacao: row.get(10)?,
                 data_movimento: row.get(11)?,
-                preco_compra: row.get(12)?,
-                unidade: row.get(13)?,
+                unidade: row.get(12)?,
             })
         })
         .map_err(|e| e.to_string())?;
@@ -1298,7 +1265,6 @@ fn create_movimentacao(
     loja_destino_nome: Option<String>,
     usuario_id: Option<i64>,
     observacao: Option<String>,
-    preco_compra: Option<f64>,
     unidade: Option<i64>,
     data_movimento: Option<String>,
 ) -> Result<Movimentacao, String> {
@@ -1324,14 +1290,13 @@ fn create_movimentacao(
             &tipo,
             produto_id,
             quantidade,
-            preco_compra,
             loja_origem_id,
             loja_destino_id,
         )?;
 
         tx.execute(
-            "INSERT INTO movimentacoes (tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, preco_compra, unidade, data_movimento) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
-            params![tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, preco_compra, unidade, dt],
+            "INSERT INTO movimentacoes (tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, unidade, data_movimento) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
+            params![tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, unidade, dt],
         )
         .map_err(|e| e.to_string())?;
         let id = tx.last_insert_rowid();
@@ -1350,7 +1315,6 @@ fn create_movimentacao(
             usuario_id,
             observacao,
             data_movimento: dt,
-            preco_compra,
             unidade,
         })
     })();
@@ -2291,14 +2255,13 @@ fn export_all_data() -> Result<ExportData, String> {
     let fornecedores: Vec<Fornecedor> = stmt_forn.query_map([], |r| Ok(Fornecedor { id: r.get(0)?, nome: r.get(1)?, cnpj: r.get(2)?, contato: r.get(3)?, email: r.get(4)?, telefone: r.get(5)?, ativo: r.get::<_, i64>(6)? != 0 }))
         .map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
-    let mut stmt_prod = conn.prepare("SELECT p.id, p.codigo, p.nome, p.marca, p.modelo, p.descricao, p.categoria_id, c.nome, p.fornecedor_id, f.nome, p.unidade, p.preco_compra, p.preco_venda, p.estoque, p.estoque_minimo, p.custo_total, p.ativo, p.localizacao FROM produtos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN fornecedores f ON p.fornecedor_id = f.id").map_err(|e| e.to_string())?;
+    let mut stmt_prod = conn.prepare("SELECT p.id, p.codigo, p.nome, p.marca, p.modelo, p.descricao, p.categoria_id, c.nome, p.fornecedor_id, f.nome, p.unidade, p.estoque, p.estoque_minimo, p.ativo, p.localizacao FROM produtos p LEFT JOIN categorias c ON p.categoria_id = c.id LEFT JOIN fornecedores f ON p.fornecedor_id = f.id").map_err(|e| e.to_string())?;
     let produtos: Vec<Produto> = stmt_prod.query_map([], |r| Ok(Produto {
         id: r.get(0)?, codigo: r.get(1)?, nome: r.get(2)?, marca: r.get(3)?, modelo: r.get(4)?,
         descricao: r.get(5)?, categoria_id: r.get(6)?, categoria_nome: r.get(7)?,
         fornecedor_id: r.get(8)?, fornecedor_nome: r.get(9)?, unidade: r.get(10)?,
-        preco_compra: r.get(11)?, preco_venda: r.get(12)?, estoque: r.get(13)?,
-        estoque_minimo: r.get(14)?, custo_total: r.get(15)?, ativo: r.get::<_, i64>(16)? != 0,
-        localizacao: r.get(17)?,
+        estoque: r.get(11)?, estoque_minimo: r.get(12)?, ativo: r.get::<_, i64>(13)? != 0,
+        localizacao: r.get(14)?,
     })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
     // SEGURANÇA: Senha (hash Argon2) NUNCA é exportada no JSON de sync.
@@ -2309,12 +2272,12 @@ fn export_all_data() -> Result<ExportData, String> {
         loja_id: r.get(4)?, loja_nome: r.get(5)?, ativo: r.get::<_, i64>(6)? != 0,
     })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
-    let mut stmt_mov = conn.prepare("SELECT id, tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, data_movimento, preco_compra, unidade FROM movimentacoes").map_err(|e| e.to_string())?;
+    let mut stmt_mov = conn.prepare("SELECT id, tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, data_movimento, unidade FROM movimentacoes").map_err(|e| e.to_string())?;
     let movimentacoes: Vec<Movimentacao> = stmt_mov.query_map([], |r| Ok(Movimentacao {
         id: r.get(0)?, tipo: r.get(1)?, produto_id: r.get(2)?, produto_nome: r.get(3)?,
         quantidade: r.get(4)?, loja_origem_id: r.get(5)?, loja_origem_nome: r.get(6)?,
         loja_destino_id: r.get(7)?, loja_destino_nome: r.get(8)?, usuario_id: r.get(9)?,
-        observacao: r.get(10)?, data_movimento: r.get(11)?, preco_compra: r.get(12)?, unidade: r.get(13)?,
+        observacao: r.get(10)?, data_movimento: r.get(11)?, unidade: r.get(12)?,
     })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
     let mut stmt_sol = conn.prepare("SELECT s.id, s.loja_id, l.nome, s.usuario_id, u.nome, s.observacao, s.status, s.data_solicitacao, (SELECT COUNT(*) FROM solicitacao_itens si WHERE si.solicitacao_id = s.id) FROM solicitacoes s LEFT JOIN lojas l ON s.loja_id = l.id LEFT JOIN usuarios u ON s.usuario_id = u.id").map_err(|e| e.to_string())?;
@@ -2427,10 +2390,10 @@ fn import_all_data(dados: ExportData) -> Result<String, String> {
 
     // Produtos
     for item in &dados.produtos {
-        tx.execute("INSERT OR REPLACE INTO produtos (id, codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, unidade, preco_compra, preco_venda, estoque, estoque_minimo, custo_total, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14, ?15)",
+        tx.execute("INSERT OR REPLACE INTO produtos (id, codigo, nome, marca, modelo, descricao, categoria_id, fornecedor_id, unidade, estoque, estoque_minimo, ativo) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
             params![item.id, item.codigo, item.nome, item.marca, item.modelo, item.descricao,
-                item.categoria_id, item.fornecedor_id, item.unidade, item.preco_compra,
-                item.preco_venda, item.estoque, item.estoque_minimo, item.custo_total, item.ativo as i64]).map_err(|e| e.to_string())?;
+                item.categoria_id, item.fornecedor_id, item.unidade,
+                item.estoque, item.estoque_minimo, item.ativo as i64]).map_err(|e| e.to_string())?;
         *stats.entry("produtos".to_string()).or_insert(0) += 1;
     }
 
@@ -2449,10 +2412,10 @@ fn import_all_data(dados: ExportData) -> Result<String, String> {
 
     // Movimentacoes
     for item in &dados.movimentacoes {
-        tx.execute("INSERT OR REPLACE INTO movimentacoes (id, tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, data_movimento, preco_compra, unidade) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)",
+        tx.execute("INSERT OR REPLACE INTO movimentacoes (id, tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, data_movimento, unidade) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
             params![item.id, item.tipo, item.produto_id, item.produto_nome, item.quantidade,
                 item.loja_origem_id, item.loja_origem_nome, item.loja_destino_id, item.loja_destino_nome,
-                item.usuario_id, item.observacao, item.data_movimento, item.preco_compra, item.unidade]).map_err(|e| e.to_string())?;
+                item.usuario_id, item.observacao, item.data_movimento, item.unidade]).map_err(|e| e.to_string())?;
         *stats.entry("movimentacoes".to_string()).or_insert(0) += 1;
     }
 

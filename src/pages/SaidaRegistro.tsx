@@ -24,7 +24,7 @@ export default function SaidaRegistro() {
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<Movimentacao | null>(null);
-  const [form, setForm] = useState<{ produto_id: string; quantidade: number; preco_compra: number; unidade: number; solicitante: string; data: string; cod_produto: string; destino: string }>({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "", destino: "" });
+  const [form, setForm] = useState<{ produto_id: string; quantidade: number; unidade: number; solicitante: string; data: string; cod_produto: string; destino: string }>({ produto_id: "", quantidade: 1, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "", destino: "" });
   const [lote, setLote] = useState(false);
   const [loteItens, setLoteItens] = useState<LoteItem[]>([{ produto_id: "", cod_produto: "", quantidade: 1 }]);
   const [solicitantes, setSolicitantes] = useState<string[]>([]);
@@ -45,7 +45,7 @@ export default function SaidaRegistro() {
   const [erro, setErro] = useState<string | null>(null);
 
   function resetForm() {
-    setForm({ produto_id: "", quantidade: 1, preco_compra: 0, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "", destino: "" });
+    setForm({ produto_id: "", quantidade: 1, unidade: 1, solicitante: "", data: hojeInput(), cod_produto: "", destino: "" });
     setLote(false);
     setLoteItens([{ produto_id: "", cod_produto: "", quantidade: 1 }]);
     setItensAdicionais([]);
@@ -62,7 +62,6 @@ export default function SaidaRegistro() {
     setForm({
       produto_id: String(m.produto_id ?? ""),
       quantidade: m.quantidade,
-      preco_compra: (m as any).preco_compra ?? 0,
       unidade: (m as any).unidade ?? 1,
       solicitante: m.observacao?.match(/por ([^-]+) - /)?.[1]?.trim() || "",
       data: String(m.data_movimento).slice(0, 10) || hojeInput(),
@@ -252,7 +251,6 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
               loja_destino_nome: null,
               usuario_id: user?.id ?? null,
               observacao: `Saida manual por ${form.solicitante || "desconhecido"} - ${p.nome}\ncod_produto:${item.cod_produto.trim()}\ndestino:${form.destino.trim()}`,
-              preco_compra: p.preco_compra,
               unidade: Number(p.unidade) || 1,
               data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
             });
@@ -285,7 +283,6 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
           produto_id: Number(form.produto_id),
           produto_nome: p.nome,
           quantidade: qtdNum,
-          preco_compra: form.preco_compra,
           unidade: form.unidade,
           observacao: obs,
         });
@@ -301,7 +298,6 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
           loja_destino_nome: null,
           usuario_id: user?.id ?? null,
           observacao: obs,
-          preco_compra: form.preco_compra,
           unidade: form.unidade,
           data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
         });
@@ -323,7 +319,6 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
               loja_destino_nome: null,
               usuario_id: user?.id ?? null,
               observacao: `Saida manual por ${form.solicitante || "desconhecido"} - ${pa.nome}\ncod_produto:${item.cod_produto.trim()}\nvia:${p.nome}\ndestino:${form.destino.trim()}`,
-              preco_compra: pa.preco_compra,
               unidade: Number(pa.unidade) || 1,
               data_movimento: form.data ? `${form.data}T12:00:00` : undefined,
             });

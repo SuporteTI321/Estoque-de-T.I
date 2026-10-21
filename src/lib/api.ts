@@ -401,7 +401,6 @@ export const api = {
       solicitacoes_pendentes: socs.filter(s => s.status === "pendente").length,
       entradas_mes: movs.filter(m => m.tipo === "entrada" && new Date(m.data_movimento) >= inicioMes).reduce((s, m) => s + m.quantidade, 0),
       saidas_mes: movs.filter(m => m.tipo === "saida" && new Date(m.data_movimento) >= inicioMes).reduce((s, m) => s + m.quantidade, 0),
-      valor_total_estoque: ps.reduce((s, p) => s + (p.preco_compra * (p.estoque || 0)), 0),
     };
   },
 
@@ -483,11 +482,8 @@ export const api = {
             categoria_id: p.categoria_id,
             fornecedor_id: p.fornecedor_id,
             unidade: p.unidade,
-            preco_compra: p.preco_compra,
-            preco_venda: p.preco_venda,
             estoque: 0,
             estoque_minimo: p.estoque_minimo,
-            custo_total: p.custo_total ?? 0,
           });
         } catch (e) {
           erros.push(e);
@@ -610,7 +606,6 @@ export const api = {
         loja_destino_nome: m.loja_destino_nome ?? null,
         usuario_id: m.usuario_id ?? null,
         observacao: m.observacao ?? null,
-        preco_compra: m.preco_compra ?? null,
         unidade: m.unidade ?? null,
         data_movimento: m.data_movimento ?? null,
       };
@@ -630,7 +625,6 @@ export const api = {
     update: (id: number, m: Partial<Movimentacao>) => {
       const args: Record<string, unknown> = { id };
       if (m.quantidade !== undefined) args.quantidade = m.quantidade;
-      if (m.preco_compra !== undefined) args.preco_compra = m.preco_compra;
       if (m.unidade !== undefined) args.unidade = m.unidade;
       if (m.observacao !== undefined) args.observacao = m.observacao;
       return writeCall<Movimentacao>("update_movimentacao", args, () => {
