@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { ArrowUpFromLine, Plus, Pencil, Trash2, ChevronDown, Check, Layers, X, Search, MapPin } from "lucide-react";
+import { ArrowUpFromLine, Plus, Pencil, Trash2, ChevronDown, Check, Layers, X, Search, MapPin, RotateCcw } from "lucide-react";
 import Layout from "../components/Layout";
 import PageHeader from "../components/PageHeader";
 import DataTable, { type Column } from "../components/DataTable";
 import Button from "../components/Button";
 import Window from "../components/Window";
+import JanelaRetornoSaida from "../components/JanelaRetornoSaida";
 import type { Movimentacao, Produto, Loja, Usuario } from "../lib/types";
 import { api } from "../lib/api";
 import { useAuth } from "../lib/useAuth";
@@ -40,6 +41,10 @@ export default function SaidaRegistro() {
   const [codLoteIdx, setCodLoteIdx] = useState<number | null>(null);
   const [itensAdicionais, setItensAdicionais] = useState<{ produto_id: string; cod_produto: string; quantidade: number }[]>([]);
   const [adicionalIdx, setAdicionalIdx] = useState<number | null>(null);
+  /** Janela de "Retorno de Saída" (devolver ao estoque o que já saiu). */
+  const [retornoOpen, setRetornoOpen] = useState(false);
+  /** Produto cujos retornos estão sendo exibidos (null = todas as saídas). */
+  const [retornoProduto, setRetornoProduto] = useState<number | null>(null);
   // A loja que sofre a saída é sempre a do usuário logado (user.loja_id): o
   // campo de escolha saiu do formulário.
   const [erro, setErro] = useState<string | null>(null);
@@ -371,8 +376,12 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
       return registrado || "";
     } },
     { key: "data_movimento", label: "Data Saida", width: "100px", align: "center", render: (r) => new Date(r.data_movimento).toLocaleDateString("pt-BR") },
-    { key: "acoes", label: "Acao", align: "center", width: "100px", render: (r) => (
+    { key: "acoes", label: "Acao", align: "center", width: "140px", render: (r) => (
       <div className="flex items-center justify-center gap-1">
+        <button onClick={(e) => { e.stopPropagation(); setRetornoProduto(r.produto_id > 0 ? r.produto_id : null); setRetornoOpen(true); }}
+          className="rounded p-1.5 text-teal-600 hover:bg-teal-50 transition" title="Retorno de Saída (devolver ao estoque)">
+          <RotateCcw className="h-3.5 w-3.5" />
+        </button>
         <button onClick={(e) => { e.stopPropagation(); openEdit(r); }}
           className="rounded p-1.5 text-blue-600 hover:bg-blue-50 transition" title="Editar saida">
           <Pencil className="h-3.5 w-3.5" />
@@ -761,6 +770,17 @@ produto_codigo: mapa.get(x.produto_id) || "" })));
           </div>
         </div>
       </Window>
+
+      {/* Janela flutuante: Retorno de Saída (devolução de produtos que já saíram) */}
+      <JanelaRetornoSaida
+        open={retornoOpen}
+        onClose={() => setRetornoOpen(false)}
+        produtoFiltro={retornoProduto}
+        produtoNome={retornoProduto !== null
+          ? (produtos.find(p => p.id === retornoProduto)?.nome || null)
+          : null}
+        onDevolver={loadData}
+      />
     </Layout>
   );
 }
