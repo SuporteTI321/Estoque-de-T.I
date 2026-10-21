@@ -414,6 +414,7 @@ export const api = {
       total_produtos: ps.filter(p => p.ativo).length,
       itens_estoque: ps.reduce((s, p) => s + (p.estoque || 0), 0),
       estoque_baixo: ps.filter(p => p.ativo && p.estoque > 0 && p.estoque <= p.estoque_minimo).length,
+      disponiveis: ps.filter(p => p.ativo && p.estoque > p.estoque_minimo).length,
       itens_indisponiveis: ps.filter(p => p.ativo && p.estoque === 0).length,
       solicitacoes_pendentes: socs.filter(s => s.status === "pendente").length,
       entradas_mes: movs.filter(m => m.tipo === "entrada" && new Date(m.data_movimento) >= inicioMes).reduce((s, m) => s + m.quantidade, 0),
@@ -1444,7 +1445,10 @@ export async function syncAllFromBackend() {
   let ok = 0;
   for (const t of tabelas) {
     try {
-      const dados = await invoke(t.cmd);
+      // Sempre passa o mapa de argumentos (mesmo vazio). Invocar sem o segundo
+      // argumento chega ao Rust com payload indefinido, e o comando falha —
+      // era o que deixava o cache do localStorage congelado.
+      const dados = await invoke(t.cmd, {});
       t.set(dados);
       ok++;
     } catch (e) {

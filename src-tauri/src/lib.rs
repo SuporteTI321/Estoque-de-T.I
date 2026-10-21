@@ -369,6 +369,7 @@ pub struct DashboardStats {
     pub total_produtos: i64,
     pub itens_estoque: i64,
     pub estoque_baixo: i64,
+    pub disponiveis: i64,
     pub itens_indisponiveis: i64,
     pub solicitacoes_pendentes: i64,
     pub entradas_mes: i64,
@@ -560,6 +561,16 @@ fn dashboard_stats() -> Result<DashboardStats, String> {
             |r| r.get(0),
         )
         .map_err(|e| e.to_string())?;
+    // Disponiveis: estoque acima do minimo. Vai junto para a rosca do
+    // dashboard — assim card e rosca usam a MESMA fonte (o banco), sem
+    // depender do cache do navegador.
+    let disponiveis: i64 = conn
+        .query_row(
+            "SELECT COUNT(*) FROM produtos WHERE ativo=1 AND estoque > estoque_minimo",
+            [],
+            |r| r.get(0),
+        )
+        .map_err(|e| e.to_string())?;
     let itens_indisponiveis: i64 = conn
         .query_row(
             "SELECT COUNT(*) FROM produtos WHERE ativo=1 AND estoque = 0",
@@ -597,6 +608,7 @@ fn dashboard_stats() -> Result<DashboardStats, String> {
         solicitacoes_pendentes,
         entradas_mes,
         saidas_mes,
+        disponiveis,
     })
 }
 

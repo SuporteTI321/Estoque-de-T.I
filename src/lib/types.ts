@@ -168,6 +168,8 @@ export interface DashboardStats {
   total_produtos: number;
   itens_estoque: number;
   estoque_baixo: number;
+  /** Produtos com estoque acima do minimo (rosca "Disponiveis"). */
+  disponiveis: number;
   itens_indisponiveis: number;
   solicitacoes_pendentes: number;
   entradas_mes: number;

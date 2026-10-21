@@ -54,10 +54,12 @@ export default function Dashboard() {
   const saidas = movimentacoes.filter(m => m.tipo === "saida");
 
   // Donut: contagem uniforme de PRODUTOS (não mistura com soma de unidades).
-  // Mesmas definições dos StatCards: disponível = estoque > mínimo; baixo = 0 < estoque <= mínimo; sem = estoque <= 0.
-  const dispCount = produtos.filter(p => (p.estoque || 0) > (p.estoque_minimo || 0)).length;
-  const baixoCount = produtos.filter(p => { const e = p.estoque || 0; return e > 0 && e <= (p.estoque_minimo || 0); }).length;
-  const semEstoqueCount = produtos.filter(p => (p.estoque || 0) <= 0).length;
+  // Vem do backend (dashboard_stats) — mesma fonte dos StatCards, para card e
+  // rosca nunca discordarem. Definições: disponivel = estoque > minimo;
+  // baixo = 0 < estoque <= minimo; sem = estoque <= 0.
+  const dispCount = stats?.disponiveis ?? 0;
+  const baixoCount = estoqueBaixo;
+  const semEstoqueCount = indisponiveis;
   const totalDonut = dispCount + baixoCount + semEstoqueCount;
 
   return (
