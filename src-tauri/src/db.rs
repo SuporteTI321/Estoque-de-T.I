@@ -20,8 +20,8 @@ fn argon2_hash(password: &str) -> String {
 /// app precisa abrir mesmo assim — com a coluna inerte.
 fn drop_coluna_se_existir(conn: &Connection, tabela: &str, coluna: &str) {
     let existe: bool = conn
-        .prepare(&format!("SELECT {} FROM pragma_table_info(?1) LIMIT 1", coluna))
-        .and_then(|mut stmt| stmt.query_row([tabela], |r| r.get::<_, i64>(0)))
+        .prepare("SELECT 1 FROM pragma_table_info(?1) WHERE name = ?2 LIMIT 1")
+        .and_then(|mut stmt| stmt.query_row(params![tabela, coluna], |r| r.get::<_, i64>(0)))
         .map(|_| true)
         .unwrap_or(false);
     if !existe {
