@@ -145,6 +145,11 @@ create table if not exists public.alertas (
 --  (nenhum produto tem preço cadastrado). As colunas são removidas para que
 --  o schema reflita o que o app realmente controla.
 --  Idempotente: só remove se a coluna existir.
+--
+--  ATENÇÃO: o projeto fmtlmgonyaamijjcwncf.supabase.co NÃO EXISTE MAIS
+--  (NXDOMAIN confirmado em 21/10/2026). Esta migration só roda depois que o
+--  projeto for recriado — neste caso, execute o schema.sql inteiro no
+--  SQL Editor do projeto novo.
 -- ============================================================================
 do $$
 declare
