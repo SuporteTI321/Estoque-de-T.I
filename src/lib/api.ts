@@ -330,8 +330,9 @@ function notifyApiError(command: string, origem: string, erro: unknown) {
 }
 
 /** Operações de escrita (create/update/delete) merecem aviso ao usuário; leituras não. */
+const COMANDOS_SEM_AVISO = ["login", "logout_sessao", "validar_sessao"];
 function isEscrita(command: string): boolean {
-  return !command.startsWith("list_") && command !== "login";
+  return !command.startsWith("list_") && !COMANDOS_SEM_AVISO.includes(command);
 }
 
 async function apiCall<T>(command: string, args: any, fallback: () => T | Promise<T>): Promise<T> {
@@ -584,6 +585,14 @@ export const api = {
     }).then(() => {
       store.removeUsuario(id);
     }),
+    /**
+     * Confere se a sessao aberta no backend ainda vale (nao expirou em 8h e
+     * nao foi invalidada no logout). Na versao web nao ha backend de sessao:
+     * o timeout local de 8h e aplicado pelo useAuth.
+     */
+    validarSessao: (session_id: string) => apiCall<boolean>("validar_sessao", { session_id }, () => true),
+    /** Encerra a sessao no backend e limpa as sessoes expiradas. */
+    logout: (session_id?: string | null) => apiCall<void>("logout_sessao", { session_id: session_id ?? null }, () => undefined as unknown as void),
   },
 
   // ---- Movimentacoes ----

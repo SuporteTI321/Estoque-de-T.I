@@ -1,6 +1,6 @@
 # 🔒 Relatório de Análise de Segurança — Estoque de T.I
 
-**Data:** 2026-09-02
+**Data:** 2026-09-02 (revisado em 2026-10-21)
 **Escopo:** Código-fonte completo (Frontend TypeScript + Backend Rust/Tauri)
 **Status:** ✅ Todas as correções aplicadas
 
@@ -65,10 +65,17 @@
 
 #### 7. Session timeout não implementado — CORRIGIDO
 **Arquivo:** `src-tauri/src/lib.rs`, `src-tauri/src/db.rs`
-**Correção:** Sistema de sessões implementado:
+**Correção:** Sistema de sessões implementado (validado em 21/10/2026):
 - Tabela `sessoes` no SQLite
 - Timeout de 8 horas
 - Validação de sessão
+- O `login` devolve o `session_id` (antes era descartado e a tabela crescia
+  sem nunca ser lida)
+- Comandos `validar_sessao` e `logout_sessao` (invalidam a sessão e limpam as
+  expiradas) — antes `validate_session`/`invalidate_session` eram código morto
+- Front-end: `useAuth` aplica o timeout de 8h e valida a sessão no backend ao
+  abrir o app; o logout encerra a sessão no backend
+- Versão web (sem backend de sessão): o timeout de 8h é aplicado no cliente
 - Invalidação no logout
 
 #### 8. Falta de audit log — CORRIGIDO

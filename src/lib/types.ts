@@ -42,6 +42,8 @@ export interface Usuario {
   loja_id: number | null;
   loja_nome: string | null;
   ativo: boolean;
+  /** ID da sessao aberta no login (desktop). Ausente na versao web. */
+  session_id?: string | null;
 }
 
 export interface Movimentacao {

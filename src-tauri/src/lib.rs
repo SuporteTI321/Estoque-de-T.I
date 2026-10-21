@@ -282,6 +282,10 @@ pub struct Usuario {
     pub loja_id: Option<i64>,
     pub loja_nome: Option<String>,
     pub ativo: bool,
+    /// ID da sessao aberta por este login (desktop). Ausente na versao web e
+    /// nos comandos que nao abrem sessao (listar, criar, editar).
+    #[serde(default)]
+    pub session_id: Option<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -1053,7 +1057,8 @@ fn list_usuarios() -> Result<Vec<Usuario>, String> {
                 loja_id: row.get(5)?,
                 loja_nome: row.get(6)?,
                 ativo: row.get::<_, i64>(7)? != 0,
-            })
+                session_id: None,
+        })
         })
         .map_err(|e| e.to_string())?;
     let mut out = Vec::new();
@@ -1104,7 +1109,7 @@ fn login(email: String, senha: String) -> Result<Usuario, String> {
         audit_log(&conn, Some(usuario_id), &email, "login_sucesso", Some("usuarios"), Some(usuario_id), None);
 
         // Criar sessão
-        let _session_id = create_session(&conn, usuario_id)?;
+        let session_id = create_session(&conn, usuario_id)?;
 
         // Migra senha de texto plano para Argon2 (lazy migration)
         if let Some(new_hash) = maybe_migrate_password(&senha, &stored_hash) {
@@ -1119,6 +1124,7 @@ fn login(email: String, senha: String) -> Result<Usuario, String> {
             loja_id: row.get(5).map_err(|e| e.to_string())?,
             loja_nome: row.get(6).map_err(|e| e.to_string())?,
             ativo: row.get::<_, i64>(7).map_err(|e| e.to_string())? != 0,
+            session_id: Some(session_id),
         })
     } else {
         // SEGURANÇA: Registrar falha
@@ -1126,6 +1132,34 @@ fn login(email: String, senha: String) -> Result<Usuario, String> {
         audit_log(&conn, None, &email, "login_falha", Some("usuarios"), None, Some("Usuário não encontrado"));
         Err("Credenciais inválidas".to_string())
     }
+}
+
+/// Valida se a sessão ainda é válida (não expirou e não foi invalidada).
+/// O frontend chama isso ao abrir o app: se a sessão expirou (8h), o usuário
+/// precisa logar de novo.
+#[tauri::command(rename_all = "snake_case")]
+fn validar_sessao(session_id: String) -> Result<bool, String> {
+    let conn = db::open_conn().map_err(|e| e.to_string())?;
+    validate_session(&conn, &session_id)
+}
+
+/// Encerra a sessão: invalida a sessão atual e remove as sessões expiradas.
+/// Chamado no logout do frontend.
+#[tauri::command(rename_all = "snake_case")]
+fn logout_sessao(session_id: Option<String>) -> Result<(), String> {
+    let conn = db::open_conn().map_err(|e| e.to_string())?;
+    if let Some(sid) = session_id {
+        if !sid.is_empty() {
+            invalidate_session(&conn, &sid)?;
+            audit_log(&conn, None, "", "logout", Some("sessoes"), None, None);
+        }
+    }
+    // Limpa sessões expiradas/inativas para a tabela não crescer sem parar
+    let _ = conn.execute(
+        "DELETE FROM sessoes WHERE ativa=0 OR expira_em < ?1",
+        params![chrono::Utc::now().timestamp_millis()],
+    );
+    Ok(())
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -1158,7 +1192,8 @@ fn create_usuario(
         loja_id,
         loja_nome: None,
         ativo: true,
-    })
+        session_id: None,
+        })
 }
 
 #[tauri::command(rename_all = "snake_case")]
@@ -1197,7 +1232,8 @@ fn update_usuario(
         loja_id,
         loja_nome: None,
         ativo: true,
-    })
+        session_id: None,
+        })
 }
 
 /// Valida a senha atual de um usuário (usado no Perfil antes de trocar a senha).
@@ -1949,6 +1985,8 @@ pub fn run() {
             update_produto_categoria,
             list_usuarios,
             login,
+            validar_sessao,
+            logout_sessao,
             create_usuario,
             update_usuario,
             verify_password,
@@ -2270,7 +2308,8 @@ fn export_all_data() -> Result<ExportData, String> {
     let usuarios: Vec<Usuario> = stmt_usu.query_map([], |r| Ok(Usuario {
         id: r.get(0)?, nome: r.get(1)?, email: r.get(2)?, senha: String::new(), perfil: r.get(3)?,
         loja_id: r.get(4)?, loja_nome: r.get(5)?, ativo: r.get::<_, i64>(6)? != 0,
-    })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
+        session_id: None,
+        })).map_err(|e| e.to_string())?.filter_map(|r| r.ok()).collect();
 
     let mut stmt_mov = conn.prepare("SELECT id, tipo, produto_id, produto_nome, quantidade, loja_origem_id, loja_origem_nome, loja_destino_id, loja_destino_nome, usuario_id, observacao, data_movimento, unidade FROM movimentacoes").map_err(|e| e.to_string())?;
     let movimentacoes: Vec<Movimentacao> = stmt_mov.query_map([], |r| Ok(Movimentacao {
