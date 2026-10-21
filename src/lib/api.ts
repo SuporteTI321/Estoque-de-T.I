@@ -330,7 +330,14 @@ function notifyApiError(command: string, origem: string, erro: unknown) {
 }
 
 /** Operações de escrita (create/update/delete) merecem aviso ao usuário; leituras não. */
-const COMANDOS_SEM_AVISO = ["login", "logout_sessao", "validar_sessao"];
+const COMANDOS_SEM_AVISO = [
+  "login",
+  "logout_sessao",
+  "validar_sessao",
+  // Leitura: na web não há equivalente remoto, então falhar é esperado e
+  // não deve virar aviso de erro na tela.
+  "dashboard_stats",
+];
 function isEscrita(command: string): boolean {
   return !command.startsWith("list_") && !COMANDOS_SEM_AVISO.includes(command);
 }
@@ -385,9 +392,18 @@ function todayISO() { return new Date().toISOString(); }
 
 // ---- Dashboard ----
 export const api = {
-  // Lê direto do localStorage — que é mantido em sincronia com o
-  // backend/nuvem por syncAllFromBackend e pelos caches do apiCall.
-  dashboardStats: async (): Promise<DashboardStats> => {
+  /**
+   * Estatísticas do dashboard.
+   *
+   * No desktop, usa o comando Rust (dados vivos do SQLite). Antes lia só o
+   * localStorage, que é preenchido pelo syncAllFromBackend — como o card era
+   * calculado antes do sync terminar, ele mostrava valores defasados (ex.:
+   * "Estoque baixo: 0" mesmo com 8 produtos abaixo do mínimo).
+   *
+   * Na web não há equivalente remoto, então cai no cálculo local (mesmos
+   * números, sobre o cache do navegador).
+   */
+  dashboardStats: () => apiCall<DashboardStats>("dashboard_stats", {}, () => {
     const ps = loadFromLS<Produto[]>("almox_produtos", []);
     const movs = loadFromLS<Movimentacao[]>("almox_movimentacoes", []);
     const socs = loadFromLS<Solicitacao[]>("almox_solicitacoes", []);
@@ -403,7 +419,7 @@ export const api = {
       entradas_mes: movs.filter(m => m.tipo === "entrada" && new Date(m.data_movimento) >= inicioMes).reduce((s, m) => s + m.quantidade, 0),
       saidas_mes: movs.filter(m => m.tipo === "saida" && new Date(m.data_movimento) >= inicioMes).reduce((s, m) => s + m.quantidade, 0),
     };
-  },
+  }),
 
   // ---- Lojas ----
   lojas: {
