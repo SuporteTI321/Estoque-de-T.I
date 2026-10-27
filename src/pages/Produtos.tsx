@@ -58,7 +58,7 @@ export default function Produtos() {
         // 2. Migra siglas antigas para oficiais
         const { lista: migrados, alterados } = migrarCodigos(renum);
         if (alterados > 0) {
-          console.log(`[Produtos] ${alterados} código(s) migrado(s) para siglas oficiais`);
+          if (import.meta.env.DEV) console.log(`[Produtos] ${alterados} código(s) migrado(s) para siglas oficiais`);
           // Persistir migração no backend
           for (const prod of migrados) {
             const original = p.find(x => x.id === prod.id);
@@ -486,7 +486,7 @@ export default function Produtos() {
                     onClick={(e) => e.stopPropagation()} />
                 </div>
                 <button onClick={() => { setForm({ ...form, unidade: `${u.label} / ${unidadesQtd[u.val] ?? u.qtd}` }); setShowNewUnid(false); }}
-                  className="rounded-lg bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700">Selecionar</button>
+                  className="rounded-lg bg-gradient-to-b from-blue-500 to-blue-600 px-3 py-1.5 text-xs font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-3 py-1.5 text-xs font-medium text-white hover:from-blue-600 hover:to-blue-700">Selecionar</button>
               </div>
             ))}
           </div>

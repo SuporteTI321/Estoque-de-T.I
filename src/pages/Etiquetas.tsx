@@ -370,7 +370,7 @@ export default function Etiquetas() {
             )}
 
             {!mostrarConfig && (
-              <button onClick={() => setMostrarConfig(true)} className="fixed right-4 top-24 bg-blue-600 hover:bg-blue-700 text-white p-3 rounded-full shadow-lg" title="Configurações">
+              <button onClick={() => setMostrarConfig(true)} className="fixed right-4 top-24 bg-gradient-to-b from-blue-500 to-blue-600 shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] hover:from-blue-600 hover:to-blue-700 text-white p-3 rounded-full shadow-lg" title="Configurações">
                 <Settings size={20} />
               </button>
             )}

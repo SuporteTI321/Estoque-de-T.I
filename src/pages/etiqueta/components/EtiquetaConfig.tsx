@@ -95,7 +95,7 @@ export default function EtiquetaConfig(props: EtiquetaConfigProps) {
           <div className="space-y-2">
             <div className="flex gap-1.5">
               <input value={nomePerfil} onChange={e => setNomePerfil(e.target.value)} placeholder="Nome do perfil..." className="flex-1 rounded-md border border-slate-200 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none" onKeyDown={e => { if (e.key === 'Enter') salvarPerfil(); }} />
-              <button onClick={salvarPerfil} className="flex items-center gap-1 rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white hover:bg-blue-700"><Save size={12} />Salvar</button>
+              <button onClick={salvarPerfil} className="flex items-center gap-1 rounded-md bg-gradient-to-b from-blue-500 to-blue-600 px-2.5 py-1.5 text-xs font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-2.5 py-1.5 text-xs font-medium text-white hover:from-blue-600 hover:to-blue-700"><Save size={12} />Salvar</button>
             </div>
             {perfis.length === 0 ? (
               <p className="text-[11px] text-slate-400 text-center py-2">Nenhum perfil salvo</p>
@@ -105,7 +105,7 @@ export default function EtiquetaConfig(props: EtiquetaConfigProps) {
                   <div key={p.nome} className="flex items-center gap-1 rounded-md border border-slate-200 bg-slate-50 px-2 py-1.5">
                     <FolderOpen size={12} className="text-slate-400 shrink-0" />
                     <span className="flex-1 truncate text-xs font-medium text-slate-700">{p.nome}</span>
-                    <button onClick={() => carregarPerfil(p.nome)} className="rounded bg-blue-600 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-blue-700">Carregar</button>
+                    <button onClick={() => carregarPerfil(p.nome)} className="rounded bg-gradient-to-b from-blue-500 to-blue-600 px-2 py-0.5 text-[10px] font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-2 py-0.5 text-[10px] font-medium text-white hover:from-blue-600 hover:to-blue-700">Carregar</button>
                     <button onClick={() => excluirPerfil(p.nome)} className="rounded p-1 text-slate-400 hover:text-red-500 hover:bg-red-50"><Trash2 size={12} /></button>
                   </div>
                 ))}

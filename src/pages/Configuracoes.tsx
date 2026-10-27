@@ -614,7 +614,7 @@ function parseCSVLine(line: string, sep: string = ","): string[] {
             </div>
             <div className="flex justify-end gap-2 border-t border-gray-200 px-5 py-3">
               <button onClick={() => setShowCsvModal(false)} className="rounded-lg border border-gray-300 px-4 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">Cancelar</button>
-              <button onClick={doExportCSV} className="rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700">Exportar</button>
+              <button onClick={doExportCSV} className="rounded-lg bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-4 py-2 text-xs font-semibold text-white hover:from-blue-600 hover:to-blue-700">Exportar</button>
             </div>
           </div>
         </div>

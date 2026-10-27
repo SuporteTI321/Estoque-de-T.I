@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Bell, HelpCircle, Search, ChevronDown, LogOut, AlertCircle, AlertTriangle, Menu, X } from "lucide-react";
+import { Bell, ChevronDown, LogOut, AlertCircle, AlertTriangle, Menu, X } from "lucide-react";
 import type { Usuario, Alerta, Produto } from "../lib/types";
 import { api } from "../lib/api";
 
@@ -173,16 +173,6 @@ export default function Header({ user, title, subtitle, onLogout, onMenu }: Head
         {subtitle && <p className="text-xs text-gray-500">{subtitle}</p>}
       </div>
 
-      {/* Search */}
-      <div className="relative hidden w-72 md:block">
-        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Buscar produtos, categorias, pedidos, lojas..."
-          className="h-9 w-full rounded-lg border border-gray-200 bg-gray-50 pl-9 pr-3 text-sm outline-none transition focus:border-blue-300 focus:bg-white focus:ring-2 focus:ring-blue-100"
-        />
-      </div>
-
       {/* Bell Notifications */}
       <div className="relative" ref={notifRef}>
         <button onClick={() => setNotifOpen(!notifOpen)} className="relative rounded-lg p-2 text-gray-500 transition hover:bg-gray-100">
@@ -268,10 +258,6 @@ export default function Header({ user, title, subtitle, onLogout, onMenu }: Head
           </div>
         )}
       </div>
-
-      <button className="rounded-lg p-2 text-gray-500 transition hover:bg-gray-100">
-        <HelpCircle className="h-5 w-5" />
-      </button>
 
       {/* User menu */}
       <div className="relative" ref={menuRef}>

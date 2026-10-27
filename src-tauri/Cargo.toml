@@ -1,6 +1,6 @@
 [package]
 name = "estoque-ti"
-version = "0.1.3"
+version = "0.1.8"
 description = "Estoque de T.I - Sistema de Controle de Estoque"
 authors = ["Henrique"]
 edition = "2021"
@@ -39,3 +39,4 @@ sha2 = "0.10"
 [features]
 default = ["custom-protocol"]
 custom-protocol = ["tauri/custom-protocol"]
+

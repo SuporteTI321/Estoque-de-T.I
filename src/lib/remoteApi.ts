@@ -129,7 +129,6 @@ export async function remoteCall<T = any>(command: string, args: any): Promise<T
 
     // ---- Auth ----
     case "login": {
-      console.log("[remoteApi] login iniciado para:", a.email);
       const buscarUsuario = async (): Promise<any | null> => {
         // Preferência: RPC login_usuario (única porta do hash — a coluna senha
         // é bloqueada para anon no schema novo). Fallback: select direto (schema antigo).
@@ -148,7 +147,6 @@ export async function remoteCall<T = any>(command: string, args: any): Promise<T
       let erroAuth: any;
       try {
         const { user: authUser } = await db.loginSupabase(a.email, a.senha);
-        console.log("[remoteApi] login Supabase auth OK");
         const u = await buscarUsuario();
         if (u) {
           // Verifica a senha contra o hash/texto armazenado — vazio nunca aceita
@@ -159,13 +157,12 @@ export async function remoteCall<T = any>(command: string, args: any): Promise<T
         const fallbackUser = { id: 1, nome: authUser.email?.split("@")[0] || "Usuário", email: a.email, perfil: "admin", loja_id: null, ativo: true };
         return { ...fallbackUser, senha: "" } as T;
       } catch (e: any) {
-        console.log("[remoteApi] login Supabase auth falhou:", e?.message || e);
+        console.error("[remoteApi] login Supabase auth falhou:", e?.message || e);
         erroAuth = e;
       }
       // Fallback legado sem Supabase Auth configurado
       try {
         const u = await buscarUsuario();
-        console.log("[remoteApi] login legacy buscarUsuario:", u ? { email: u.email, senha_len: u.senha?.length } : null);
         if (!u) throw erroAuth;
         if (!(await db.verificarSenha(u.senha, a.senha))) throw new Error("Credenciais inválidas");
         return { ...u, senha: "" } as T;

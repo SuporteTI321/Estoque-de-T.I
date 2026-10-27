@@ -326,7 +326,7 @@ export default function Sincronizacao() {
             </div>
             <button
               onClick={handleSaveGithubConfig}
-              className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+              className="rounded-lg bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-4 py-2 text-sm font-medium text-white hover:from-blue-600 hover:to-blue-700"
             >
               Salvar Configuracao
             </button>
@@ -351,7 +351,7 @@ export default function Sincronizacao() {
                 Push Agora
               </button>
               <button onClick={handlePullNow} disabled={status === "loading"}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+                className="rounded-lg bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-4 py-2 text-sm font-medium text-white hover:from-blue-600 hover:to-blue-700 disabled:opacity-50">
                 Pull Agora
               </button>
               <button onClick={() => { api.sync.setGithubConfig("", "", "", ""); setHasConfig(false); setAutoSync(false); api.sync.setAutoSync(false); }}
@@ -392,7 +392,7 @@ export default function Sincronizacao() {
           <div className="space-y-3">
             <p className="text-xs text-amber-700 bg-amber-50 rounded-lg p-3">🔒 Cofre trancado — digite sua senha mestra para desbloquear.</p>
             <input type="password" placeholder="Senha mestra" value={vaultPw} onChange={(e) => setVaultPw(e.target.value)} className="rounded-lg border border-gray-300 px-3 py-2 text-sm w-full" />
-            <button onClick={handleUnlockVault} className="rounded-lg bg-amber-600 px-4 py-2 text-sm font-medium text-white hover:bg-amber-700">Desbloquear</button>
+            <button onClick={handleUnlockVault} className="rounded-lg bg-gradient-to-b from-amber-500 to-amber-600 px-4 py-2 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-4 py-2 text-sm font-medium text-white hover:from-amber-600 hover:to-amber-700">Desbloquear</button>
           </div>
         ) : !hasCloud ? (
           <div className="space-y-3">
@@ -401,7 +401,7 @@ export default function Sincronizacao() {
               <input placeholder="Anon public key (eyJ...)" value={cloudCfg.key} onChange={(e) => setCloudCfg({ ...cloudCfg, key: e.target.value })} className="rounded-lg border border-gray-300 px-3 py-2 font-mono text-xs" />
               <input type="password" placeholder="Senha mestra do cofre (só você saberá)" value={vaultPw} onChange={(e) => setVaultPw(e.target.value)} className="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-sm" />
             </div>
-            <button onClick={handleSaveCloud} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">Salvar no Cofre (criptografado)</button>
+            <button onClick={handleSaveCloud} className="rounded-lg bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-4 py-2 text-sm font-medium text-white hover:from-blue-600 hover:to-blue-700">Salvar no Cofre (criptografado)</button>
             <p className="text-[11px] text-gray-500">As chaves são criptografadas com sua senha (PBKDF2 + AES-GCM). Sem a senha ninguém lê — nem inspecionando o navegador.</p>
           </div>
         ) : (
@@ -411,7 +411,7 @@ export default function Sincronizacao() {
               <CloudUpload className="h-4 w-4" /> Enviar dados locais para nuvem
             </button>
             <button onClick={handleCloudPull} disabled={cloudStatus === "loading"}
-              className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50">
+              className="inline-flex items-center gap-2 rounded-lg bg-gradient-to-b from-blue-500 to-blue-600 px-4 py-2 text-sm font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-4 py-2 text-sm font-medium text-white hover:from-blue-600 hover:to-blue-700 disabled:opacity-50">
               <Download className="h-4 w-4" /> Baixar dados da nuvem
             </button>
             <button onClick={() => { clearCloudConfig(); setHasCloud(false); setCloudCfg({ url: "", key: "" }); }}

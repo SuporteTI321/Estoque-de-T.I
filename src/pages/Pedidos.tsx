@@ -407,7 +407,7 @@ export default function Pedidos() {
               </div>
               {viewing.status !== "atendido" && (
                 <button onClick={() => confirmar(viewing)} disabled={confirmando===viewing.id}
-                  className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-3 text-sm font-bold text-white hover:bg-emerald-700 disabled:opacity-50 shadow-sm">
+                  className="mt-3 w-full inline-flex items-center justify-center gap-2 rounded-lg bg-gradient-to-b from-emerald-500 to-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-4 py-3 text-sm font-bold text-white hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50">
                   <Check className="h-5 w-5"/>{confirmando===viewing.id ? "Confirmando..." : "Confirmar Pedido"}
                 </button>
               )}

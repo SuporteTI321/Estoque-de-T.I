@@ -54,7 +54,7 @@ export default function AvisoApi() {
           </div>
           <button
             onClick={() => setAviso(null)}
-            className="mt-2 rounded-lg bg-red-600 px-3 py-1 text-xs font-medium text-white transition hover:bg-red-700"
+            className="mt-2 rounded-lg bg-gradient-to-b from-red-500 to-red-600 px-3 py-1 text-xs font-medium text-white transition shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-3 py-1 text-xs font-medium text-white transition hover:from-red-600 hover:to-red-700"
           >
             Entendi
           </button>

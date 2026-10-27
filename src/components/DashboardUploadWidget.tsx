@@ -114,7 +114,7 @@ export default function DashboardUploadWidget() {
             <p className="text-[10px] text-gray-400">ou</p>
             <button
               onClick={handlePick}
-              className="mt-1 inline-flex items-center gap-1 rounded-md bg-blue-600 px-3 py-1 text-[11px] font-semibold text-white hover:bg-blue-700"
+              className="mt-1 inline-flex items-center gap-1 rounded-md bg-gradient-to-b from-blue-500 to-blue-600 px-3 py-1 text-[11px] font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-3 py-1 text-[11px] font-semibold text-white hover:from-blue-600 hover:to-blue-700"
             >
               <Upload className="h-3 w-3" /> Selecionar PDF
             </button>
@@ -141,7 +141,7 @@ export default function DashboardUploadWidget() {
           <button
             onClick={(e) => { e.stopPropagation(); handleImport(); }}
             disabled={!lojaId || busy}
-            className="flex w-full items-center justify-center gap-1 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
+            className="flex w-full items-center justify-center gap-1 rounded-md bg-gradient-to-b from-emerald-500 to-emerald-600 px-3 py-1.5 text-xs font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] px-3 py-1.5 text-xs font-semibold text-white hover:from-emerald-600 hover:to-emerald-700 disabled:opacity-50"
           >
             {busy ? <Loader2 className="h-3 w-3 animate-spin" /> : <FileCheck2 className="h-3 w-3" />}
             {busy ? "Importando..." : "Importar agora"}

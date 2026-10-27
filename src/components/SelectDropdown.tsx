@@ -166,7 +166,7 @@ export default function SelectDropdown({
                     <button
                       type="button"
                       onClick={() => select(customValue.trim())}
-                      className="rounded-lg bg-blue-600 p-2 text-white hover:bg-blue-700 transition"
+                      className="rounded-lg bg-gradient-to-b from-blue-500 to-blue-600 p-2 text-white shadow-[inset_0_1px_0_rgba(255,255,255,.25),0_1px_2px_rgba(17,24,39,.08)] p-2 text-white hover:from-blue-600 hover:to-blue-700 transition"
                     >
                       <Plus className="h-4 w-4" />
                     </button>
